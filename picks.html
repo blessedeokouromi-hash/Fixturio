@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fixturio - Top Picks</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}
+header{padding:14px 16px;font-size:20px;font-weight:700;background:#16a34a;color:#fff;display:flex;justify-content:space-between;align-items:center}
+header a{color:#fff;text-decoration:none;font-size:14px}
+.ad{margin:10px;padding:18px;text-align:center;border:1px dashed #475569;color:#64748b;font-size:12px;border-radius:8px}
+.wrap{padding:0 16px 24px}
+.sum{margin:12px 0;color:#94a3b8;font-size:14px}
+.pick{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #1e293b}
+.rk{font-weight:700;color:#f59e0b;width:26px}
+.body{flex:1}
+.lg{color:#38bdf8;font-size:12px}
+.mk{color:#fbbf24;font-weight:600;margin-top:2px}
+.rs{color:#94a3b8;font-size:13px;margin-top:2px}
+.pr{font-weight:700;color:#22c55e;white-space:nowrap}
+.note{margin-top:14px;font-size:11px;color:#64748b}
+</style></head><body>
+<header><a href="/">← Matches</a><span>⭐ Top 15 Picks</span></header>
+<div class="ad">Ad space</div>
+<div class="wrap" id="app">Building today's picks... the first visit can take up to a minute.</div>
+<div class="ad">Ad space</div>
+<script>
+const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+fetch("/api/daily").then(r=>r.json()).then(d=>{
+  const app=document.getElementById("app");
+  if(d.error){app.textContent=d.error;return;}
+  let h='<div class="sum">'+esc(d.summary)+'</div>';
+  (d.picks||[]).forEach((p,i)=>{
+    const t=new Date(p.kickoff).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+    h+='<div class="pick"><div class="rk">'+(i+1)+'</div><div class="body"><div class="lg">'+esc(p.league)+' · '+t+'</div><div>'+esc(p.match)+'</div><div class="mk">'+esc(p.market)+'</div><div class="rs">'+esc(p.reason)+'</div></div><div class="pr">'+esc(p.probability)+'%</div></div>';
+  });
+  h+='<div class="note">Single picks, not a combined ticket. 18+ only. Estimates, not guaranteed. Please gamble responsibly.</div>';
+  app.innerHTML=h;
+}).catch(()=>{document.getElementById("app").textContent="Could not load picks";});
+</script></body></html>
