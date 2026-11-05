@@ -5,33 +5,96 @@
 <title>Fixturio</title>
 <style>
 body{font-family:system-ui,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}
-header{padding:14px 16px;font-size:20px;font-weight:700;background:#16a34a;color:#fff}
+header{padding:14px 16px;font-size:20px;font-weight:700;background:#16a34a;color:#fff;display:flex;justify-content:space-between;align-items:center}
+header small{font-size:12px;font-weight:400;opacity:.9}
 .ad{margin:10px;padding:18px;text-align:center;border:1px dashed #475569;color:#64748b;font-size:12px;border-radius:8px}
 .league{padding:10px 16px 4px;font-weight:600;color:#38bdf8}
-.match{display:flex;justify-content:space-between;padding:10px 16px;border-bottom:1px solid #1e293b}
+.match{padding:10px 16px;border-bottom:1px solid #1e293b;cursor:pointer}
+.row{display:flex;justify-content:space-between}
 .score{font-weight:700;text-align:right}
+.livescore{color:#ef4444}
+.live{color:#ef4444;font-weight:700}
+.pred{display:none;margin-top:10px;padding:10px;background:#1e293b;border-radius:8px;font-size:14px}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0}
+.bar span{width:44px}
+.track{flex:1;height:8px;background:#334155;border-radius:4px;overflow:hidden}
+.fill{height:100%;background:#22c55e}
+.bar b{width:40px;text-align:right}
+.adv{margin-top:8px;color:#fbbf24}
+.note{margin-top:6px;font-size:11px;color:#64748b}
 </style></head><body>
-<header>Fixturio</header>
+<header>Fixturio<small id="upd"></small></header>
 <div class="ad">Ad space</div>
 <main id="app">Loading matches...</main>
 <div class="ad">Ad space</div>
 <script>
-fetch("/api/matches").then(r=>r.json()).then(d=>{
+const LIVE=["1H","2H","HT","ET","BT","P","LIVE"];
+const open=new Set(), preds={};
+let data=[];
+const isLive=m=>LIVE.includes(m.fixture.status.short);
+
+function status(m){
+  const s=m.fixture.status.short;
+  if(s==="HT")return '<span class="live">HT</span>';
+  if(isLive(m))return '<span class="live">● '+(m.fixture.status.elapsed||"")+"'</span>";
+  return s;
+}
+
+function predHTML(d){
+  const p=(d.response||[])[0];
+  if(!p)return "Prediction not available for this match.";
+  const pr=p.predictions, pc=pr.percent;
+  const n=v=>parseInt(v)||0;
+  const bar=(l,v)=>'<div class="bar"><span>'+l+'</span><div class="track"><div class="fill" style="width:'+n(v)+'%"></div></div><b>'+n(v)+'%</b></div>';
+  let h=bar("Home",pc.home)+bar("Draw",pc.draw)+bar("Away",pc.away);
+  if(pr.winner&&pr.winner.name)h+='<div>Likely: <b>'+pr.winner.name+'</b>'+(pr.winner.comment?' ('+pr.winner.comment+')':'')+'</div>';
+  if(pr.advice)h+='<div class="adv">'+pr.advice+'</div>';
+  return h+'<div class="note">Statistical estimate only, not guaranteed.</div>';
+}
+
+function tog(id){
+  const el=document.getElementById("p"+id);
+  if(open.has(id)){open.delete(id);el.style.display="none";return;}
+  open.add(id);el.style.display="block";
+  if(preds[id])return;
+  fetch("/api/predictions?fixture="+id).then(r=>r.json()).then(d=>{
+    preds[id]=predHTML(d);
+    const e=document.getElementById("p"+id);
+    if(e)e.innerHTML=preds[id];
+  }).catch(()=>{
+    const e=document.getElementById("p"+id);
+    if(e)e.innerHTML="Could not load prediction";
+  });
+}
+
+function render(){
   const g={};
-  (d.response||[]).forEach(m=>{
+  data.forEach(m=>{
     const k=m.league.country+" - "+m.league.name;
     (g[k]=g[k]||[]).push(m);
   });
+  const keys=Object.keys(g).sort((a,b)=>g[b].some(isLive)-g[a].some(isLive));
   let h="",i=0;
-  for(const k in g){
+  keys.forEach(k=>{
     h+='<div class="league">'+k+'</div>';
-    g[k].forEach(m=>{
-      const t=new Date(m.fixture.date).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+    g[k].sort((a,b)=>isLive(b)-isLive(a)).forEach(m=>{
+      const f=m.fixture, live=isLive(m);
+      const t=new Date(f.date).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
       const s=m.goals.home===null?t:m.goals.home+" - "+m.goals.away;
-      h+='<div class="match"><div>'+m.teams.home.name+'<br>'+m.teams.away.name+'</div><div class="score">'+s+'<br><small>'+m.fixture.status.short+'</small></div></div>';
+      h+='<div class="match" onclick="tog('+f.id+')"><div class="row"><div>'+m.teams.home.name+'<br>'+m.teams.away.name+'</div><div class="score'+(live?' livescore':'')+'">'+s+'<br><small>'+status(m)+'</small></div></div><div class="pred" id="p'+f.id+'"'+(open.has(f.id)?' style="display:block"':'')+'>'+(preds[f.id]||"Loading prediction...")+'</div></div>';
     });
     if(++i%5===0)h+='<div class="ad">Ad space</div>';
-  }
+  });
   document.getElementById("app").innerHTML=h||"No matches today";
-}).catch(()=>{document.getElementById("app").textContent="Could not load matches"});
+}
+
+function load(){
+  fetch("/api/matches").then(r=>r.json()).then(d=>{
+    data=d.response||[];
+    render();
+    document.getElementById("upd").textContent="Updated "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  }).catch(()=>{document.getElementById("app").textContent="Could not load matches"});
+}
+load();
+setInterval(load,60000);
 </script></body></html>
