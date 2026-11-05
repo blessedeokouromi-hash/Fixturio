@@ -6,8 +6,9 @@
 <style>
 body{font-family:system-ui,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}
 body.tm{padding-bottom:130px}
-header{padding:14px 16px;font-size:20px;font-weight:700;background:#16a34a;color:#fff;display:flex;justify-content:space-between;align-items:center}
+header{padding:14px 16px;font-size:20px;font-weight:700;background:#16a34a;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:8px}
 header small{font-size:12px;font-weight:400;opacity:.9}
+header a{color:#fff;text-decoration:none;font-size:14px;font-weight:700}
 #tbtn{background:#fff;color:#166534;border:0;border-radius:8px;padding:8px 10px;font-weight:700}
 .ad{margin:10px;padding:18px;text-align:center;border:1px dashed #475569;color:#64748b;font-size:12px;border-radius:8px}
 .league{padding:10px 16px 4px;font-weight:600;color:#38bdf8}
@@ -38,7 +39,7 @@ body.tm .bar2{display:block}
 .rb.on{background:#16a34a;border-color:#16a34a;color:#fff}
 .go{width:100%;margin-top:8px;padding:12px;background:#f59e0b;color:#111;font-weight:700;border:0;border-radius:8px;font-size:15px}
 </style></head><body>
-<header><div>Fixturio<br><small id="upd"></small></div><a href="/picks.html" style="color:#fff;text-decoration:none;font-weight:700">⭐ Top 15</a><button id="tbtn" onclick="toggleMode()">🎟 AI Ticket</button></header>
+<header><div>Fixturio<br><small id="upd"></small></div><a href="/picks.html">⭐ Top 15</a><button id="tbtn" onclick="toggleMode()">🎟 AI Ticket</button></header>
 <div class="ad">Ad space</div>
 <div id="ticket" class="tk"></div>
 <main id="app">Loading matches...</main>
@@ -175,4 +176,4 @@ function load(){
 }
 load();
 setInterval(load,60000);
-</script></body></html>
+</script></body></html>k
