@@ -6,7 +6,11 @@ module.exports = async (req, res) => {
       { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY } }
     );
     const data = await r.json();
-    res.setHeader("Cache-Control", "s-maxage=900, stale-while-revalidate=600");
+    const hasError = data.errors && Object.keys(data.errors).length > 0;
+    const live = (data.response || []).some(m =>
+      ["1H","2H","HT","ET","BT","P","LIVE"].includes(m.fixture.status.short));
+    const sec = hasError ? 60 : live ? 300 : 1800;
+    res.setHeader("Cache-Control", "s-maxage=" + sec + ", stale-while-revalidate=60");
     res.status(200).json(data);
   } catch (e) {
     res.status(500).json({ error: "fetch failed" });
