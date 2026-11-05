@@ -5,12 +5,16 @@
 <title>Fixturio</title>
 <style>
 body{font-family:system-ui,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}
+body.tm{padding-bottom:130px}
 header{padding:14px 16px;font-size:20px;font-weight:700;background:#16a34a;color:#fff;display:flex;justify-content:space-between;align-items:center}
 header small{font-size:12px;font-weight:400;opacity:.9}
+#tbtn{background:#fff;color:#166534;border:0;border-radius:8px;padding:8px 10px;font-weight:700}
 .ad{margin:10px;padding:18px;text-align:center;border:1px dashed #475569;color:#64748b;font-size:12px;border-radius:8px}
 .league{padding:10px 16px 4px;font-weight:600;color:#38bdf8}
 .match{padding:10px 16px;border-bottom:1px solid #1e293b;cursor:pointer}
-.row{display:flex;justify-content:space-between}
+.row{display:flex;align-items:center}
+.teams{flex:1}
+.chk{margin-right:12px;font-size:22px;color:#22c55e}
 .score{font-weight:700;text-align:right}
 .livescore{color:#ef4444}
 .live{color:#ef4444;font-weight:700}
@@ -22,16 +26,38 @@ header small{font-size:12px;font-weight:400;opacity:.9}
 .bar b{width:40px;text-align:right}
 .adv{margin-top:8px;color:#fbbf24}
 .note{margin-top:6px;font-size:11px;color:#64748b}
+.tk{display:none;margin:10px;padding:12px;background:#1e293b;border:1px solid #f59e0b;border-radius:10px;font-size:14px}
+.pick{padding:8px 0;border-bottom:1px solid #334155}
+.mk{color:#fbbf24;font-weight:600}
+.rs{color:#94a3b8;font-size:13px}
+.comb{margin:10px 0 4px;font-size:15px}
+.bar2{display:none;position:fixed;left:0;right:0;bottom:0;background:#111827;border-top:1px solid #334155;padding:10px 12px;z-index:5}
+body.tm .bar2{display:block}
+.rowb{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.rb{background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:6px 10px}
+.rb.on{background:#16a34a;border-color:#16a34a;color:#fff}
+.go{width:100%;margin-top:8px;padding:12px;background:#f59e0b;color:#111;font-weight:700;border:0;border-radius:8px;font-size:15px}
 </style></head><body>
 <header><div>Fixturio<br><small id="upd"></small></div><a href="/picks.html" style="color:#fff;text-decoration:none;font-weight:700">⭐ Top 15</a><button id="tbtn" onclick="toggleMode()">🎟 AI Ticket</button></header>
 <div class="ad">Ad space</div>
+<div id="ticket" class="tk"></div>
 <main id="app">Loading matches...</main>
 <div class="ad">Ad space</div>
+<div id="bar2" class="bar2">
+  <div class="rowb">
+    <span id="cnt">0/10 selected</span>
+    <button class="rb" id="rsafe" onclick="setRisk('safe')">Safe</button>
+    <button class="rb on" id="rbalanced" onclick="setRisk('balanced')">Balanced</button>
+    <button class="rb" id="rrisky" onclick="setRisk('risky')">Risky</button>
+  </div>
+  <button class="go" onclick="build()">Build my ticket</button>
+</div>
 <script>
 const LIVE=["1H","2H","HT","ET","BT","P","LIVE"];
-const open=new Set(), preds={};
-let data=[];
+const open=new Set(), preds={}, sel=new Set();
+let data=[], mode=false, risk="balanced";
 const isLive=m=>LIVE.includes(m.fixture.status.short);
+const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 function status(m){
   const s=m.fixture.status.short;
@@ -47,8 +73,8 @@ function predHTML(d){
   const n=v=>parseInt(v)||0;
   const bar=(l,v)=>'<div class="bar"><span>'+l+'</span><div class="track"><div class="fill" style="width:'+n(v)+'%"></div></div><b>'+n(v)+'%</b></div>';
   let h=bar("Home",pc.home)+bar("Draw",pc.draw)+bar("Away",pc.away);
-  if(pr.winner&&pr.winner.name)h+='<div>Likely: <b>'+pr.winner.name+'</b>'+(pr.winner.comment?' ('+pr.winner.comment+')':'')+'</div>';
-  if(pr.advice)h+='<div class="adv">'+pr.advice+'</div>';
+  if(pr.winner&&pr.winner.name)h+='<div>Likely: <b>'+esc(pr.winner.name)+'</b>'+(pr.winner.comment?' ('+esc(pr.winner.comment)+')':'')+'</div>';
+  if(pr.advice)h+='<div class="adv">'+esc(pr.advice)+'</div>';
   return h+'<div class="note">Statistical estimate only, not guaranteed.</div>';
 }
 
@@ -67,6 +93,57 @@ function tog(id){
   });
 }
 
+function cnt(){document.getElementById("cnt").textContent=sel.size+"/10 selected";}
+
+function tap(id,ns){
+  if(mode&&ns){
+    if(sel.has(id))sel.delete(id);
+    else if(sel.size>=10){alert("Maximum 10 matches per ticket");return;}
+    else sel.add(id);
+    const c=document.getElementById("c"+id);
+    if(c)c.textContent=sel.has(id)?"☑":"☐";
+    cnt();
+    return;
+  }
+  tog(id);
+}
+
+function toggleMode(){
+  mode=!mode;
+  document.body.classList.toggle("tm",mode);
+  document.getElementById("tbtn").textContent=mode?"✕ Close":"🎟 AI Ticket";
+  if(!mode){document.getElementById("ticket").style.display="none";sel.clear();}
+  cnt();
+  render();
+}
+
+function setRisk(r){
+  risk=r;
+  ["safe","balanced","risky"].forEach(x=>{
+    document.getElementById("r"+x).classList.toggle("on",x===r);
+  });
+}
+
+function build(){
+  const box=document.getElementById("ticket");
+  box.style.display="block";
+  if(sel.size<2){box.innerHTML="Pick at least 2 upcoming matches first.";window.scrollTo(0,0);return;}
+  box.innerHTML="Building your ticket...";
+  window.scrollTo(0,0);
+  const ids=[...sel].sort((a,b)=>a-b).join(",");
+  fetch("/api/accumulator?ids="+ids+"&risk="+risk).then(r=>r.json()).then(d=>{
+    if(d.error){box.innerHTML=esc(d.error);return;}
+    let h='<b>Your AI ticket</b> ('+esc(risk)+')';
+    (d.picks||[]).forEach(p=>{
+      h+='<div class="pick"><div>'+esc(p.match)+'</div><div class="mk">'+esc(p.market)+' · '+esc(p.probability)+'%</div><div class="rs">'+esc(p.reason)+'</div></div>';
+    });
+    h+='<div class="comb">Combined chance: <b>'+esc(d.combined)+'%</b> for '+esc(d.legs)+' legs</div>';
+    h+='<div class="rs">'+esc(d.summary)+'</div>';
+    h+='<div class="note">18+ only. Estimates, not guaranteed. Please gamble responsibly.</div>';
+    box.innerHTML=h;
+  }).catch(()=>{box.innerHTML="Could not build ticket";});
+}
+
 function render(){
   const g={};
   data.forEach(m=>{
@@ -76,12 +153,13 @@ function render(){
   const keys=Object.keys(g).sort((a,b)=>g[b].some(isLive)-g[a].some(isLive));
   let h="",i=0;
   keys.forEach(k=>{
-    h+='<div class="league">'+k+'</div>';
+    h+='<div class="league">'+esc(k)+'</div>';
     g[k].sort((a,b)=>isLive(b)-isLive(a)).forEach(m=>{
-      const f=m.fixture, live=isLive(m);
+      const f=m.fixture, live=isLive(m), ns=f.status.short==="NS";
       const t=new Date(f.date).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
       const s=m.goals.home===null?t:m.goals.home+" - "+m.goals.away;
-      h+='<div class="match" onclick="tog('+f.id+')"><div class="row"><div>'+m.teams.home.name+'<br>'+m.teams.away.name+'</div><div class="score'+(live?' livescore':'')+'">'+s+'<br><small>'+status(m)+'</small></div></div><div class="pred" id="p'+f.id+'"'+(open.has(f.id)?' style="display:block"':'')+'>'+(preds[f.id]||"Loading prediction...")+'</div></div>';
+      const box=(mode&&ns)?'<span class="chk" id="c'+f.id+'">'+(sel.has(f.id)?"☑":"☐")+'</span>':'';
+      h+='<div class="match" onclick="tap('+f.id+','+(ns?1:0)+')"><div class="row">'+box+'<div class="teams">'+esc(m.teams.home.name)+'<br>'+esc(m.teams.away.name)+'</div><div class="score'+(live?' livescore':'')+'">'+s+'<br><small>'+status(m)+'</small></div></div><div class="pred" id="p'+f.id+'"'+(open.has(f.id)?' style="display:block"':'')+'>'+(preds[f.id]||"Loading prediction...")+'</div></div>';
     });
     if(++i%5===0)h+='<div class="ad">Ad space</div>';
   });
