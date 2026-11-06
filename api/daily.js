@@ -45,6 +45,6 @@ module.exports = async (req, res) => {
       summary: "Ranked by estimated chance of winning, from bookmaker odds and form data. Safer markets like double chance rank higher, so always check the market before you decide."
     });
   } catch (e) {
-    res.status(500).json({ error: "Could not build picks" });
+    res.setHeader("Cache-Control", full ? "s-maxage=43200, stale-while-revalidate=3600" : "s-maxage=300");
   }
 };
