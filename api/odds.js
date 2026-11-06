@@ -10,8 +10,8 @@ module.exports = async (req, res) => {
     const want = [1, 5, 8, 12];
     const bm = bms.find(b => (b.bets || []).some(x => x.id === 1)) || bms[0];
     const bets = bm ? (bm.bets || []).filter(x => want.includes(x.id)) : [];
-    const sec = hasError ? 60 : bets.length ? 10800 : 1800;
-    res.setHeader("Cache-Control", "s-maxage=" + sec + ", stale-while-revalidate=300");
+    const sec = hasError ? 300 : bets.length ? 43200 : 21600;
+    res.setHeader("Cache-Control", "s-maxage=" + sec + ", stale-while-revalidate=600");
     res.status(200).json({ bookmaker: bm ? bm.name : null, bets });
   } catch (e) {
     res.status(500).json({ error: "fetch failed" });
