@@ -8,13 +8,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#0B1220;--s1:#121B2E;--line:#243049;--tx:#E8EDF7;--mu:#93A0BA;--amb:#F5B544;--f:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif}
+:root{--ink:#0B1220;--s1:#121B2E;--s2:#18233A;--line:#243049;--tx:#E8EDF7;--mu:#93A0BA;--amb:#F5B544;--slip:#F4E6B0;--sink:#1D1B12;--f:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif}
 *{box-sizing:border-box}
 html{color-scheme:dark}
 body{margin:0;background:var(--ink);color:var(--tx);font:500 15px/1.4 var(--f);-webkit-text-size-adjust:100%;font-variant-numeric:tabular-nums}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--amb);outline-offset:2px}
 .wrap{max-width:560px;margin:0 auto}
+body.hasdock .wrap{padding-bottom:96px}
 .top{position:sticky;top:0;z-index:4;background:var(--ink);border-bottom:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
 .logo{display:flex;align-items:center;gap:10px}
 .logo svg{width:32px;height:32px;flex:none}
@@ -24,25 +25,77 @@ button{font:inherit;color:inherit;cursor:pointer}
 .tabs a{padding:11px 0;color:var(--mu);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-1px}
 .tabs a.on{color:var(--tx);border-color:var(--amb)}
 .tabs span{margin-left:auto;font-size:12px;color:var(--mu)}
-.intro{padding:22px 16px 6px}
+.intro{padding:22px 16px 10px}
 .intro h2{margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em}
 .intro p{margin:8px 0 0;color:var(--mu);max-width:46ch}
-.chips{display:flex;gap:8px;padding:14px 16px 12px;overflow-x:auto}
-.chip{flex:none;border:1px solid var(--line);background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap}
-.chip.on{background:var(--tx);color:var(--ink);border-color:var(--tx)}
-.list{list-style:none;margin:0;padding:0;background:var(--s1);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.pk{display:grid;grid-template-columns:34px 1fr auto;column-gap:10px;padding:16px;border-top:1px solid var(--line)}
+.rec{margin:8px 16px 4px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--s1)}
+.rec .rt{display:block;font-weight:800;font-size:17px}
+.rec .msg0{margin:6px 0 0;color:var(--mu);font-size:14px}
+.rh{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.rh small{display:block;color:var(--mu);font-size:13px}
+.rh b{display:block;font-size:20px;font-weight:800;letter-spacing:-.01em;margin-top:2px}
+.rate{text-align:right;font-size:28px;font-weight:800;line-height:1}
+.rate small{display:block;margin-top:4px;font-size:12px;font-weight:500;color:var(--mu)}
+.dots{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
+.dots i{width:12px;height:12px;border-radius:50%;background:var(--line)}
+.dots i.w{background:#5BD18B}
+.dots i.l{background:#FF6B6B}
+.tr2{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--mu)}
+.tr2 b{color:var(--tx)}
+.link{margin-top:12px;border:0;background:none;color:var(--amb);font-weight:700;padding:0}
+.rl{margin-top:8px}
+.rl>div{display:grid;grid-template-columns:48px 1fr auto;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.rl .w{color:#5BD18B;font-weight:700}
+.rl .l{color:#FF6B6B;font-weight:700}
+.rl .v{color:var(--mu)}
+.hero{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;margin:12px 16px 4px;padding:18px;border:1px solid var(--amb);border-radius:14px;background:linear-gradient(160deg,#17233B,#121B2E)}
+.hero small{display:block;color:var(--amb);font-weight:700;font-size:13px}
+.hero .mt{font-size:19px;font-weight:800;letter-spacing:-.01em;margin-top:4px}
+.hero .mk{font-size:17px;margin-top:8px}
+.hero .add{margin-top:12px}
+.dial text{fill:var(--tx);font:800 26px var(--f)}
+.arc{stroke-dasharray:var(--c);animation:draw 1s ease-out}
+@keyframes draw{from{stroke-dashoffset:var(--c)}}
+@media (prefers-reduced-motion:reduce){.arc{animation:none}}
+.tier{margin-top:24px}
+.tier header{margin:0 16px 10px;padding-left:12px;border-left:4px solid var(--tc)}
+.tier h3{margin:0;font-size:20px;font-weight:800;letter-spacing:-.01em}
+.tier header p{margin:2px 0 0;font-size:13px;color:var(--mu)}
+.rows{background:var(--s1);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pk{display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px 16px;border-top:1px solid var(--line)}
 .pk:first-child{border-top:0}
-.rk{font-size:22px;font-weight:800;color:var(--amb)}
 .mt{font-weight:700}
 .lgn{font-size:13px;color:var(--mu);margin-top:1px}
-.mk{margin-top:8px;font-weight:800;color:var(--amb)}
-.rs{font-size:13px;color:var(--mu);margin-top:3px}
-.bar{height:4px;margin-top:10px;background:var(--line);border-radius:2px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--amb);border-radius:2px}
-.pc{font-size:22px;font-weight:800;text-align:right;white-space:nowrap}
-.advt{margin:18px 16px;padding:16px;border:1px dashed var(--line);color:var(--mu);font-size:12px;text-align:center}
+.mk{margin-top:7px;font-weight:800;color:var(--amb)}
+.cp{display:inline-block;margin:7px 6px 0 0;padding:3px 9px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--mu)}
+.pr{text-align:right}
+.pr b{display:block;font-size:22px;font-weight:800;margin-bottom:8px}
+.add{border:1px solid var(--tx);background:transparent;border-radius:8px;padding:8px 14px;font-weight:700;font-size:14px}
+.add[aria-pressed=true]{background:var(--amb);border-color:var(--amb);color:var(--ink)}
+.advt{margin:22px 16px 18px;padding:16px;border:1px dashed var(--line);color:var(--mu);font-size:12px;text-align:center}
 .fine{margin:0;padding:4px 16px calc(28px + env(safe-area-inset-bottom));font-size:12px;color:var(--mu)}
+.dock{display:none;position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--s1);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+.dk{max-width:560px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.dk b{display:block;font-weight:800}
+.dk small{color:var(--mu);font-size:13px}
+.go{border:0;border-radius:8px;background:var(--slip);color:var(--sink);font-weight:800;font-size:15px;padding:12px 18px}
+.slip{display:none;position:relative;margin:16px;padding:28px 18px 24px;background:var(--slip);color:var(--sink)}
+.slip::before,.slip::after{content:"";position:absolute;left:0;right:0;height:10px;background:radial-gradient(circle at 10px 0,var(--ink) 6px,transparent 6.5px) 0 0/20px 10px repeat-x}
+.slip::before{top:0}
+.slip::after{bottom:0;transform:scaleY(-1)}
+.sh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-bottom:10px;border-bottom:2px solid var(--sink)}
+.sh b{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.sh span{font-size:13px}
+.leg{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px dashed rgba(29,27,18,.4)}
+.leg .mt{font-weight:700}
+.leg .mk2{font-weight:600;margin-top:2px}
+.leg .pc{font-size:22px;font-weight:800;white-space:nowrap}
+.tot{display:flex;justify-content:space-between;align-items:baseline;padding-top:14px}
+.tot span{font-weight:700}
+.tot b{font-size:38px;font-weight:800;letter-spacing:-.02em}
+.fine2{margin:10px 0 0;font-size:12px;color:#5B563F}
+.sacts{display:flex;gap:10px;margin-top:14px}
+.sacts button{flex:1;padding:10px;border:1.5px solid var(--sink);background:transparent;border-radius:8px;font-weight:700;color:var(--sink)}
 </style></head><body>
 <div class="wrap">
 <header class="top"><div class="logo">
@@ -51,32 +104,130 @@ button{font:inherit;color:inherit;cursor:pointer}
 </div></header>
 <nav class="tabs"><a href="/">Matches</a><a class="on" href="/picks.html">Top 15</a><span id="upd"></span></nav>
 <section class="intro"><h2>Today’s top 15</h2><p id="sub">Loading today’s picks…</p></section>
-<div id="chips" class="chips"></div>
-<ol id="list" class="list"></ol>
+<div id="rec"></div>
+<section id="slip" class="slip" aria-live="polite"></section>
+<div id="hero"></div>
+<div id="tiers"></div>
 <div class="advt">Advertisement</div>
-<p class="fine">18+ only. These are single picks, not a combined ticket. Estimates are not guarantees. Please gamble responsibly.</p>
+<p class="fine">18+ only. Estimates are not guarantees. Please gamble responsibly.</p>
 </div>
+<div id="dock" class="dock"><div class="dk">
+  <div><b id="dn"></b><small id="dc"></small></div>
+  <button class="go" onclick="openSlip()">View slip</button>
+</div></div>
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const tm=d=>new Date(d).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
-const catOf=m=>/^Double chance/.test(m)?"Double chance":/^(Home|Away) win/.test(m)?"Result":/^(Over|Under)/.test(m)?"Goals":/^Both teams/.test(m)?"Both teams":"Other";
-let picks=[],cat="All";
-function setCat(c){cat=c;show();}
-function show(){
-  const cats=["All"].concat([...new Set(picks.map(p=>catOf(p.market)))]);
-  $("chips").innerHTML=cats.map(c=>'<button class="chip'+(c===cat?" on":"")+'" onclick="setCat(\''+c+'\')">'+esc(c)+"</button>").join("");
-  $("list").innerHTML=picks.map((p,i)=>({p:p,i:i})).filter(x=>cat==="All"||catOf(x.p.market)===cat).map(x=>{
-    const p=x.p;
-    return '<li class="pk"><div class="rk">'+(x.i+1)+'</div><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+esc(p.league)+" kicks off at "+tm(p.kickoff)+'</div><div class="mk">'+esc(p.market)+'</div><div class="rs">'+esc(p.reason)+'</div><div class="bar"><i style="width:'+esc(p.probability)+'%"></i></div></div><div class="pc">'+esc(p.probability)+"%</div></li>";
-  }).join("");
+const TIERS=[
+  {k:"Bankers",d:"Highest chance of landing, usually smaller payouts.",c:"#F5B544",f:p=>p>=80},
+  {k:"Solid",d:"A balanced chance with fair rewards.",c:"#8FB4FF",f:p=>p>=65&&p<80},
+  {k:"Brave",d:"Riskier picks that can swing either way.",c:"#FF8A6B",f:p=>p<65}
+];
+let picks=[],mm={},sel=[],slipOn=false;
+
+function dial(p,size){
+  const h=size/2,r=h-7,c=2*Math.PI*r,o=c*(1-p/100);
+  return '<svg class="dial" width="'+size+'" height="'+size+'" viewBox="0 0 '+size+" "+size+'" role="img" aria-label="'+p+' percent chance"><circle cx="'+h+'" cy="'+h+'" r="'+r+'" fill="none" stroke="#243049" stroke-width="9"/><circle class="arc" cx="'+h+'" cy="'+h+'" r="'+r+'" fill="none" stroke="#F5B544" stroke-width="9" stroke-linecap="round" style="--c:'+c.toFixed(1)+";stroke-dashoffset:"+o.toFixed(1)+'" transform="rotate(-90 '+h+" "+h+')"/><text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle">'+p+"%</text></svg>";
 }
+
+function chips(p){
+  const m=mm[p.fixture]||{};
+  const c=[/bookmaker/.test(m.src||p.reason||"")?"Backed by bookmaker odds":"Form and stats only"];
+  if(m.form&&m.form.home&&m.form.away)c.push("Form "+m.form.home+" vs "+m.form.away);
+  return c.map(x=>'<span class="cp">'+esc(x)+"</span>").join("");
+}
+
+function btn(i){
+  const on=sel.indexOf(i)>=0;
+  return '<button class="add" aria-pressed="'+on+'" onclick="add('+i+')">'+(on?"Added":"Add to ticket")+"</button>";
+}
+
+function rowHTML(i){
+  const p=picks[i];
+  return '<div class="pk"><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+esc(p.league)+" kicks off at "+tm(p.kickoff)+'</div><div class="mk">'+esc(p.market)+"</div><div>"+chips(p)+'</div></div><div class="pr"><b>'+esc(p.probability)+"%</b>"+btn(i)+"</div></div>";
+}
+
+function add(i){
+  const at=sel.indexOf(i);
+  if(at>=0)sel.splice(at,1);
+  else{sel=sel.filter(j=>picks[j].fixture!==picks[i].fixture);sel.push(i);}
+  if(!sel.length)slipOn=false;
+  draw();
+}
+
+function comb(){return Math.round(sel.reduce((a,i)=>a*picks[i].probability/100,1)*1000)/10;}
+
+function slip(){
+  const s=$("slip");
+  if(!slipOn||!sel.length){s.style.display="none";return;}
+  s.style.display="block";
+  let h='<div class="sh"><b>Your slip</b><span>'+sel.length+(sel.length===1?" pick":" picks")+"</span></div>";
+  sel.forEach(i=>{const p=picks[i];h+='<div class="leg"><div><div class="mt">'+esc(p.match)+'</div><div class="mk2">'+esc(p.market)+'</div></div><div class="pc">'+esc(p.probability)+"%</div></div>";});
+  h+='<div class="tot"><span>Combined chance</span><b>'+comb()+'%</b></div><p class="fine2">Each pick’s chance is multiplied together, so the total falls quickly as you add picks. You can add one pick per match.</p><div class="sacts"><button onclick="clearAll()">Clear all</button><button onclick="closeSlip()">Close</button></div>';
+  s.innerHTML=h;
+}
+function openSlip(){slipOn=true;slip();window.scrollTo({top:0});}
+function closeSlip(){slipOn=false;slip();}
+function clearAll(){sel=[];slipOn=false;draw();}
+
+function draw(){
+  if(!picks.length)return;
+  const h=picks[0];
+  $("hero").innerHTML='<article class="hero"><div><small>Pick of the day</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+esc(h.league)+" kicks off at "+tm(h.kickoff)+'</div><div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div>"+btn(0)+"</div><div>"+dial(h.probability,112)+"</div></article>";
+  $("tiers").innerHTML=TIERS.map(t=>{
+    const idx=picks.map((p,i)=>i).filter(i=>i>0&&t.f(picks[i].probability));
+    if(!idx.length)return "";
+    return '<section class="tier" style="--tc:'+t.c+'"><header><h3>'+t.k+"</h3><p>"+t.d+'</p></header><div class="rows">'+idx.map(rowHTML).join("")+"</div></section>";
+  }).join("");
+  $("dock").style.display=sel.length?"block":"none";
+  document.body.classList.toggle("hasdock",sel.length>0);
+  $("dn").textContent=sel.length+(sel.length===1?" pick":" picks")+" added";
+  $("dc").textContent="Combined chance "+comb()+"%";
+  slip();
+}
+
+function toggleRec(){
+  const e=$("recList");
+  e.hidden=!e.hidden;
+  $("recBtn").textContent=e.hidden?"See those picks":"Hide those picks";
+}
+
+function record(hist){
+  const box=$("rec");
+  const days=(hist&&hist.days)||[];
+  if(!days.length){
+    box.innerHTML='<section class="rec"><b class="rt">Track record</b><p class="msg0">Results tracking starts after the next morning update. Every pick will be marked won or lost, including the losses.</p></section>';
+    return;
+  }
+  const last=days[days.length-1];
+  const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
+  const label=last.date===y?"Yesterday":new Date(last.date+"T12:00:00Z").toLocaleDateString([],{weekday:"short",day:"numeric",month:"short"});
+  const fin=last.won+last.lost;
+  const recent=days.slice(-30);
+  let w=0,l=0;
+  const t={Bankers:[0,0],Solid:[0,0],Brave:[0,0]};
+  recent.forEach(d=>d.picks.forEach(p=>{
+    if(p.result!=="won"&&p.result!=="lost")return;
+    const k=p.probability>=80?"Bankers":p.probability>=65?"Solid":"Brave";
+    if(p.result==="won"){w++;t[k][0]++;}else{l++;t[k][1]++;}
+  }));
+  const pct=(a,b)=>b?Math.round(a*100/b)+"%":"–";
+  let h='<section class="rec"><div class="rh"><div><small>'+esc(label)+"</small><b>"+(fin?last.won+" of "+fin+" picks won":"No finished picks")+'</b></div><div class="rate">'+pct(w,w+l)+"<small>last "+recent.length+(recent.length===1?" day":" days")+"</small></div></div>";
+  h+='<div class="dots" aria-hidden="true">'+last.picks.map(p=>'<i class="'+(p.result==="won"?"w":p.result==="lost"?"l":"")+'"></i>').join("")+"</div>";
+  h+='<div class="tr2">'+["Bankers","Solid","Brave"].filter(k=>t[k][0]+t[k][1]).map(k=>"<span>"+k+" <b>"+pct(t[k][0],t[k][0]+t[k][1])+"</b> ("+t[k][0]+" of "+(t[k][0]+t[k][1])+")</span>").join("")+"</div>";
+  h+='<button id="recBtn" class="link" onclick="toggleRec()">See those picks</button><div id="recList" class="rl" hidden>'+last.picks.map(p=>'<div><span class="'+(p.result==="won"?"w":p.result==="lost"?"l":"v")+'">'+(p.result==="won"?"Won":p.result==="lost"?"Lost":"Void")+"</span><span>"+esc(p.match)+"<br>"+esc(p.market)+"</span><span>"+esc(p.score||"")+"</span></div>").join("")+"</div></section>";
+  box.innerHTML=h;
+}
+
 $("date").textContent=new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long"});
+fetch("/history.json").then(r=>r.ok?r.json():null).then(record).catch(()=>record(null));
 fetch("/daily.json").then(r=>{if(!r.ok)throw 0;return r.json();}).then(d=>{
   picks=d.picks||[];
   if(!picks.length)throw 0;
+  (d.matches||[]).forEach(m=>{mm[m.id]=m;});
   $("sub").textContent="Chosen from bookmaker odds and recent form. Built once each morning, so everyone sees the same list.";
   $("upd").textContent="Built at "+tm(d.generated);
-  show();
+  draw();
 }).catch(()=>{$("sub").textContent="Today’s picks are still being built. They appear every morning, so check back soon.";});
 </script></body></html>
