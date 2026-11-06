@@ -1,6 +1,0 @@
-{
-  "functions": {
-    "api/daily.js": { "maxDuration": 60 },
-    "api/accumulator.js": { "maxDuration": 60 }
-  }
-}
