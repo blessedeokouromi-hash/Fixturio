@@ -2,46 +2,56 @@
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0B4632">
+<meta name="theme-color" content="#0B1220">
 <title>Fixturio – Top 15</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Hanken+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--turf:#0B4632;--deep:#083627;--chalk:#EEF3E6;--mute:rgba(238,243,230,.7);--line:rgba(238,243,230,.16);--slip:#F4E6B0;--disp:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;--body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif}
+:root{--ink:#0B1220;--s1:#121B2E;--line:#243049;--tx:#E8EDF7;--mu:#93A0BA;--amb:#F5B544;--f:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif}
 *{box-sizing:border-box}
 html{color-scheme:dark}
-body{margin:0;font:400 16px/1.4 var(--body);color:var(--chalk);background:repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 44px,rgba(0,0,0,.04) 44px 88px),var(--turf);-webkit-text-size-adjust:100%}
-:focus-visible{outline:2px solid var(--slip);outline-offset:2px}
+body{margin:0;background:var(--ink);color:var(--tx);font:500 15px/1.4 var(--f);-webkit-text-size-adjust:100%;font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
 .wrap{max-width:560px;margin:0 auto}
-.top{padding:calc(18px + env(safe-area-inset-top)) 16px 12px}
-.brand h1{margin:0;font:800 38px/1 var(--disp);letter-spacing:.01em}
-.brand span{display:block;margin-top:4px;font-size:13px;color:var(--mute)}
+.top{position:sticky;top:0;z-index:4;background:var(--ink);border-bottom:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top)) 16px 12px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:32px;height:32px;flex:none}
+.logo b{display:block;font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+.logo small{display:block;font-size:12px;color:var(--mu)}
 .tabs{display:flex;align-items:center;gap:22px;padding:0 16px;border-bottom:1px solid var(--line)}
-.tabs a{padding:10px 0;color:var(--mute);text-decoration:none;font-weight:600;border-bottom:3px solid transparent;margin-bottom:-1px}
-.tabs a.on{color:var(--chalk);border-color:var(--chalk)}
-.tabs span{margin-left:auto;font-size:12px;color:var(--mute)}
-.intro{padding:24px 16px 10px}
-.intro h2{margin:0;font:800 46px/1 var(--disp)}
-.intro p{margin:10px 0 0;color:var(--mute);max-width:46ch}
-.list{list-style:none;margin:10px 0 0;padding:0}
-.pk{display:grid;grid-template-columns:40px 1fr auto;column-gap:10px;padding:16px;border-top:1px solid var(--line)}
-.rk{font:800 34px/1 var(--disp);color:var(--slip)}
+.tabs a{padding:11px 0;color:var(--mu);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs a.on{color:var(--tx);border-color:var(--amb)}
+.tabs span{margin-left:auto;font-size:12px;color:var(--mu)}
+.intro{padding:22px 16px 6px}
+.intro h2{margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em}
+.intro p{margin:8px 0 0;color:var(--mu);max-width:46ch}
+.chips{display:flex;gap:8px;padding:14px 16px 12px;overflow-x:auto}
+.chip{flex:none;border:1px solid var(--line);background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap}
+.chip.on{background:var(--tx);color:var(--ink);border-color:var(--tx)}
+.list{list-style:none;margin:0;padding:0;background:var(--s1);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pk{display:grid;grid-template-columns:34px 1fr auto;column-gap:10px;padding:16px;border-top:1px solid var(--line)}
+.pk:first-child{border-top:0}
+.rk{font-size:22px;font-weight:800;color:var(--amb)}
 .mt{font-weight:700}
-.lgn{font-size:13px;color:var(--mute);margin-top:1px}
-.mk{margin-top:8px;font-weight:700;color:var(--slip)}
-.rs{font-size:13px;color:var(--mute);margin-top:3px}
+.lgn{font-size:13px;color:var(--mu);margin-top:1px}
+.mk{margin-top:8px;font-weight:800;color:var(--amb)}
+.rs{font-size:13px;color:var(--mu);margin-top:3px}
 .bar{height:4px;margin-top:10px;background:var(--line);border-radius:2px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--slip)}
-.pc{font:800 34px/1 var(--disp);text-align:right;white-space:nowrap}
-.pc small{font-size:16px}
-.advt{margin:18px 16px;padding:16px;border:1px dashed var(--line);color:var(--mute);font-size:12px;text-align:center}
-.fine{margin:0;padding:20px 16px calc(28px + env(safe-area-inset-bottom));font-size:12px;color:var(--mute)}
+.bar i{display:block;height:100%;background:var(--amb);border-radius:2px}
+.pc{font-size:22px;font-weight:800;text-align:right;white-space:nowrap}
+.advt{margin:18px 16px;padding:16px;border:1px dashed var(--line);color:var(--mu);font-size:12px;text-align:center}
+.fine{margin:0;padding:4px 16px calc(28px + env(safe-area-inset-bottom));font-size:12px;color:var(--mu)}
 </style></head><body>
 <div class="wrap">
-<header class="top"><div class="brand"><h1>Fixturio</h1><span id="date"></span></div></header>
+<header class="top"><div class="logo">
+  <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#F5B544"/><circle cx="16" cy="16" r="6" fill="none" stroke="#0B1220" stroke-width="2"/><path d="M16 4v24" stroke="#0B1220" stroke-width="2"/></svg>
+  <div><b>Fixturio</b><small id="date"></small></div>
+</div></header>
 <nav class="tabs"><a href="/">Matches</a><a class="on" href="/picks.html">Top 15</a><span id="upd"></span></nav>
 <section class="intro"><h2>Today’s top 15</h2><p id="sub">Loading today’s picks…</p></section>
+<div id="chips" class="chips"></div>
 <ol id="list" class="list"></ol>
 <div class="advt">Advertisement</div>
 <p class="fine">18+ only. These are single picks, not a combined ticket. Estimates are not guarantees. Please gamble responsibly.</p>
@@ -50,12 +60,23 @@ body{margin:0;font:400 16px/1.4 var(--body);color:var(--chalk);background:repeat
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const tm=d=>new Date(d).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
+const catOf=m=>/^Double chance/.test(m)?"Double chance":/^(Home|Away) win/.test(m)?"Result":/^(Over|Under)/.test(m)?"Goals":/^Both teams/.test(m)?"Both teams":"Other";
+let picks=[],cat="All";
+function setCat(c){cat=c;show();}
+function show(){
+  const cats=["All"].concat([...new Set(picks.map(p=>catOf(p.market)))]);
+  $("chips").innerHTML=cats.map(c=>'<button class="chip'+(c===cat?" on":"")+'" onclick="setCat(\''+c+'\')">'+esc(c)+"</button>").join("");
+  $("list").innerHTML=picks.map((p,i)=>({p:p,i:i})).filter(x=>cat==="All"||catOf(x.p.market)===cat).map(x=>{
+    const p=x.p;
+    return '<li class="pk"><div class="rk">'+(x.i+1)+'</div><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+esc(p.league)+" kicks off at "+tm(p.kickoff)+'</div><div class="mk">'+esc(p.market)+'</div><div class="rs">'+esc(p.reason)+'</div><div class="bar"><i style="width:'+esc(p.probability)+'%"></i></div></div><div class="pc">'+esc(p.probability)+"%</div></li>";
+  }).join("");
+}
 $("date").textContent=new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long"});
 fetch("/daily.json").then(r=>{if(!r.ok)throw 0;return r.json();}).then(d=>{
-  const picks=d.picks||[];
+  picks=d.picks||[];
   if(!picks.length)throw 0;
   $("sub").textContent="Chosen from bookmaker odds and recent form. Built once each morning, so everyone sees the same list.";
   $("upd").textContent="Built at "+tm(d.generated);
-  $("list").innerHTML=picks.map((p,i)=>'<li class="pk"><div class="rk">'+(i+1)+'</div><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+esc(p.league)+" kicks off at "+tm(p.kickoff)+'</div><div class="mk">'+esc(p.market)+'</div><div class="rs">'+esc(p.reason)+'</div><div class="bar"><i style="width:'+esc(p.probability)+'%"></i></div></div><div class="pc">'+esc(p.probability)+"<small>%</small></div></li>").join("");
+  show();
 }).catch(()=>{$("sub").textContent="Today’s picks are still being built. They appear every morning, so check back soon.";});
 </script></body></html>
