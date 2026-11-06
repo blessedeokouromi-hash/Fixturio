@@ -1,39 +1,61 @@
 <!DOCTYPE html>
-<html><head>
+<html lang="en"><head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fixturio - Top Picks</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B4632">
+<title>Fixturio – Top 15</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Hanken+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-body{font-family:system-ui,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}
-header{padding:14px 16px;font-size:20px;font-weight:700;background:#16a34a;color:#fff;display:flex;justify-content:space-between;align-items:center}
-header a{color:#fff;text-decoration:none;font-size:14px}
-.ad{margin:10px;padding:18px;text-align:center;border:1px dashed #475569;color:#64748b;font-size:12px;border-radius:8px}
-.wrap{padding:0 16px 24px}
-.sum{margin:12px 0;color:#94a3b8;font-size:14px}
-.pick{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #1e293b}
-.rk{font-weight:700;color:#f59e0b;width:26px}
-.body{flex:1}
-.lg{color:#38bdf8;font-size:12px}
-.mk{color:#fbbf24;font-weight:600;margin-top:2px}
-.rs{color:#94a3b8;font-size:13px;margin-top:2px}
-.pr{font-weight:700;color:#22c55e;white-space:nowrap}
-.note{margin-top:14px;font-size:11px;color:#64748b}
+:root{--turf:#0B4632;--deep:#083627;--chalk:#EEF3E6;--mute:rgba(238,243,230,.7);--line:rgba(238,243,230,.16);--slip:#F4E6B0;--disp:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;--body:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+html{color-scheme:dark}
+body{margin:0;font:400 16px/1.4 var(--body);color:var(--chalk);background:repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 44px,rgba(0,0,0,.04) 44px 88px),var(--turf);-webkit-text-size-adjust:100%}
+:focus-visible{outline:2px solid var(--slip);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto}
+.top{padding:calc(18px + env(safe-area-inset-top)) 16px 12px}
+.brand h1{margin:0;font:800 38px/1 var(--disp);letter-spacing:.01em}
+.brand span{display:block;margin-top:4px;font-size:13px;color:var(--mute)}
+.tabs{display:flex;align-items:center;gap:22px;padding:0 16px;border-bottom:1px solid var(--line)}
+.tabs a{padding:10px 0;color:var(--mute);text-decoration:none;font-weight:600;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs a.on{color:var(--chalk);border-color:var(--chalk)}
+.tabs span{margin-left:auto;font-size:12px;color:var(--mute)}
+.intro{padding:24px 16px 10px}
+.intro h2{margin:0;font:800 46px/1 var(--disp)}
+.intro p{margin:10px 0 0;color:var(--mute);max-width:46ch}
+.list{list-style:none;margin:10px 0 0;padding:0}
+.pk{display:grid;grid-template-columns:40px 1fr auto;column-gap:10px;padding:16px;border-top:1px solid var(--line)}
+.rk{font:800 34px/1 var(--disp);color:var(--slip)}
+.mt{font-weight:700}
+.lgn{font-size:13px;color:var(--mute);margin-top:1px}
+.mk{margin-top:8px;font-weight:700;color:var(--slip)}
+.rs{font-size:13px;color:var(--mute);margin-top:3px}
+.bar{height:4px;margin-top:10px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--slip)}
+.pc{font:800 34px/1 var(--disp);text-align:right;white-space:nowrap}
+.pc small{font-size:16px}
+.advt{margin:18px 16px;padding:16px;border:1px dashed var(--line);color:var(--mute);font-size:12px;text-align:center}
+.fine{margin:0;padding:20px 16px calc(28px + env(safe-area-inset-bottom));font-size:12px;color:var(--mute)}
 </style></head><body>
-<header><a href="/">← Matches</a><span>⭐ Top 15 Picks</span></header>
-<div class="ad">Ad space</div>
-<div class="wrap" id="app">Building today's picks... the first visit can take up to a minute.</div>
-<div class="ad">Ad space</div>
+<div class="wrap">
+<header class="top"><div class="brand"><h1>Fixturio</h1><span id="date"></span></div></header>
+<nav class="tabs"><a href="/">Matches</a><a class="on" href="/picks.html">Top 15</a><span id="upd"></span></nav>
+<section class="intro"><h2>Today’s top 15</h2><p id="sub">Loading today’s picks…</p></section>
+<ol id="list" class="list"></ol>
+<div class="advt">Advertisement</div>
+<p class="fine">18+ only. These are single picks, not a combined ticket. Estimates are not guarantees. Please gamble responsibly.</p>
+</div>
 <script>
+const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-fetch("/daily.json").then(r=>r.json()).then(d=>{
-  const app=document.getElementById("app");
-  if(d.error){app.textContent=d.error;return;}
-  let h='<div class="sum">'+esc(d.summary)+'</div>';
-  (d.picks||[]).forEach((p,i)=>{
-    const t=new Date(p.kickoff).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
-    h+='<div class="pick"><div class="rk">'+(i+1)+'</div><div class="body"><div class="lg">'+esc(p.league)+' · '+t+'</div><div>'+esc(p.match)+'</div><div class="mk">'+esc(p.market)+'</div><div class="rs">'+esc(p.reason)+'</div></div><div class="pr">'+esc(p.probability)+'%</div></div>';
-  });
-  h+='<div class="note">Single picks, not a combined ticket. 18+ only. Estimates, not guaranteed. Please gamble responsibly.</div>';
-  app.innerHTML=h;
-}).catch(()=>{document.getElementById("app").textContent="Could not load picks";});
+const tm=d=>new Date(d).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
+$("date").textContent=new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long"});
+fetch("/daily.json").then(r=>{if(!r.ok)throw 0;return r.json();}).then(d=>{
+  const picks=d.picks||[];
+  if(!picks.length)throw 0;
+  $("sub").textContent="Chosen from bookmaker odds and recent form. Built once each morning, so everyone sees the same list.";
+  $("upd").textContent="Built at "+tm(d.generated);
+  $("list").innerHTML=picks.map((p,i)=>'<li class="pk"><div class="rk">'+(i+1)+'</div><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+esc(p.league)+" kicks off at "+tm(p.kickoff)+'</div><div class="mk">'+esc(p.market)+'</div><div class="rs">'+esc(p.reason)+'</div><div class="bar"><i style="width:'+esc(p.probability)+'%"></i></div></div><div class="pc">'+esc(p.probability)+"<small>%</small></div></li>").join("");
+}).catch(()=>{$("sub").textContent="Today’s picks are still being built. They appear every morning, so check back soon.";});
 </script></body></html>
