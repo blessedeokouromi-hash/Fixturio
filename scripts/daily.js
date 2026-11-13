@@ -82,7 +82,7 @@ function reason(m) {
   }
   const rank = m => { const i = TOP.indexOf(m.league.id); return i === -1 ? 99 : i; };
   const cands = (fx.response || [])
-    .filter(m => m.fixture.status.short === "NS")
+        .filter(m => m.fixture.status.short === "NS" && !/\bU\s?(1[5-9]|2[0-3])\b|youth|reserve/i.test(m.teams.home.name + " " + m.teams.away.name + " " + m.league.name))
     .sort((a, b) => rank(a) - rank(b))
     .slice(0, 12);
 
