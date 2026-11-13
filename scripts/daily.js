@@ -84,7 +84,7 @@ function reason(m) {
   const cands = (fx.response || [])
         .filter(m => m.fixture.status.short === "NS" && !/\bU\s?(1[5-9]|2[0-3])\b|youth|reserve/i.test(m.teams.home.name + " " + m.teams.away.name + " " + m.league.name))
     .sort((a, b) => rank(a) - rank(b))
-    .slice(0, 12);
+    .slice(0, 8)
 
   const matches = [];
   for (const c of cands) {
