@@ -26,9 +26,10 @@ body.tm .wrap{padding-bottom:180px}
 .tabs a{padding:11px 0;color:var(--mu);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-1px}
 .tabs a.on{color:var(--tx);border-color:var(--amb)}
 .tabs span{margin-left:auto;font-size:12px;color:var(--mu)}
-.chips{display:flex;gap:8px;padding:12px 16px;overflow-x:auto}
+.chips{display:flex;gap:8px;padding:12px 16px 8px;overflow-x:auto}
 .chip{flex:none;border:1px solid var(--line);background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap}
 .chip.on{background:var(--tx);color:var(--ink);border-color:var(--tx)}
+.cov{margin:0;padding:0 16px 6px;font-size:12px;color:var(--mu)}
 .lg{display:flex;align-items:center;gap:10px;padding:18px 16px 8px}
 .lg img{width:20px;height:20px;object-fit:contain}
 .lg b{font-weight:800;font-size:15px}
@@ -40,17 +41,31 @@ body.tm .wrap{padding-bottom:180px}
 .mw{border-top:1px solid var(--line)}
 .mw:first-child{border-top:0}
 .mw.dim{opacity:.45}
-.m{display:grid;grid-template-columns:46px 1fr auto;column-gap:12px;align-items:center;padding:11px 16px;cursor:pointer}
-body.tm .m{grid-template-columns:24px 46px 1fr auto}
+.m{display:grid;grid-template-columns:46px 1fr auto auto;column-gap:10px;align-items:center;padding:11px 16px;cursor:pointer}
+body.tm .m{grid-template-columns:24px 46px 1fr auto auto}
 .st{text-align:center;font-size:13px;font-weight:700;color:var(--mu);line-height:1.2}
 .st.live{color:var(--live)}
 .dot{display:block;width:6px;height:6px;margin:5px auto 0;border-radius:50%;background:var(--amb)}
+.tn{min-width:0}
 .tn>div{display:flex;align-items:center;gap:8px;height:24px;font-size:15px;font-weight:600;min-width:0}
 .tn img{width:18px;height:18px;object-fit:contain;flex:none}
 .tn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tn .w{font-weight:800}
 .tn .l{color:var(--mu);font-weight:500}
-.sc{text-align:right;font-weight:800;font-size:15px}
+.pr{display:grid;justify-items:center;gap:5px;min-width:54px}
+.pill{font-weight:800;font-size:14px;padding:3px 9px;border-radius:7px;background:var(--s2);border:1px solid var(--line)}
+.pill.ok{background:#1D4D33;border-color:#2F7F52;color:#8CE6B0}
+.pill.bad{background:#4A1F27;border-color:#8A3340;color:#FF9AA4}
+.na{color:var(--line)}
+.sig{display:flex;gap:2px;align-items:flex-end;height:10px}
+.sig i{display:block;width:4px;border-radius:1px;background:var(--line)}
+.sig i:nth-child(1){height:4px}
+.sig i:nth-child(2){height:7px}
+.sig i:nth-child(3){height:10px}
+.sig.s1 i:nth-child(1){background:#FF7A7A}
+.sig.s2 i:nth-child(-n+2){background:var(--amb)}
+.sig.s3 i{background:#5BD18B}
+.sc{text-align:right;font-weight:800;font-size:15px;min-width:20px}
 .sc div{height:24px;line-height:24px}
 .sc.live div{color:var(--live)}
 .sc .l{color:var(--mu);font-weight:600}
@@ -113,11 +128,12 @@ body.tm .dock{display:block}
 </header>
 <nav class="tabs"><a class="on" href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
 <div id="chips" class="chips"></div>
+<p id="cov" class="cov"></p>
 <div id="hint" class="hint"></div>
 <section id="slip" class="slip" aria-live="polite"></section>
 <main id="app"><p class="msg pad">Loading matches…</p></main>
 <div class="advt">Advertisement</div>
-<p class="fine foot">18+ only. Predictions are estimates, not guarantees. A dot beside a match means it was analysed this morning.</p>
+<p class="fine foot">18+ only. Predictions are estimates, not guarantees. A dot beside a time means a deeper analysis using bookmaker odds.</p>
 </div>
 <div class="dock"><div class="dk">
   <div class="dk1">
@@ -133,12 +149,13 @@ body.tm .dock{display:block}
 <script>
 const LIVE=["1H","2H","HT","ET","BT","P","LIVE"],DONE=["FT","AET","PEN"];
 const open=new Set(),panels={},sel=new Set(),info={};
-let data=[],loaded=false,mode=false,risk="balanced",filter="all",failed="";
+let data=[],pred={},cov=null,loaded=false,mode=false,risk="balanced",filter="all",failed="";
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const isLive=m=>LIVE.includes(m.fixture.status.short);
 const ana=id=>!!info[id];
+const hasP=id=>!!pred[id]||!!info[id];
 const tm=d=>new Date(d).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
 const img=u=>u?'<img src="'+esc(u)+'" alt="" loading="lazy" onerror="this.style.visibility=\'hidden\'">':"";
 
@@ -150,6 +167,21 @@ function stat(m){
   return s;
 }
 
+function predCell(m){
+  const p=pred[m.fixture.id];
+  if(!p)return '<div class="pr"><span class="na">–</span></div>';
+  const sp=p.s.split("-"),ps=+sp[0],pa=+sp[1];
+  const mx=Math.max(p.h,p.d,p.a);
+  const lv=mx>=60?3:mx>=45?2:1;
+  let cls="";
+  if(DONE.includes(m.fixture.status.short)&&m.goals.home!==null){
+    const po=ps>pa?"H":ps<pa?"A":"D";
+    const ao=m.goals.home>m.goals.away?"H":m.goals.home<m.goals.away?"A":"D";
+    cls=po===ao?" ok":" bad";
+  }
+  return '<div class="pr" title="Predicted score, confidence '+mx+'%"><span class="pill'+cls+'">'+esc(p.s)+'</span><span class="sig s'+lv+'" role="img" aria-label="Confidence '+(lv===3?"high":lv===2?"medium":"low")+'"><i></i><i></i><i></i></span></div>';
+}
+
 function row(m){
   const f=m.fixture,id=f.id,live=isLive(m),can=f.status.short==="NS"&&ana(id);
   const done=DONE.includes(f.status.short),gh=m.goals.home,ga=m.goals.away;
@@ -157,28 +189,29 @@ function row(m){
   const hc=done?(hw?"w":(aw?"l":"")):"",ac=done?(aw?"w":(hw?"l":"")):"";
   const sc=gh===null?"":'<div class="'+hc+'">'+gh+'</div><div class="'+ac+'">'+ga+"</div>";
   const ck=mode?'<div class="ck'+(sel.has(id)?" on":"")+'" id="c'+id+'"'+(can?"":' style="visibility:hidden"')+">✓</div>":"";
-  return '<div class="mw'+(mode&&!can?" dim":"")+'"><div class="m" role="button" tabindex="0" onclick="tap('+id+','+(can?1:0)+')">'+ck+'<div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span></div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+'</span></div></div><div class="sc'+(live?" live":"")+'">'+sc+'</div></div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
+  return '<div class="mw'+(mode&&!can?" dim":"")+'"><div class="m" role="button" tabindex="0" onclick="tap('+id+','+(can?1:0)+')">'+ck+'<div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span></div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+"</span></div></div>"+predCell(m)+'<div class="sc'+(live?" live":"")+'">'+sc+'</div></div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
 }
 
 function chips(){
-  const nl=data.filter(isLive).length,na=data.filter(m=>ana(m.fixture.id)).length;
-  const c=[["all","All",data.length],["live","Live",nl],["ana","Analysed",na]];
+  const nl=data.filter(isLive).length,np=data.filter(m=>hasP(m.fixture.id)).length,na=data.filter(m=>ana(m.fixture.id)).length;
+  const c=[["all","All",data.length],["live","Live",nl],["pre","Predicted",np],["ana","Top picks",na]];
   $("chips").innerHTML=c.map(x=>'<button class="chip'+(filter===x[0]?" on":"")+'" onclick="setFilter(\''+x[0]+'\')">'+x[1]+" "+x[2]+"</button>").join("");
+  $("cov").textContent=cov&&data.length?"Predicted score and confidence bars for "+Object.keys(pred).length+" matches in "+cov.leagues+" leagues. More green bars means more confident.":"";
 }
 function setFilter(f){filter=f;render();}
 
 function render(){
   if(!loaded)return;
   chips();
-  const list=data.filter(m=>filter==="live"?isLive(m):filter==="ana"?ana(m.fixture.id):true);
+  const list=data.filter(m=>filter==="live"?isLive(m):filter==="pre"?hasP(m.fixture.id):filter==="ana"?ana(m.fixture.id):true);
   if(!list.length){
-    const t=!data.length?(failed||"No fixtures are listed for today yet. Check back later."):(filter==="live"?"No matches are live right now.":"No analysed matches yet. They appear after the morning update.");
+    const t=!data.length?(failed||"No fixtures are listed for today yet. Check back later."):(filter==="live"?"No matches are live right now.":"Nothing here yet. Predictions appear after the morning update.");
     $("app").innerHTML='<p class="msg pad">'+esc(t)+"</p>";return;
   }
   const g={};
   list.forEach(m=>{const k=m.league.id+"|"+m.league.country+"|"+m.league.name;(g[k]=g[k]||[]).push(m);});
-  const hasLive=k=>g[k].some(isLive)?1:0,hasAna=k=>g[k].some(x=>ana(x.fixture.id))?1:0;
-  const keys=Object.keys(g).sort((a,b)=>(hasLive(b)-hasLive(a))||(hasAna(b)-hasAna(a))||(g[b].length-g[a].length));
+  const hasLive=k=>g[k].some(isLive)?1:0,hasPr=k=>g[k].some(x=>hasP(x.fixture.id))?1:0;
+  const keys=Object.keys(g).sort((a,b)=>(hasLive(b)-hasLive(a))||(hasPr(b)-hasPr(a))||(g[b].length-g[a].length));
   let h="",i=0;
   keys.forEach(k=>{
     const p=k.split("|");
@@ -234,9 +267,24 @@ function dailyNote(dm,home,away){
   return t+" Estimates, not guarantees.";
 }
 
+function modelRows(p,home,away){
+  return [
+    {g:"Match result",label:home+" win",p:p.h},
+    {g:"Match result",label:"Draw",p:p.d},
+    {g:"Match result",label:away+" win",p:p.a},
+    {g:"Double chance",label:home+" or draw",p:Math.min(100,p.h+p.d)},
+    {g:"Double chance",label:away+" or draw",p:Math.min(100,p.d+p.a)},
+    {g:"Double chance",label:home+" or "+away,p:Math.min(100,p.h+p.a)},
+    {g:"Total goals",label:"Over 2.5 goals",p:p.o},
+    {g:"Total goals",label:"Under 2.5 goals",p:100-p.o},
+    {g:"Both teams to score",label:"Yes",p:p.b},
+    {g:"Both teams to score",label:"No",p:100-p.b}
+  ];
+}
+
 function predPanel(d,home,away){
   const p=(d.response||[])[0];
-  if(!p)return panel([],"The data provider has no predictions for this match. Matches with a dot are analysed every morning and show more markets.");
+  if(!p)return panel([],"No prediction is available for this match. Predictions cover the main leagues each morning.");
   const pr=p.predictions,pc=pr.percent||{};
   const n=v=>parseInt(v)||0;
   let h=n(pc.home),x=n(pc.draw),a=n(pc.away);
@@ -253,8 +301,7 @@ function predPanel(d,home,away){
   let note=pr.advice?pr.advice+". ":"";
   const uo=pr.under_over?String(pr.under_over):"";
   if(uo)note+="Goals lean "+(uo.charAt(0)==="-"?"under ":"over ")+uo.replace(/^[+-]/,"")+". ";
-  note+="Goals and both-teams-to-score markets appear for matches with a dot, which are analysed each morning.";
-  return panel(rows,note);
+  return panel(rows,note+"Estimates, not guarantees.");
 }
 
 function tog(id){
@@ -266,6 +313,7 @@ function tog(id){
   if(!mm)return;
   const home=mm.teams.home.name,away=mm.teams.away.name;
   if(info[id]){panels[id]=panel(dailyRows(info[id],home,away),dailyNote(info[id],home,away));el.innerHTML=panels[id];return;}
+  if(pred[id]){panels[id]=panel(modelRows(pred[id],home,away),"Predicted score "+pred[id].s+". Estimated from this season’s goals scored and conceded by both teams. Estimates, not guarantees.");el.innerHTML=panels[id];return;}
   el.innerHTML='<p class="note">Loading predictions…</p>';
   fetch("/api/predictions?fixture="+id).then(r=>r.json()).then(d=>{
     panels[id]=predPanel(d,home,away);
@@ -274,7 +322,7 @@ function tog(id){
 }
 
 function cnt(){$("cnt").textContent=sel.size+" of 10 chosen";}
-function hintText(){return Object.keys(info).length?"Choose 2 to 10 matches that have not started. Matches with a dot were analysed this morning.":"This morning’s analysis is not ready yet, so tickets cannot be built right now.";}
+function hintText(){return Object.keys(info).length?"Choose 2 to 10 matches that have not started. Matches with a dot beside the time can be used in tickets.":"This morning’s analysis is not ready yet, so tickets cannot be built right now.";}
 
 function tap(id,can){
   if(mode){
@@ -334,5 +382,8 @@ load();
 setInterval(load,60000);
 fetch("/daily.json").then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.matches){d.matches.forEach(m=>{info[m.id]=m;});$("hint").textContent=hintText();render();}
+}).catch(()=>{});
+fetch("/all.json").then(r=>r.ok?r.json():null).then(d=>{
+  if(d&&d.m){pred=d.m;cov=d;render();}
 }).catch(()=>{});
 </script><script src="/share.js"></script></body></html>
