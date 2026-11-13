@@ -9,7 +9,7 @@ module.exports = async (req, res) => {
     const hasError = data.errors && Object.keys(data.errors).length > 0;
     const live = (data.response || []).some(m =>
       ["1H","2H","HT","ET","BT","P","LIVE"].includes(m.fixture.status.short));
-    const sec = hasError ? 300 : live ? 1800 : 7200;
+    const sec = hasError ? 300 : live ? 2700 : 7200;
     res.setHeader("Cache-Control", "s-maxage=" + sec + ", stale-while-revalidate=300");
     res.status(200).json(data);
   } catch (e) {
