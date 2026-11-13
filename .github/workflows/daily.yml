@@ -17,6 +17,11 @@ jobs:
         run: node scripts/results.js
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      - name: Predict every match
+        continue-on-error: true
+        run: node scripts/all.js
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       - name: Build today's picks
         run: node scripts/daily.js
         env:
