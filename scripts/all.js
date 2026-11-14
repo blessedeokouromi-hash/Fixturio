@@ -113,7 +113,7 @@ function model(lh, la) {
       let la = avg.a * strength(aa.f, aa.p, avg.a) * strength(hh.a, hh.p, avg.a);
       lh = Math.min(3.5, Math.max(0.2, lh));
       la = Math.min(3.5, Math.max(0.2, la));
-      out[m.fixture.id] = model(lh, la);
+            out[m.fixture.id] = Object.assign(model(lh, la), { x: +lh.toFixed(2), y: +la.toFixed(2) });
       n++;
     });
     console.log("League " + parts[0] + ": " + n + " of " + groups[k].length + " matches predicted");
