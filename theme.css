@@ -1,0 +1,59 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&display=swap");
+html:root{
+  --ink:#F2F5F3;--s1:#FFFFFF;--s2:#F7F9F8;--line:#DDE5E0;
+  --tx:#0F1C16;--mu:#56665D;--amb:#0B6E47;--live:#E5262B;
+  --slip:#FFD54A;--sink:#1D1B12;--pitch:#0B5A3C;
+  --f:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+body .top{background:var(--pitch);border-bottom:0;padding-bottom:14px}
+body .tabs{background:var(--pitch);border-bottom:0}
+body .logo b{color:#fff}
+body .logo small{color:#BFD9CC}
+body .logo svg rect{fill:#FFD54A}
+body .top>a{color:#FFD54A}
+body .tabs a{color:#BFD9CC}
+body .tabs a.on{color:#fff;border-bottom-color:#FFD54A}
+body .tabs span{color:#BFD9CC}
+body .logo b,body .lg b,body .intro h1,body .intro h2,body .card h2,body .tier h3,body .sh b,body .tot b,body .hero .mt{font-stretch:112%}
+body .logo b{font-weight:800}
+
+body .days{gap:0;padding-top:14px}
+body .days button{background:#fff;border-radius:0;margin-left:-1px}
+body .days button:first-child{border-radius:10px 0 0 10px;margin-left:0}
+body .days button:last-child{border-radius:0 10px 10px 0}
+body .days button.on{background:var(--pitch);border-color:var(--pitch);color:#fff;position:relative;z-index:1}
+body .days button.on small{color:#CFE5DA}
+body .sr input{background:#fff;border-radius:10px}
+body .chip{background:#fff}
+body .chip.on{background:var(--pitch);border-color:var(--pitch);color:#fff}
+body .seg button.on{background:var(--pitch);color:#fff}
+body .more{background:#fff;border-radius:10px}
+
+body .lg{background:#E4EDE8;padding:12px 16px;margin-top:14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+body .lg b{font-size:15px;font-weight:800;color:var(--tx)}
+body .lg span{color:var(--mu)}
+body .grp{background:#fff;border:0;border-bottom:1px solid var(--line)}
+body .mw{border-top-color:var(--line)}
+body .pn{background:var(--s2)}
+
+body .pill{background:#fff;border-color:var(--line);color:var(--tx);border-radius:8px}
+body .pill.ok{background:#E1F5EA;border-color:#9AD9B6;color:#07663F}
+body .pill.bad{background:#FDE7E7;border-color:#F3AFAF;color:#A31C1C}
+body .sig i{background:#D3DDD7}
+body .sig.s1 i:nth-child(1){background:#E5484D}
+body .sig.s2 i:nth-child(-n+2){background:#F2A900}
+body .sig.s3 i{background:#12A15A}
+
+body .hero{background:#fff;border:1px solid var(--line);border-left:6px solid var(--pitch);border-radius:14px;box-shadow:0 6px 20px rgba(11,90,60,.10)}
+body .dial circle:first-of-type{stroke:#DDE5E0}
+body .arc{stroke:#0B6E47}
+body .rec{background:#fff}
+body .dots i{background:#DDE5E0}
+body .dots i.w{background:#12A15A}
+body .dots i.l{background:#E5484D}
+body .rl .w{color:#0B6E47}
+body .rl .l{color:#C62828}
+
+body .dock{border-top:1px solid var(--line);box-shadow:0 -8px 24px rgba(11,90,60,.10)}
+body .chk{color:#2E4036}
