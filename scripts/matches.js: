@@ -1,0 +1,34 @@
+const fs = require("fs");
+const KEY = process.env.API_FOOTBALL_KEY;
+const offs = (process.argv[2] || "-1,0,1").split(",").map(Number);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const iso = o => new Date(Date.now() + o * 864e5).toISOString().slice(0, 10);
+
+(async () => {
+  fs.mkdirSync("data", { recursive: true });
+  for (const o of offs) {
+    const r = await fetch("https://v3.football.api-sports.io/fixtures?date=" + iso(o),
+      { headers: { "x-apisports-key": KEY } });
+    const d = await r.json();
+    await sleep(7000);
+    if ((d.errors && Object.keys(d.errors).length) || !d.response) {
+      console.error("Day " + o + ": " + JSON.stringify(d.errors));
+      continue;
+    }
+    const response = d.response.map(m => ({
+      fixture: {
+        id: m.fixture.id, timestamp: m.fixture.timestamp, date: m.fixture.date,
+        status: { short: m.fixture.status.short, elapsed: m.fixture.status.elapsed }
+      },
+      league: { id: m.league.id, name: m.league.name, country: m.league.country, logo: m.league.logo },
+      teams: {
+        home: { id: m.teams.home.id, name: m.teams.home.name, logo: m.teams.home.logo },
+        away: { id: m.teams.away.id, name: m.teams.away.name, logo: m.teams.away.logo }
+      },
+      goals: m.goals
+    }));
+    fs.writeFileSync("data/d" + o + ".json",
+      JSON.stringify({ date: iso(o), generated: new Date().toISOString(), response }));
+    console.log("Saved day " + o + ": " + response.length + " matches");
+  }
+})();
