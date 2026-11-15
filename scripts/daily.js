@@ -1,6 +1,6 @@
 const fs = require("fs");
 const KEY = process.env.API_FOOTBALL_KEY;
-const TOP = [2,3,848,39,140,135,78,61,88,94,144,203,40,253,71,128,179];
+const TOP = [1,2,4,5,6,3,848,39,140,135,78,61,88,94,144,203,40,253,71,128,179,29,32,10,12];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const num = v => parseFloat(String(v == null ? "" : v).replace("%", "")) || 0;
 
@@ -82,9 +82,9 @@ function reason(m) {
   }
   const rank = m => { const i = TOP.indexOf(m.league.id); return i === -1 ? 99 : i; };
   const cands = (fx.response || [])
-        .filter(m => m.fixture.status.short === "NS" && !/\bU\s?(1[5-9]|2[0-3])\b|youth|reserve/i.test(m.teams.home.name + " " + m.teams.away.name + " " + m.league.name))
+    .filter(m => m.fixture.status.short === "NS" && !/\bU\s?(1[5-9]|2[0-3])\b|youth|reserve/i.test(m.teams.home.name + " " + m.teams.away.name + " " + m.league.name))
     .sort((a, b) => rank(a) - rank(b))
-    .slice(0, 8)
+    .slice(0, 16);
 
   const matches = [];
   for (const c of cands) {
