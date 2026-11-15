@@ -4,12 +4,25 @@ module.exports = async (req, res) => {
     let date = String(req.query.date || today);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) date = today;
     let diff = Math.round((new Date(date) - new Date(today)) / 864e5);
-    if (Math.abs(diff) > 1) diff = 0;
-    const r = await fetch("https://" + req.headers.host + "/data/d" + diff + ".json");
-    if (!r.ok) return res.status(200).json({ response: [], errors: { data: "Match data is being prepared" } });
-    const d = await r.json();
-    res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=300");
-    res.status(200).json(d);
+    if (Math.abs(diff) > 1) { diff = 0; date = today; }
+
+    try {
+      const r = await fetch("https://" + req.headers.host + "/data/d" + diff + ".json");
+      if (r.ok) {
+        const d = await r.json();
+        if (d && d.response && d.response.length && (!d.date || d.date === date)) {
+          res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=300");
+          return res.status(200).json(d);
+        }
+      }
+    } catch (e) {}
+
+    const r2 = await fetch("https://v3.football.api-sports.io/fixtures?date=" + date,
+      { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY } });
+    const data = await r2.json();
+    const hasError = data.errors && Object.keys(data.errors).length > 0;
+    res.setHeader("Cache-Control", "s-maxage=" + (hasError ? 300 : 7200) + ", stale-while-revalidate=300");
+    res.status(200).json(data);
   } catch (e) {
     res.status(500).json({ error: "load failed" });
   }
