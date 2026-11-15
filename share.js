@@ -35,8 +35,11 @@
     foot.parentNode.insertBefore(d, foot.nextSibling);
   }
   if (document.getElementById("chips")) {
-    var s = document.createElement("script");
-    s.src = "/tabs.js";
-    document.body.appendChild(s);
+    ["/tabs.js", "/fresh.js"].forEach(function (src) {
+      var s = document.createElement("script");
+      s.async = false;
+      s.src = src;
+      document.body.appendChild(s);
+    });
   }
 })();
