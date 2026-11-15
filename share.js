@@ -34,23 +34,9 @@
     if (!sub) d.appendChild(mk("Share Fixturio"));
     foot.parentNode.insertBefore(d, foot.nextSibling);
   }
+  if (document.getElementById("chips")) {
+    var s = document.createElement("script");
+    s.src = "/tabs.js";
+    document.body.appendChild(s);
+  }
 })();
-
-if (typeof predCell === "function" && typeof pred !== "undefined") {
-  window.predCell = function (m) {
-    var p = pred[m.fixture.id];
-    if (!p) return '<div class="pr"></div>';
-    var sp = p.s.split("-"), ps = +sp[0], pa = +sp[1];
-    var mx = Math.max(p.h, p.d, p.a);
-    var thin = p.n != null && p.n < 3;
-    var lv = thin ? 1 : (mx >= 60 ? 3 : mx >= 45 ? 2 : 1);
-    var cls = "";
-    if (DONE.indexOf(m.fixture.status.short) >= 0 && m.goals.home !== null) {
-      var po = ps > pa ? "H" : ps < pa ? "A" : "D";
-      var ao = m.goals.home > m.goals.away ? "H" : m.goals.home < m.goals.away ? "A" : "D";
-      cls = po === ao ? " ok" : " bad";
-    }
-    var tip = thin ? "Predicted score, limited data so low confidence" : "Predicted score, confidence " + mx + "%";
-    return '<div class="pr" title="' + tip + '"><span class="pill' + cls + '">' + esc(p.s) + '</span><span class="sig s' + lv + '" role="img" aria-label="Confidence ' + (lv === 3 ? "high" : lv === 2 ? "medium" : "low") + '"><i></i><i></i><i></i></span></div>';
-  };
-}
