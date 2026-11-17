@@ -14,7 +14,7 @@
   function mk(label) {
     var b = document.createElement("button");
     b.textContent = label;
-    b.style.cssText = "border:1px solid #DDE5E0;background:#fff;color:#0F1C16;border-radius:8px;padding:9px 14px;font-weight:700;font-size:14px;font-family:inherit;cursor:pointer";
+    b.className = "sharebtn";
     b.onclick = function () { share(b); };
     return b;
   }
@@ -29,17 +29,17 @@
   if (foot) {
     var d = document.createElement("div");
     d.style.cssText = "padding:0 16px 28px;font-size:13px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center";
-    var link = function (t, h) { return '<a href="/info.html#' + h + '" style="color:#56665D">' + t + "</a>"; };
+    var link = function (t, h) { return '<a href="/info.html#' + h + '" style="color:var(--mu)">' + t + "</a>"; };
     d.innerHTML = link("About", "about") + link("Responsible gambling", "responsible") + link("Privacy", "privacy") + link("Terms", "terms") + link("Contact", "contact");
     if (!sub) d.appendChild(mk("Share Fixturio"));
     foot.parentNode.insertBefore(d, foot.nextSibling);
   }
-  if (document.getElementById("chips")) {
-    ["/tabs.js", "/fresh.js"].forEach(function (src) {
-      var s = document.createElement("script");
-      s.async = false;
-      s.src = src;
-      document.body.appendChild(s);
-    });
-  }
+  var list = ["/theme.js"];
+  if (document.getElementById("chips")) list.push("/tabs.js", "/fresh.js");
+  list.forEach(function (src) {
+    var s = document.createElement("script");
+    s.async = false;
+    s.src = src;
+    document.body.appendChild(s);
+  });
 })();
