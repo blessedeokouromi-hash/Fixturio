@@ -3,57 +3,90 @@ html:root{
   --ink:#F2F5F3;--s1:#FFFFFF;--s2:#F7F9F8;--line:#DDE5E0;
   --tx:#0F1C16;--mu:#56665D;--amb:#0B6E47;--live:#E5262B;
   --slip:#FFD54A;--sink:#1D1B12;--pitch:#0B5A3C;
+  --band:#E4EDE8;--bar:#0B5A3C;--hmu:#BFD9CC;--shadow:rgba(11,90,60,.10);
+  --okbg:#E1F5EA;--okbd:#9AD9B6;--okfg:#07663F;
+  --badbg:#FDE7E7;--badbd:#F3AFAF;--badfg:#A31C1C;
+  --sigoff:#D3DDD7;--g3:#12A15A;--g2:#F2A900;--g1:#E5484D;
+  --t3:#0B8A4F;--t2:#9A6400;--t1:#C62828;
   --f:"Archivo",system-ui,-apple-system,"Segoe UI",sans-serif;
   color-scheme:light;
 }
+@media (prefers-color-scheme:dark){
+  html:root:not([data-theme="light"]){
+    --ink:#0A120E;--s1:#111C16;--s2:#16241D;--line:#243529;
+    --tx:#E8F1EB;--mu:#9DB3A6;--amb:#4ADE9C;--live:#FF6B6B;
+    --pitch:#0A3D2A;--band:#14231B;--bar:#4ADE9C;--hmu:#A9C9B8;--shadow:rgba(0,0,0,.35);
+    --okbg:#12351F;--okbd:#2A6A44;--okfg:#8CE6B0;
+    --badbg:#3A1A1E;--badbd:#7A2F38;--badfg:#FF9AA4;
+    --sigoff:#2B3D32;--g3:#34D399;--g2:#FBBF24;--g1:#F87171;
+    --t3:#4ADE9C;--t2:#FBBF24;--t1:#F87171;
+    color-scheme:dark;
+  }
+}
+html[data-theme="dark"]{
+  --ink:#0A120E;--s1:#111C16;--s2:#16241D;--line:#243529;
+  --tx:#E8F1EB;--mu:#9DB3A6;--amb:#4ADE9C;--live:#FF6B6B;
+  --pitch:#0A3D2A;--band:#14231B;--bar:#4ADE9C;--hmu:#A9C9B8;--shadow:rgba(0,0,0,.35);
+  --okbg:#12351F;--okbd:#2A6A44;--okfg:#8CE6B0;
+  --badbg:#3A1A1E;--badbd:#7A2F38;--badfg:#FF9AA4;
+  --sigoff:#2B3D32;--g3:#34D399;--g2:#FBBF24;--g1:#F87171;
+  --t3:#4ADE9C;--t2:#FBBF24;--t1:#F87171;
+  color-scheme:dark;
+}
+
 body .top{background:var(--pitch);border-bottom:0;padding-bottom:14px}
 body .tabs{background:var(--pitch);border-bottom:0}
 body .logo b{color:#fff}
-body .logo small{color:#BFD9CC}
+body .logo small,body .tabs a,body .tabs span{color:var(--hmu)}
+body .tabs a.on{color:#fff;border-bottom-color:#FFD54A}
 body .logo svg rect{fill:#FFD54A}
 body .top>a{color:#FFD54A}
-body .tabs a{color:#BFD9CC}
-body .tabs a.on{color:#fff;border-bottom-color:#FFD54A}
-body .tabs span{color:#BFD9CC}
 body .logo b,body .lg b,body .intro h1,body .intro h2,body .card h2,body .tier h3,body .sh b,body .tot b,body .hero .mt{font-stretch:112%}
 body .logo b{font-weight:800}
 
 body .days{gap:0;padding-top:14px}
-body .days button{background:#fff;border-radius:0;margin-left:-1px}
+body .days button{background:var(--s1);border-radius:0;margin-left:-1px}
 body .days button:first-child{border-radius:10px 0 0 10px;margin-left:0}
 body .days button:last-child{border-radius:0 10px 10px 0}
 body .days button.on{background:var(--pitch);border-color:var(--pitch);color:#fff;position:relative;z-index:1}
 body .days button.on small{color:#CFE5DA}
-body .sr input{background:#fff;border-radius:10px}
-body .chip{background:#fff}
+body .sr input{background:var(--s1);color:var(--tx);border-radius:10px}
+body .chip{background:var(--s1)}
 body .chip.on{background:var(--pitch);border-color:var(--pitch);color:#fff}
 body .seg button.on{background:var(--pitch);color:#fff}
-body .more{background:#fff;border-radius:10px}
+body .more{background:var(--s1);border-radius:10px}
+body .mkt{background:var(--s1)}
 
-body .lg{background:#E4EDE8;padding:12px 16px;margin-top:14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+body .lg{background:var(--band);padding:12px 16px;margin-top:14px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 body .lg b{font-size:15px;font-weight:800;color:var(--tx)}
 body .lg span{color:var(--mu)}
-body .grp{background:#fff;border:0;border-bottom:1px solid var(--line)}
+body .grp{background:var(--s1);border:0;border-bottom:1px solid var(--line)}
 body .mw{border-top-color:var(--line)}
 body .pn{background:var(--s2)}
 
-body .pill{background:#fff;border-color:var(--line);color:var(--tx);border-radius:8px}
-body .pill.ok{background:#E1F5EA;border-color:#9AD9B6;color:#07663F}
-body .pill.bad{background:#FDE7E7;border-color:#F3AFAF;color:#A31C1C}
-body .sig i{background:#D3DDD7}
-body .sig.s1 i:nth-child(1){background:#E5484D}
-body .sig.s2 i:nth-child(-n+2){background:#F2A900}
-body .sig.s3 i{background:#12A15A}
+body .pill{background:var(--s1);border-color:var(--line);color:var(--tx);border-radius:8px}
+body .pill.ok{background:var(--okbg);border-color:var(--okbd);color:var(--okfg)}
+body .pill.bad{background:var(--badbg);border-color:var(--badbd);color:var(--badfg)}
+body .sig i{background:var(--sigoff)}
+body .sig.s1 i:nth-child(1){background:var(--g1)}
+body .sig.s2 i:nth-child(-n+2){background:var(--g2)}
+body .sig.s3 i{background:var(--g3)}
+body .cf.s3{color:var(--t3)}
+body .cf.s2{color:var(--t2)}
+body .cf.s1{color:var(--t1)}
 
-body .hero{background:#fff;border:1px solid var(--line);border-left:6px solid var(--pitch);border-radius:14px;box-shadow:0 6px 20px rgba(11,90,60,.10)}
-body .dial circle:first-of-type{stroke:#DDE5E0}
-body .arc{stroke:#0B6E47}
-body .rec{background:#fff}
-body .dots i{background:#DDE5E0}
-body .dots i.w{background:#12A15A}
-body .dots i.l{background:#E5484D}
-body .rl .w{color:#0B6E47}
-body .rl .l{color:#C62828}
+body .hero{background:var(--s1);border:1px solid var(--line);border-left:6px solid var(--bar);border-radius:14px;box-shadow:0 6px 20px var(--shadow)}
+body .dial circle:first-of-type{stroke:var(--line)}
+body .arc{stroke:var(--amb)}
+body .rec{background:var(--s1)}
+body .dots i{background:var(--line)}
+body .dots i.w{background:var(--g3)}
+body .dots i.l{background:var(--g1)}
+body .rl .w{color:var(--t3)}
+body .rl .l{color:var(--t1)}
 
-body .dock{border-top:1px solid var(--line);box-shadow:0 -8px 24px rgba(11,90,60,.10)}
-body .chk{color:#2E4036}
+body .dock{border-top:1px solid var(--line);box-shadow:0 -8px 24px var(--shadow)}
+body .chk{color:var(--tx)}
+
+.sharebtn{border:1px solid var(--line);background:var(--s1);color:var(--tx);border-radius:8px;padding:9px 14px;font:700 14px/1 var(--f);cursor:pointer}
+#themeBtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:3;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--s1);color:var(--tx);display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px var(--shadow)}
