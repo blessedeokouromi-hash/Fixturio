@@ -111,6 +111,7 @@
     var s = document.createElement("div");
     s.id = "mks";
     s.className = "mks";
+    ch.parentNode.insertBefore(d, ch);
     ch.parentNode.insertBefore(s, ch);
     drawTabs();
     drawSub();
