@@ -96,6 +96,7 @@ function reason(m) {
     matches.push({
       id: c.fixture.id,
       league: c.league.name,
+      country: c.league.country,
       kickoff: c.fixture.date,
       home: c.teams.home.name,
       away: c.teams.away.name,
@@ -124,7 +125,8 @@ function reason(m) {
       probability: Math.round(Math.min(90, c.prob * 100)),
       reason: reason(m),
       kickoff: m.kickoff,
-      league: m.league
+      league: m.league,
+      country: m.country
     }));
   });
   picks.sort((a, b) => b.probability - a.probability);

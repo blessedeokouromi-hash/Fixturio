@@ -9,8 +9,11 @@
   var mkMode = "main";
 
   var st = document.createElement("style");
-  st.textContent = ".mkt{display:flex;gap:20px;overflow-x:auto;padding:0 16px;border-bottom:1px solid var(--line);background:#fff}" +
+  st.textContent = ".mkt{display:flex;gap:20px;overflow-x:auto;padding:0 16px;border-bottom:1px solid var(--line);background:var(--ink)}" +
     ".mkt button{flex:none;background:none;border:0;padding:12px 0;font-weight:700;font-size:14px;color:var(--mu);border-bottom:3px solid transparent;margin-bottom:-1px;font-family:inherit;cursor:pointer}" +
+    ".mks{display:none;gap:8px;padding:10px 16px 0}" +
+    ".mks button{flex:none;border:1px solid var(--line);background:transparent;padding:6px 14px;border-radius:999px;font-weight:600;font-size:13px;white-space:nowrap;font-family:inherit;cursor:pointer;color:var(--mu)}" +
+    ".mks button.on{background:var(--tx);color:var(--ink);border-color:var(--tx)}" +
     ".mkt button.on{color:var(--tx);border-bottom-color:var(--pitch,#0B6E47)}" +
     ".cf{font-size:11px;font-weight:700;color:var(--mu)}.cf.s3{color:#0B8A4F}.cf.s2{color:#9A6400}.cf.s1{color:#C62828}";
   document.head.appendChild(st);
@@ -52,6 +55,10 @@
     return ok ? " ok" : " bad";
   }
 
+  window.tipOf = tipOf;
+  var SUB = { "1x2": ["1", "X", "2"], "ou": ["Over", "Under"], "btts": ["Yes", "No"] };
+  window.mkSel = window.mkSel || "all";
+
   window.predCell = function (m) {
     var p = pred[m.fixture.id];
     if (!p) return '<div class="pr"></div>';
@@ -82,15 +89,31 @@
       return '<button class="' + (mkMode === t[0] ? "on" : "") + '" onclick="setMk(\'' + t[0] + '\')">' + t[1] + "</button>";
     }).join("");
   }
-  window.setMk = function (m) { mkMode = m; drawTabs(); render(); };
+  function drawSub() {
+    var d = document.getElementById("mks");
+    if (!d) return;
+    var opts = SUB[mkMode];
+    if (!opts) { d.innerHTML = ""; d.style.display = "none"; return; }
+    d.style.display = "flex";
+    var rows = ["all"].concat(opts);
+    d.innerHTML = rows.map(function (v) {
+      return '<button class="' + (window.mkSel === v ? "on" : "") + '" onclick="setMkSel(\'' + v + '\')">' + (v === "all" ? "All" : v) + "</button>";
+    }).join("");
+  }
+  window.setMkSel = function (v) { window.mkSel = v; drawSub(); render(); };
+  window.setMk = function (m) { mkMode = m; window.mkMode = m; window.mkSel = "all"; drawTabs(); drawSub(); render(); };
 
   var ch = document.getElementById("chips");
   if (ch && !document.getElementById("mkt")) {
     var d = document.createElement("div");
     d.id = "mkt";
     d.className = "mkt";
-    ch.parentNode.insertBefore(d, ch);
+    var s = document.createElement("div");
+    s.id = "mks";
+    s.className = "mks";
+    ch.parentNode.insertBefore(s, ch);
     drawTabs();
+    drawSub();
     render();
   }
 })();

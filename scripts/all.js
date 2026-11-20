@@ -1,6 +1,6 @@
 const fs = require("fs");
 const KEY = process.env.API_FOOTBALL_KEY;
-const WINDOW = 30;
+const WINDOW = 45;
 const MIN_GAMES = 3;
 const K = 3;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -56,25 +56,24 @@ function model(lh, la) {
 (async () => {
   const now = Date.now();
   const today = iso(now);
+  const yesterday = iso(now - 864e5);
   const db = load();
 
-  const missing = [];
-  for (let i = 1; i <= WINDOW; i++) {
-    const d = iso(now - i * 864e5);
-    if (!db.days[d]) missing.push(d);
-  }
-  console.log("Days to fetch: " + missing.length);
-  for (const d of missing) {
-    const r = await api("/fixtures?date=" + d);
-    if (hasErr(r)) { console.log("Stopped at " + d + ": " + JSON.stringify(r.errors)); break; }
+  // Free plans can only reach the last day or two, so history grows one day per run.
+  // Every day adds yesterday's finished matches, and the model gets sharper as it grows.
+  const ry = await api("/fixtures?date=" + yesterday);
+  if (hasErr(ry)) {
+    console.log("Yesterday unavailable: " + JSON.stringify(ry.errors));
+  } else {
     const rows = [];
-    (r.response || []).forEach(m => {
+    (ry.response || []).forEach(m => {
       if (["FT", "AET", "PEN"].indexOf(m.fixture.status.short) < 0) return;
       const ft = m.score && m.score.fulltime && m.score.fulltime.home !== null ? m.score.fulltime : m.goals;
       if (!ft || ft.home === null || ft.away === null) return;
       rows.push([m.league.id, m.teams.home.id, m.teams.away.id, ft.home, ft.away]);
     });
-    db.days[d] = rows;
+    db.days[yesterday] = rows;
+    console.log("Stored " + rows.length + " finished matches from " + yesterday);
   }
   Object.keys(db.days).forEach(d => { if (d < iso(now - WINDOW * 864e5)) delete db.days[d]; });
   fs.writeFileSync("teamdata.json", JSON.stringify(db));
@@ -82,7 +81,6 @@ function model(lh, la) {
   const all = [];
   Object.keys(db.days).forEach(d => db.days[d].forEach(r => all.push(r)));
   console.log("Finished matches in history: " + all.length);
-  if (all.length < 200) { console.error("Not enough history yet"); process.exit(1); }
 
   const L = {};
   let gn = 0, ghg = 0, gag = 0;
@@ -105,29 +103,39 @@ function model(lh, la) {
     H.n++; H.sc += r[3] / av.h; H.co += r[4] / av.a;
     A.n++; A.sc += r[4] / av.a; A.co += r[3] / av.h;
   });
-  const att = t => (t.sc + K) / (t.n + K);
-  const def = t => (t.co + K) / (t.n + K);
 
+  const tomorrow = iso(now + 864e5);
   const fx = await api("/fixtures?date=" + today);
   if (hasErr(fx)) { console.error("Fixtures error: " + JSON.stringify(fx.errors)); process.exit(1); }
   console.log("Fixtures today: " + (fx.response || []).length);
+  const fxt = await api("/fixtures?date=" + tomorrow);
+  const tomorrowList = hasErr(fxt) ? [] : (fxt.response || []);
+  console.log("Fixtures tomorrow: " + tomorrowList.length);
+
+  // Teams with little or no history fall back to neutral strength instead of
+  // being dropped, so every match gets a prediction.
+  const att = t => t ? (t.sc + K) / (t.n + K) : 1;
+  const def = t => t ? (t.co + K) / (t.n + K) : 1;
 
   const out = {};
   const lg = {};
-  let skipped = 0;
-  (fx.response || []).forEach(m => {
+  let thin = 0;
+  function predict(m) {
     if (["PST", "CANC", "ABD", "AWD", "WO"].indexOf(m.fixture.status.short) >= 0) return;
-    const H = T[m.teams.home.id], A = T[m.teams.away.id];
-    if (!H || !A || H.n < MIN_GAMES || A.n < MIN_GAMES) { skipped++; return; }
+    if (["PST", "CANC", "ABD", "AWD", "WO"].indexOf(m.fixture.status.short) >= 0) return;
     const av = avgFor(m.league.id);
+    const H = T[m.teams.home.id], A = T[m.teams.away.id];
+    if (!H || !A || H.n < MIN_GAMES || A.n < MIN_GAMES) thin++;
     let lh = av.h * att(H) * def(A);
     let la = av.a * att(A) * def(H);
     lh = Math.min(3.5, Math.max(0.2, lh));
     la = Math.min(3.5, Math.max(0.2, la));
     out[m.fixture.id] = Object.assign(model(lh, la), { x: +lh.toFixed(2), y: +la.toFixed(2) });
     lg[m.league.id] = 1;
-  });
-  console.log("Predicted " + Object.keys(out).length + " matches, skipped " + skipped + " with too little data");
+  }
+  fx.response.forEach(predict);
+  tomorrowList.forEach(predict);
+  console.log("Predicted " + Object.keys(out).length + " matches (" + thin + " on thin data)");
   if (!Object.keys(out).length) { console.error("No predictions built"); process.exit(1); }
   fs.writeFileSync("all.json", JSON.stringify({
     date: today, generated: new Date().toISOString(),

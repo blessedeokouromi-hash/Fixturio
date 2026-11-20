@@ -104,7 +104,8 @@ body.hasdock .wrap{padding-bottom:96px}
   <div><b>Fixturio</b><small id="date"></small></div>
 </div></header>
 <nav class="tabs"><a href="/">Matches</a><a class="on" href="/picks.html">Top 15</a><span id="upd"></span></nav>
-<section class="intro"><h2>Today’s top 15</h2><p id="sub">Loading today’s picks…</p></section>
+<section class="intro"><h2>Today’s top 15</h2><p id="sub">Loading today’s picks…</p>
+<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="add" onclick="shareImage()">Share as image</button></div></section>
 <div id="rec"></div>
 <section id="slip" class="slip" aria-live="polite"></section>
 <div id="hero"></div>
@@ -146,7 +147,8 @@ function btn(i){
 
 function rowHTML(i){
   const p=picks[i];
-  return '<div class="pk"><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+esc(p.league)+" kicks off at "+tm(p.kickoff)+'</div><div class="mk">'+esc(p.market)+"</div><div>"+chips(p)+'</div></div><div class="pr"><b>'+esc(p.probability)+"%</b>"+btn(i)+"</div></div>";
+  var lgx=(window.flagName?window.flagName(p.country)+" ":"")+esc(p.league)+(p.country?" · "+esc(p.country):"")+" · "+tm(p.kickoff);
+  return '<div class="pk"><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+lgx+'</div><div class="mk">'+esc(p.market)+"</div><div>"+chips(p)+'</div></div><div class="pr"><b>'+esc(p.probability)+"%</b>"+btn(i)+"</div></div>";
 }
 
 function add(i){
@@ -175,7 +177,7 @@ function clearAll(){sel=[];slipOn=false;draw();}
 function draw(){
   if(!picks.length)return;
   const h=picks[0];
-  $("hero").innerHTML='<article class="hero"><div><small>Pick of the day</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+esc(h.league)+" kicks off at "+tm(h.kickoff)+'</div><div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div>"+btn(0)+"</div><div>"+dial(h.probability,112)+"</div></article>";
+  $("hero").innerHTML='<article class="hero"><div><small>Pick of the day</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+(window.flagName?window.flagName(h.country)+" ":"")+esc(h.league)+(h.country?" · "+esc(h.country):"")+" · "+tm(h.kickoff)+'</div><div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div>"+btn(0)+"</div><div>"+dial(h.probability,112)+"</div></article>";
   $("tiers").innerHTML=TIERS.map(t=>{
     const idx=picks.map((p,i)=>i).filter(i=>i>0&&t.f(picks[i].probability));
     if(!idx.length)return "";
@@ -231,4 +233,4 @@ fetch("/daily.json").then(r=>{if(!r.ok)throw 0;return r.json();}).then(d=>{
   $("upd").textContent="Built at "+tm(d.generated);
   draw();
 }).catch(()=>{$("sub").textContent="Today’s picks are still being built. They appear every morning, so check back soon.";});
-</script></body></html>
+</script><script src="/share-image.js"></script><script src="/share.js"></script></body></html>
