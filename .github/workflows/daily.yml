@@ -42,6 +42,15 @@ jobs:
         run: node scripts/daily.js
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      - name: Build standings, scorers, news and videos
+        if: github.event.schedule != '23,53 6-22 * * *'
+        continue-on-error: true
+        run: |
+          node scripts/standings.js
+          node scripts/news.js
+          node scripts/videos.js
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       - name: Save results
         if: always()
         run: |

@@ -3,8 +3,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B1220">
-<title>Fixturio</title>
-  <link rel="stylesheet" href="/theme.css">
+<title>Fixturio | Live football scores, predictions and top picks</title>
+<meta name="description" content="Live scores, predicted scores, over/under and BTTS chances for over 1,500 matches a day, plus league standings, news and a smart ticket builder. Free on Fixturio.">
+<link rel="canonical" href="https://fixturio.vercel.app/">
+<meta property="og:title" content="Fixturio | Live football scores and predictions">
+<meta property="og:description" content="Predicted scores and confidence bars for 1,500+ matches every day. Free, fast and mobile friendly.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fixturio.vercel.app/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Fixturio","url":"https://fixturio.vercel.app/","description":"Live football scores, predictions and top picks"}</script>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/theme.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -137,7 +145,8 @@ body.tm .dock{display:block}
   </div>
   <button id="tbtn" class="tbtn" onclick="toggleMode()">Smart ticket</button>
 </header>
-<nav class="tabs"><a class="on" href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
+<nav class="tabs tabsx"><a class="on" href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
+<div class="adslot" id="ad-banner"></div>
 <div id="days" class="days"></div>
 <div class="sr"><input id="q" type="search" placeholder="Search team, league or country" oninput="setQ(this.value)" aria-label="Search matches" autocomplete="off"></div>
 <div id="chips" class="chips"></div>
@@ -163,6 +172,8 @@ const LIVE=["1H","2H","HT","ET","BT","P","LIVE"],DONE=["FT","AET","PEN"];
 const TOPL=[1,2,3,4,5,6,10,12,29,32,848,39,140,135,78,61,88,94,144,203,40,253,71,128,179];
 const open=new Set(),panels={},sel=new Set(),info={};
 let data=[],pred={},cov=null,loaded=false,mode=false,risk="balanced",filter="all",failed="",day=0,q="",moreOpen=false,npCol=false;
+let legs=[];try{legs=JSON.parse(localStorage.getItem("fixturio:legs")||"[]")}catch(e){}
+let _ctx=null,_rows=[];
 window.mkMode="main";window.mkSel="all";
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -300,22 +311,45 @@ function render(){
 }
 
 function panel(rows,notes){
-  if(!rows.length)return '<p class="note">'+esc(notes)+"</p>";
+  if(!rows.length)return '<p class="note">'+esc(notes)+'</p>';
   const top=(a,b)=>b.p>a.p?b:a;
   const b1=rows.reduce(top);
   const singles=rows.filter(r=>r.g!=="Double chance"&&r.label!=="Draw");
   const b2=singles.length?singles.reduce(top):null;
-  let h='<div class="two"><div><small>Safest pick</small><b>'+esc(b1.label)+"</b><em>"+b1.p+"%</em></div>";
-  if(b2&&b2!==b1)h+='<div><small>Best single market</small><b>'+esc(b2.label)+"</b><em>"+b2.p+"%</em></div>";
-  h+="</div>";
+  let h='<div class="two"><div><small>Safest pick</small><b>'+esc(b1.label)+'</b><em>'+b1.p+'%</em></div>';
+  if(b2&&b2!==b1)h+='<div><small>Best single market</small><b>'+esc(b2.label)+'</b><em>'+b2.p+'%</em></div>';
+  h+='</div>';
+  if(_ctx)h+='<div class="pacts"><button class="star2" id="starbtn" onclick="starMatch()">'+(savedHas(_ctx.id)?"★ Saved":"☆ Save match")+'</button></div>';
   const g={};
   rows.forEach(r=>{(g[r.g]=g[r.g]||[]).push(r);});
   Object.keys(g).forEach(k=>{
-    h+='<div class="sec"><h4>'+esc(k)+"</h4>";
-    g[k].forEach(r=>{h+='<div class="mrow'+(r===b1?" best":"")+'"><span class="nm">'+esc(r.label)+'</span><span class="pv">'+r.p+'%</span><div class="tr"><i style="width:'+r.p+'%"></i></div></div>';});
-    h+="</div>";
+    h+='<div class="sec"><h4>'+esc(k)+'</h4>';
+    g[k].forEach(r=>{
+      const idx=_rows.indexOf(r);
+      h+='<div class="mrow'+(r===b1?" best":"")+'"><span class="nm">'+esc(r.label)+'</span><span class="pv">'+r.p+'%</span><div class="tr"><i style="width:'+r.p+'%"></i></div>'+(canAdd()?'<button class="add2'+(legHas(_ctx.id,r.label)?" on":"")+'" onclick="addLeg('+idx+')" aria-label="Add to ticket">'+(legHas(_ctx.id,r.label)?"✓":"Add")+'</button>':'')+'</div>';
+    });
+    h+='</div>';
   });
-  return h+(notes?'<p class="note">'+esc(notes)+"</p>":"");
+  return h+(notes?'<p class="note">'+esc(notes)+'</p>':"");
+}
+function savedHas(id){let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){}return s.includes(id);}
+function starMatch(){
+  if(!_ctx)return;
+  let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){}
+  const i2=s.indexOf(_ctx.id);
+  if(i2>=0)s.splice(i2,1);else s.unshift(_ctx.id);
+  localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));
+  const b=$("starbtn");if(b){b.classList.toggle("on",i2<0);b.textContent=i2<0?"★ Saved":"☆ Save match";}
+}
+function canAdd(){const mm=_ctx?data.find(m=>m.fixture.id===_ctx.id):null;return !!(mm&&mm.fixture.status.short==="NS");}
+function legHas(id,label){return legs.some(l=>l.id===id&&l.market===label);}
+function addLeg(i){
+  if(!_ctx)return;
+  const r=_rows[i];if(!r)return;
+  if(legHas(_ctx.id,r.label)){legs=legs.filter(l=>!(l.id===_ctx.id&&l.market===r.label));}
+  else{if(legs.length>=10){$("hint").textContent="Ten selections is the limit for one ticket.";return;}legs.push({id:_ctx.id,match:_ctx.home+" vs "+_ctx.away,market:r.label,p:r.p});}
+  localStorage.setItem("fixturio:legs",JSON.stringify(legs));
+  cnt();open.delete(_ctx.id);tog(_ctx.id);
 }
 
 function dailyRows(dm,home,away){
@@ -389,8 +423,9 @@ function tog(id){
   const mm=data.find(x=>x.fixture.id===id);
   if(!mm)return;
   const home=mm.teams.home.name,away=mm.teams.away.name;
-  if(info[id]){panels[id]=panel(dailyRows(info[id],home,away),dailyNote(info[id],home,away));el.innerHTML=panels[id];return;}
-  if(pred[id]){panels[id]=panel(modelRows(pred[id],home,away),"Predicted score "+pred[id].s+". Estimated from both teams’ results over the last 30 days. Estimates, not guarantees.");el.innerHTML=panels[id];return;}
+  _ctx={id:id,home:home,away:away};
+  if(info[id]){_rows=dailyRows(info[id],home,away);panels[id]=panel(_rows,dailyNote(info[id],home,away));el.innerHTML=panels[id];return;}
+  if(pred[id]){_rows=modelRows(pred[id],home,away);panels[id]=panel(_rows,"Predicted score "+pred[id].s+". Estimated from both teams’ results over the last 30 days. Estimates, not guarantees.");el.innerHTML=panels[id];return;}
   el.innerHTML='<p class="note">Loading predictions…</p>';
   fetch("/api/predictions?fixture="+id).then(r=>r.json()).then(d=>{
     panels[id]=predPanel(d,home,away);
@@ -398,7 +433,7 @@ function tog(id){
   }).catch(()=>{const e=$("p"+id);if(e)e.innerHTML='<p class="note">Predictions could not be loaded. Try again later.</p>';});
 }
 
-function cnt(){$("cnt").textContent=sel.size+" of 10 chosen";}
+function cnt(){$("cnt").textContent=legs.length?legs.length+" selections":"0 of 10 chosen";}
 function hintText(){return Object.keys(info).length?"Choose 2 to 10 matches that have not started. Matches with a dot beside the time can be used in tickets.":"This morning’s analysis is not ready yet, so tickets cannot be built right now.";}
 
 function tap(id,can){
@@ -433,7 +468,20 @@ function slipMsg(t){$("slip").innerHTML='<div class="sh"><b>Your ticket</b></div
 function build(){
   $("slip").style.display="block";
   window.scrollTo({top:0});
-  if(sel.size<2){slipMsg("Choose at least 2 matches to build a ticket.");return;}
+  if(legs.length){
+    let combined=1;
+    let h='<div class="sh"><b>Your ticket</b><span>'+esc(legs.length)+' selections</span></div>';
+    legs.forEach((p,i)=>{
+      combined*=p.p/100;
+      h+='<div class="leg"><div><div class="mt">'+esc(p.match)+'</div><div class="mk">'+esc(p.market)+'</div></div><div style="text-align:right"><div class="pc">'+p.p+'%</div><button class="rm" onclick="rmLeg('+i+')">Remove</button></div></div>';
+    });
+    h+='<div class="tot"><span>Combined chance</span><b>'+Math.round(combined*100)+'%</b></div>';
+    h+='<div class="sacts"><button onclick="shareTicket()">Share ticket</button><button onclick="clearTicket()">Clear ticket</button></div>';
+    h+='<p class="fine">Your selections stay saved on this device. Estimates are not guarantees. 18+ only. Please gamble responsibly.</p>';
+    $("slip").innerHTML=h;
+    return;
+  }
+  if(sel.size<2){slipMsg("Choose at least 2 matches to build a ticket. Or open a match and tap Add next to a market.");return;}
   slipMsg("Building your ticket…");
   const ids=[...sel].sort((a,b)=>a-b).join(",");
   fetch("/api/accumulator?ids="+ids+"&risk="+risk).then(r=>r.json()).then(d=>{
@@ -443,6 +491,13 @@ function build(){
     h+='<div class="tot"><span>Combined chance</span><b>'+esc(d.combined)+'%</b></div><p class="fine">'+esc(d.summary)+'</p><p class="fine">18+ only. Estimates are not guarantees. Please gamble responsibly.</p>';
     $("slip").innerHTML=h;
   }).catch(()=>slipMsg("The ticket could not be built. Check your connection and try again."));
+}
+function rmLeg(i){legs.splice(i,1);localStorage.setItem("fixturio:legs",JSON.stringify(legs));cnt();build();}
+function clearTicket(){legs=[];localStorage.setItem("fixturio:legs",JSON.stringify(legs));cnt();slipMsg("Ticket cleared. Open a match and tap Add next to any market.");}
+function shareTicket(){
+  const txt="My Fixturio ticket:\n"+legs.map(l=>l.match+" - "+l.market+" ("+l.p+"%)").join("\n")+"\nCombined chance "+Math.round(legs.reduce((c,l)=>c*l.p/100,1)*100)+"%\nhttps://fixturio.vercel.app";
+  if(navigator.share)navigator.share({title:"My Fixturio ticket",text:txt}).catch(function(){});
+  else if(navigator.clipboard)navigator.clipboard.writeText(txt);
 }
 
 function load(){
@@ -467,4 +522,4 @@ fetch("/daily.json").then(r=>r.ok?r.json():null).then(d=>{
 fetch("/all.json").then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.m){pred=d.m;cov=d;render();}
 }).catch(()=>{});
-</script><script src="/markets.js"></script><script src="/share.js"></script></body></html>
+</script><script src="/markets.js"></script><script src="/share.js"></script><script src="/ads.js" defer></script></body></html>

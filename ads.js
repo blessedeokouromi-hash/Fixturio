@@ -1,0 +1,44 @@
+// Config-driven ad loader. Reads /ads.json (edited from the admin dashboard).
+// Frequency limits: popunder once per visitor per day, social bar and banner once
+// per page. Every shown zone pings the tracker for later revenue reporting.
+(function () {
+  var POP = "fixturio:ad:pop";
+  function shownToday() {
+    try { return JSON.parse(localStorage.getItem(POP) || '""') === new Date().toISOString().slice(0, 10); }
+    catch (e) { return false; }
+  }
+  function markToday() {
+    try { localStorage.setItem(POP, JSON.stringify(new Date().toISOString().slice(0, 10))); } catch (e) {}
+  }
+  function track(zone) {
+    try { fetch("/api/track?zone=" + zone, { keepalive: true }).catch(function () {}); } catch (e) {}
+  }
+  function run(src, host, zone) {
+    if (!src || !host) return;
+    var s = document.createElement("script");
+    s.src = src;
+    s.async = true;
+    host.appendChild(s);
+    track(zone);
+  }
+  fetch("/ads.json", { cache: "no-store" })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (cfg) {
+      if (!cfg || !cfg.enabled) return;
+      var banner = document.getElementById("ad-banner");
+      if (banner) {
+        var small = window.innerWidth < 480;
+        run(small && cfg.mobileBanner && cfg.mobileBanner.src ? cfg.mobileBanner.src : (cfg.banner && cfg.banner.src), banner, "banner");
+      }
+      var native = document.getElementById("ad-native");
+      if (native) run(cfg.native && cfg.native.src, native, "native");
+      var sb = document.getElementById("ad-socialbar");
+      if (sb) run(cfg.socialbar && cfg.socialbar.src, sb, "socialbar");
+      if (cfg.popunder && cfg.popunder.src && !shownToday()) {
+        markToday();
+        run(cfg.popunder.src, document.body, "popunder");
+      }
+      window.fixturioVastUrl = cfg.vast && cfg.vast.url ? cfg.vast.url : null;
+    })
+    .catch(function () {});
+})();

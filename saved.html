@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B5A3C">
+<title>Saved matches | Fixturio</title>
+<link rel="stylesheet" href="/theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--tx);font:500 15px/1.4 var(--f);-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+.top{position:sticky;top:0;z-index:4;background:var(--pitch);border-bottom:0;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo svg{width:32px;height:32px;flex:none}
+.logo b{font-size:21px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.tabs{display:flex;align-items:center;gap:22px;padding:0 16px;background:var(--pitch);border-bottom:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{padding:11px 0;color:var(--hmu);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs a.on{color:#fff;border-color:var(--amb)}
+.tabs span{margin-left:auto;font-size:12px;color:var(--hmu)}
+.intro{padding:22px 16px 8px}
+.intro h2{margin:0;font-size:28px;font-weight:800;letter-spacing:-.02em}
+.intro p{margin:8px 0 0;color:var(--mu);max-width:46ch}
+.rows{background:var(--s1);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.row{display:grid;grid-template-columns:52px 1fr auto auto;gap:10px;align-items:center;padding:12px 16px;border-top:1px solid var(--line);text-decoration:none;color:inherit}
+.row:first-child{border-top:0}
+.row .st{font-size:13px;font-weight:700;color:var(--mu);text-align:center}
+.row .st.live{color:var(--live)}
+.row .n{min-width:0}
+.row .n div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.row .n small{color:var(--mu);font-size:12px;display:block}
+.row .sc{font-weight:800;white-space:nowrap}
+.x2{border:0;background:transparent;color:var(--mu);font-weight:800;padding:4px}
+.msg{margin:24px 16px;color:var(--mu)}
+.fine{margin:16px 16px 0;font-size:12px;color:var(--mu)}
+.adslot{min-height:60px;margin:12px 16px;display:flex;justify-content:center;align-items:center}
+.adslot:empty{display:none}
+</style></head><body>
+<div class="wrap">
+<header class="top"><a class="logo" href="/"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#F5B544"/><circle cx="16" cy="16" r="6" fill="none" stroke="#0B1220" stroke-width="2"/><path d="M16 4v24" stroke="#0B1220" stroke-width="2"/></svg><b>Fixturio</b></a></header>
+<nav class="tabs tabsx"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a class="on" href="/saved.html">Saved</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
+<section class="intro"><h2>Saved matches</h2><p>Matches you starred stay here on this device, with live scores while they play.</p></section>
+<div class="adslot" id="ad-native"></div>
+<main id="app"><p class="msg">Loading…</p></main>
+<p class="fine">Saved matches live in this browser only. Clearing your browser data clears them.</p>
+</div>
+<script src="/ads.js" defer></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const LIVE=["1H","2H","HT","ET","BT","P","LIVE"];
+let saved=[],byId={},done=0;
+const tm=t=>new Date(t).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
+function stTxt(m){const s=m.fixture.status.short;if(s==="HT")return "HT";if(LIVE.includes(s))return (m.fixture.status.elapsed||"")+"′";if(s==="NS")return tm(m.fixture.date);return s;}
+function rm(ev,id){ev.preventDefault();ev.stopPropagation();saved=saved.filter(x=>x!==id);localStorage.setItem("fixturio:saved",JSON.stringify(saved));render();}
+function render(){
+  if(!saved.length){$("app").innerHTML='<p class="msg">No saved matches yet. Open any match and tap “Save match”.</p>';return;}
+  let h='<div class="rows">';
+  saved.forEach(id=>{
+    const m=byId[id];
+    if(!m){h+='<a class="row" href="/match.html?id='+id+'"><div class="st">–</div><div class="n"><div>Match #'+id+'</div><small>No longer in the 3-day window</small></div><div class="sc"></div><button class="x2" onclick="rm(event,'+id+')">✕</button></a>';return;}
+    const live=LIVE.includes(m.fixture.status.short);
+    h+='<a class="row" href="/match.html?id='+id+'"><div class="st'+(live?" live":"")+'">'+esc(stTxt(m))+'</div><div class="n"><div>'+esc(m.teams.home.name)+" – "+esc(m.teams.away.name)+'</div><small>'+esc(m.league.name)+" · "+esc(m.league.country)+'</small></div><div class="sc">'+(m.goals.home===null?"":m.goals.home+" – "+m.goals.away)+'</div><button class="x2" onclick="rm(event,'+id+')" aria-label="Remove">✕</button></a>';
+  });
+  h+='</div>';
+  $("app").innerHTML=h;
+}
+function start(){
+  try{saved=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){saved=[];}
+  if(!saved.length){render();return;}
+  const offs=["-1","0","1"];
+  offs.forEach(off=>{
+    fetch("/api/matches?date="+off).then(r=>r.json()).then(d=>{
+      (d.response||[]).forEach(m=>byId[m.fixture.id]=m);
+      if(++done===offs.length){
+        saved=saved.filter(id=>byId[id]&&byId[id].day!==undefined?true:byId[id]||true);
+        render();
+        if(saved.some(id=>byId[id]&&LIVE.includes(byId[id].fixture.status.short))){setInterval(()=>location.reload(),60000);}
+      }
+    }).catch(()=>{done++;render();});
+  });
+}
+start();
+</script>
+</body></html>

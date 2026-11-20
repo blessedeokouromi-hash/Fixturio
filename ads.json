@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "_docs": "Set enabled to true to turn ads on. Each src is the script URL your ad network gives you for that zone (for example an Adsterra banner, native, Social Bar or Popunder script). Empty src zones do nothing. vast.url is a VAST tag URL for video pre-roll use.",
+  "banner": { "src": "", "w": 728, "h": 90 },
+  "native": { "src": "" },
+  "socialbar": { "src": "" },
+  "popunder": { "src": "" },
+  "vast": { "url": "" }
+}

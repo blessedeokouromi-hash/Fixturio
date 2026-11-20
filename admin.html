@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B5A3C">
+<meta name="robots" content="noindex">
+<title>Admin | Fixturio</title>
+<link rel="stylesheet" href="/theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--tx);font:500 15px/1.4 var(--f);-webkit-text-size-adjust:100%}
+button,textarea,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+.top{position:sticky;top:0;z-index:4;background:var(--pitch);border-bottom:0;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo svg{width:32px;height:32px;flex:none}
+.logo b{font-size:21px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.tabs{display:flex;align-items:center;gap:22px;padding:0 16px;background:var(--pitch);border-bottom:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{padding:11px 0;color:var(--hmu);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs a.on{color:#fff;border-color:var(--amb)}
+.card{margin:16px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--s1)}
+.card h3{margin:0 0 8px;font-size:16px;font-weight:800}
+.card p{margin:8px 0;font-size:13px;color:var(--mu)}
+.card code{background:var(--s2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
+input{width:100%;padding:11px 12px;background:var(--ink);border:1px solid var(--line);border-radius:8px;font-size:16px;margin:8px 0}
+textarea{width:100%;min-height:260px;background:var(--ink);border:1px solid var(--line);border-radius:8px;font:13px/1.5 monospace;padding:10px;margin:8px 0}
+.go{padding:11px 18px;border:0;border-radius:8px;background:var(--amb);color:var(--ink);font-weight:800}
+.st{display:inline-block;margin-left:10px;font-size:13px;color:var(--mu)}
+.ok{color:#8CE6B0}.bad{color:#FF9AA4}
+</style></head><body>
+<div class="wrap">
+<header class="top"><a class="logo" href="/"><svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#F5B544"/><circle cx="16" cy="16" r="6" fill="none" stroke="#0B1220" stroke-width="2"/><path d="M16 4v24" stroke="#0B1220" stroke-width="2"/></svg><b>Fixturio</b></a><a href="/">Site</a></header>
+<nav class="tabs"><a class="on" href="/admin.html">Ad settings</a></nav>
+<div class="card">
+<h3>Advertising settings</h3>
+<p>Turning ads on activates every zone you have filled in. Empty zones do nothing, so the site stays clean until you add real network code. Popunders are capped at one per visitor per day, and the social bar and banners show once per page. Every impression pings the tracker for later revenue reporting.</p>
+<input id="tok" type="password" placeholder="Admin token" autocomplete="off">
+<button class="go" onclick="load0()">Load current settings</button><span class="st" id="st"></span>
+<textarea id="cfg" spellcheck="false" style="display:none"></textarea>
+<button class="go" id="save" style="display:none;margin-top:6px" onclick="save0()">Save and redeploy</button>
+</div>
+<div class="card">
+<h3>One-time setup (Vercel)</h3>
+<p>1. In Vercel, open your Fixturio project → Settings → Environment Variables.</p>
+<p>2. Add <code>ADMIN_TOKEN</code> with any secret phrase you choose. That is the password for this page.</p>
+<p>3. Add <code>GITHUB_TOKEN</code> with a GitHub personal access token that has write access to the Fixturio repository (repo scope). That is what lets this page save settings.</p>
+<p>4. Redeploy once. After that, this page can switch ads on and off and paste your Adsterra zone links, and every save redeploys the site automatically.</p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+function tok(){return $("tok").value.trim()||localStorage.getItem("fixturio:admin")||"";}
+function load0(){
+  $("st").textContent="Loading…";$("st").className="st";
+  const t=$("tok").value.trim();
+  if(t)localStorage.setItem("fixturio:admin",t);
+  fetch("/api/admin").then(r=>r.json()).then(d=>{
+    if(d.connected===false){$("st").textContent="Server not connected yet: add the two environment variables in Vercel (see below), then redeploy.";$("st").className="st bad";return;}
+    $("cfg").style.display="block";$("save").style.display="inline-block";
+    $("cfg").value=JSON.stringify(d.config||{enabled:false},null,2);
+    $("st").textContent="Loaded.";$("st").className="st ok";
+  }).catch(()=>{$("st").textContent="Could not reach the admin API.";$("st").className="st bad";});
+}
+function save0(){
+  $("st").textContent="Saving…";
+  let cfg;
+  try{cfg=JSON.parse($("cfg").value)}catch(e){$("st").textContent="Not valid JSON: "+e.message;return;}
+  fetch("/api/admin",{method:"POST",headers:{"Content-Type":"application/json","x-admin-token":tok()},body:JSON.stringify(cfg)}).then(r=>r.json()).then(d=>{
+    if(d.ok){$("st").textContent="Saved. The site redeploys in about a minute.";$("st").className="st ok";}
+    else{$("st").textContent=d.error||"Save failed.";$("st").className="st bad";}
+  }).catch(()=>{$("st").textContent="Save failed.";});
+}
+</script>
+</div>
+</body></html>

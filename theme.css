@@ -90,3 +90,14 @@ body .chk{color:var(--tx)}
 
 .sharebtn{border:1px solid var(--line);background:var(--s1);color:var(--tx);border-radius:8px;padding:9px 14px;font:700 14px/1 var(--f);cursor:pointer}
 #themeBtn{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:3;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--s1);color:var(--tx);display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 14px var(--shadow)}
+
+/* Stage 2 additions */
+.tabsx{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabsx::-webkit-scrollbar{display:none}
+.adslot{min-height:50px;margin:10px 16px;display:flex;justify-content:center;align-items:center}
+.adslot:empty{display:none}
+.pacts{margin-top:12px}
+.star2,.add2,.rm{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 12px;font-weight:700;font-size:13px}
+.star2.on,.add2.on{background:var(--amb);border-color:var(--amb);color:var(--ink)}
+.mrow .add2{padding:4px 10px;font-size:12px}
+.leg .rm{margin-top:6px;padding:2px 8px;font-size:11px;color:var(--mu)}
