@@ -77,7 +77,12 @@ function reason(m) {
   const date = new Date().toISOString().slice(0, 10);
   const fx = await api("/fixtures?date=" + date);
   if (fx.errors && Object.keys(fx.errors).length) {
-    console.error(JSON.stringify(fx.errors));
+    const msg = JSON.stringify(fx.errors);
+    if (/request limit|rate/i.test(msg)) {
+      console.log("API quota reached, keeping the existing picks. They rebuild on the next run: " + msg);
+      return;
+    }
+    console.error(msg);
     process.exit(1);
   }
   const rank = m => { const i = TOP.indexOf(m.league.id); return i === -1 ? 99 : i; };
@@ -89,9 +94,17 @@ function reason(m) {
   const matches = [];
   for (const c of cands) {
     const pr = await api("/predictions?fixture=" + c.fixture.id);
+    if (pr.errors && Object.keys(pr.errors).length) {
+      console.log("API quota reached mid-run, keeping the existing picks.");
+      break;
+    }
     const p = pr.response && pr.response[0];
     if (!p) continue;
     const od = await api("/odds?fixture=" + c.fixture.id);
+    if (od.errors && Object.keys(od.errors).length) {
+      console.log("API quota reached mid-run, keeping the existing picks.");
+      break;
+    }
     const a = analyze(p, pickBets(od));
     matches.push({
       id: c.fixture.id,

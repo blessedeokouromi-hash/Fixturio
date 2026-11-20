@@ -51,6 +51,7 @@ async function api(path) {
     if (list.length) scorers.push({ id: lg.id, name: lg.name, country: lg.country, list });
   }
 
+  if (!leagues.length) { console.log("No standings built (quota reached or none available); keeping the site as it is"); return; }
   fs.writeFileSync("standings.json", JSON.stringify({ date: d, generated: new Date().toISOString(), leagues }));
   fs.writeFileSync("scorers.json", JSON.stringify({ date: d, generated: new Date().toISOString(), leagues: scorers }));
   console.log("Saved standings for " + leagues.length + " leagues, scorers for " + scorers.length);
