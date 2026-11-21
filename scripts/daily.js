@@ -170,6 +170,9 @@ function reason(m) {
     }));
   });
   picks.sort((a, b) => b.probability - a.probability);
+  // The banker: the day's most confident pick, tagged only when it is a real
+  // banker (75% or better). Otherwise no banker is shown that day.
+  if (picks[0] && picks[0].probability >= 75) picks[0].banker = true;
 
   fs.writeFileSync("daily.json", JSON.stringify({
     date,

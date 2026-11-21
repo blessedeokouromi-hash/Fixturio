@@ -144,6 +144,7 @@ function dial(p,size){
 function chips(p){
   const m=mm[p.fixture]||{};
   const c=[/bookmaker/.test(m.src||p.reason||"")?"Backed by bookmaker odds":"Form and stats only"];
+  if(p.banker)c.unshift("Banker");
   if(m.form&&m.form.home&&m.form.away)c.push("Form "+m.form.home+" vs "+m.form.away);
   if(p.cs)c.push("Model score "+p.cs);
   if(p.value)c.push("Value pick");
@@ -187,7 +188,7 @@ function clearAll(){sel=[];slipOn=false;draw();}
 function draw(){
   if(!picks.length)return;
   const h=picks[0];
-  $("hero").innerHTML='<article class="hero"><div><small>Pick of the day</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+(window.flagName?window.flagName(h.country)+" ":"")+esc(h.league)+(h.country?" · "+esc(h.country):"")+" · "+tm(h.kickoff)+'</div><div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div>"+btn(0)+"</div><div>"+dial(h.probability,112)+"</div></article>";
+  $("hero").innerHTML='<article class="hero"><div><small>'+(h.banker?"Today\'s banker":"Pick of the day")+'</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+(window.flagName?window.flagName(h.country)+" ":"")+esc(h.league)+(h.country?" · "+esc(h.country):"")+" · "+tm(h.kickoff)+'</div><div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div>"+btn(0)+"</div><div>"+dial(h.probability,112)+"</div></article>";
   $("tiers").innerHTML=TIERS.map(t=>{
     const idx=picks.map((p,i)=>i).filter(i=>i>0&&t.f(picks[i].probability));
     if(!idx.length)return "";
