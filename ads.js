@@ -13,6 +13,17 @@
   function track(zone) {
     try { fetch("/api/track?zone=" + zone, { keepalive: true }).catch(function () {}); } catch (e) {}
   }
+  function iframeBanner(host, zone, unit) {
+    if (!host || !unit || !unit.key || !unit.invoke) return;
+    var opt = document.createElement("script");
+    opt.textContent = "atOptions = {'key':'" + unit.key + "','format':'iframe','height':" + unit.h + ",'width':" + unit.w + ",'params':{}};";
+    host.appendChild(opt);
+    var s = document.createElement("script");
+    s.src = unit.invoke;
+    s.async = true;
+    host.appendChild(s);
+    track(zone);
+  }
   function run(src, host, zone) {
     if (!src || !host) return;
     // Adsterra native async fills a div named container-<zonehash>; add it
@@ -36,7 +47,9 @@
       var banner = document.getElementById("ad-banner");
       if (banner) {
         var small = window.innerWidth < 480;
-        run(small && cfg.mobileBanner && cfg.mobileBanner.src ? cfg.mobileBanner.src : (cfg.banner && cfg.banner.src), banner, "banner");
+        var unit = small && cfg.mobileBanner ? cfg.mobileBanner : cfg.banner;
+        if (unit && unit.invoke) iframeBanner(banner, "banner", unit);
+        else if (unit && unit.src) run(unit.src, banner, "banner");
       }
       var native = document.getElementById("ad-native");
       if (native) run(cfg.native && cfg.native.src, native, "native");
