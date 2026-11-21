@@ -15,6 +15,14 @@
   }
   function run(src, host, zone) {
     if (!src || !host) return;
+    // Adsterra native async fills a div named container-<zonehash>; add it
+    // before the script so the native banner has somewhere to render.
+    var m = /([0-9a-f]{32})/.exec(src);
+    if (zone === "native" && m && !document.getElementById("container-" + m[1])) {
+      var box = document.createElement("div");
+      box.id = "container-" + m[1];
+      host.appendChild(box);
+    }
     var s = document.createElement("script");
     s.src = src;
     s.async = true;
