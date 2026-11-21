@@ -63,6 +63,19 @@ function analyze(p, bets) {
     list.push({ market: "Both teams to score", prob: bt[0], kind: "single" });
     list.push({ market: "Both teams not to score", prob: bt[1], kind: "single" });
   }
+  // Keep the raw odds we already fetched, so the site can flag value picks
+  // (our probability clearly above what the odds imply) without new API calls.
+  const o = {};
+  bets.forEach(b => (b.values || []).forEach(v => { if (v && v.value && parseFloat(v.odd) > 1) o[v.value] = parseFloat(v.odd); }));
+  const KEYMAP = {
+    "Home win": "Home", "Away win": "Away",
+    "Over 2.5 goals": "Over 2.5", "Under 2.5 goals": "Under 2.5",
+    "Both teams to score": "Yes", "Both teams not to score": "No",
+    "Double chance 1X (home or draw)": "Home/Draw",
+    "Double chance X2 (away or draw)": "Draw/Away",
+    "Double chance 12 (no draw)": "Home/Away"
+  };
+  list.forEach(x => { if (KEYMAP[x.market] && o[KEYMAP[x.market]]) x.odd = o[KEYMAP[x.market]]; });
   return { src, list };
 }
 
@@ -91,6 +104,12 @@ function reason(m) {
     .sort((a, b) => rank(a) - rank(b))
     .slice(0, 16);
 
+  let pred = null;
+  try {
+    const pj = JSON.parse(fs.readFileSync("all.json", "utf8"));
+    if (pj && pj.date === today && pj.m) pred = pj.m;
+  } catch (e) {}
+
   const matches = [];
   for (const c of cands) {
     const pr = await api("/predictions?fixture=" + c.fixture.id);
@@ -106,6 +125,7 @@ function reason(m) {
       break;
     }
     const a = analyze(p, pickBets(od));
+    const q = pred && pred[c.fixture.id];
     matches.push({
       id: c.fixture.id,
       league: c.league.name,
@@ -115,10 +135,14 @@ function reason(m) {
       away: c.teams.away.name,
       src: a.src,
       form: p.comparison && p.comparison.form ? p.comparison.form : null,
+      cs: q ? q.s : null,
+      sTop: q ? q.st : null,
+      why: q ? q.why : null,
       markets: a.list.map(x => ({
         market: x.market,
         prob: Math.round(x.prob * 1000) / 1000,
-        kind: x.kind
+        kind: x.kind,
+        odd: x.odd || null
       }))
     });
   }
@@ -136,7 +160,10 @@ function reason(m) {
       match: m.home + " vs " + m.away,
       market: c.market,
       probability: Math.round(Math.min(90, c.prob * 100)),
-      reason: reason(m),
+      reason: m.why || reason(m),
+      cs: m.cs,
+      odd: c.odd || null,
+      value: !!(c.odd && c.prob * c.odd >= 1.08),
       kickoff: m.kickoff,
       league: m.league,
       country: m.country

@@ -74,6 +74,7 @@ body.tm .wrap.np .m{grid-template-columns:24px 46px 1fr auto}
 .tn .l{color:var(--mu);font-weight:500}
 .pr{display:grid;justify-items:center;gap:5px;min-width:54px}
 .pill{font-weight:800;font-size:14px;padding:3px 9px;border-radius:7px;background:var(--s2);border:1px solid var(--line)}
+.val{align-self:center;font-size:10px;font-weight:800;letter-spacing:.03em;color:#0B1220;background:#F5B544;border-radius:6px;padding:2px 6px;margin-left:4px}
 .pill.ok{background:#1D4D33;border-color:#2F7F52;color:#8CE6B0}
 .pill.bad{background:#4A1F27;border-color:#8A3340;color:#FF9AA4}
 .sig{display:flex;gap:2px;align-items:flex-end;height:10px}
@@ -194,6 +195,13 @@ function stat(m){
   return s;
 }
 
+function valChip(id){
+  const inf=info[id];
+  if(!inf||!inf.markets)return "";
+  let ev=0;
+  (inf.markets||[]).forEach(x=>{if(x.odd&&x.prob&&x.prob*x.odd>ev)ev=x.prob*x.odd;});
+  return ev>=1.08?'<span class="val" title="Our estimate is clearly higher than the bookmaker odds imply">Value</span>':"";
+}
 function predCell(m){
   const p=pred[m.fixture.id];
   if(!p)return '<div class="pr"></div>';
@@ -206,7 +214,7 @@ function predCell(m){
     const ao=m.goals.home>m.goals.away?"H":m.goals.home<m.goals.away?"A":"D";
     cls=po===ao?" ok":" bad";
   }
-  return '<div class="pr" title="Predicted score, confidence '+mx+'%"><span class="pill'+cls+'">'+esc(p.s)+'</span><span class="sig s'+lv+'" role="img" aria-label="Confidence '+(lv===3?"high":lv===2?"medium":"low")+'"><i></i><i></i><i></i></span></div>';
+  return '<div class="pr" title="Predicted score, confidence '+mx+'%"><span class="pill'+cls+'">'+esc(p.s)+'</span>'+valChip(m.fixture.id)+'<span class="sig s'+lv+'" role="img" aria-label="Confidence '+(lv===3?"high":lv===2?"medium":"low")+'"><i></i><i></i><i></i></span></div>';
 }
 
 function row(m){
@@ -434,7 +442,7 @@ function tog(id){
 }
 
 function cnt(){$("cnt").textContent=legs.length?legs.length+" selections":"0 of 10 chosen";}
-function hintText(){return Object.keys(info).length?"Choose 2 to 10 matches that have not started. Matches with a dot beside the time can be used in tickets.":"This morning’s analysis is not ready yet, so tickets cannot be built right now.";}
+function hintText(){return Object.keys(info).length?"Choose 2 to 10 matches that have not started. A dot beside the time means it can be used in tickets. Safe leans on double chance, Balanced mixes in singles, Risky backs bigger odds.":"This morning’s analysis is not ready yet, so tickets cannot be built right now.";}
 
 function tap(id,can){
   if(mode){
@@ -475,7 +483,7 @@ function build(){
       combined*=p.p/100;
       h+='<div class="leg"><div><div class="mt">'+esc(p.match)+'</div><div class="mk">'+esc(p.market)+'</div></div><div style="text-align:right"><div class="pc">'+p.p+'%</div><button class="rm" onclick="rmLeg('+i+')">Remove</button></div></div>';
     });
-    h+='<div class="tot"><span>Combined chance</span><b>'+Math.round(combined*100)+'%</b></div>';
+    h+='<div class="tot"><span>Estimated chance all legs win</span><b>'+Math.round(combined*100)+'%</b></div>';
     h+='<div class="sacts"><button onclick="shareTicket()">Share ticket</button><button onclick="clearTicket()">Clear ticket</button></div>';
     h+='<p class="fine">Your selections stay saved on this device. Estimates are not guarantees. 18+ only. Please gamble responsibly.</p>';
     $("slip").innerHTML=h;
@@ -488,7 +496,7 @@ function build(){
     if(d.error){slipMsg(d.error);return;}
     let h='<div class="sh"><b>Your ticket</b><span>'+esc(cap(risk))+" setting, "+esc(d.legs)+" legs</span></div>";
     (d.picks||[]).forEach(p=>{h+='<div class="leg"><div><div class="mt">'+esc(p.match)+'</div><div class="mk">'+esc(p.market)+'</div><div class="rs">'+esc(p.reason)+'</div></div><div class="pc">'+esc(p.probability)+"%</div></div>";});
-    h+='<div class="tot"><span>Combined chance</span><b>'+esc(d.combined)+'%</b></div><div class="bet-cta"></div><p class="fine">'+esc(d.summary)+'</p><p class="fine">18+ only. Estimates are not guarantees. Please gamble responsibly.</p>';
+    h+='<div class="tot"><span>Estimated chance all legs win</span><b>'+esc(d.combined)+'%</b></div><div class="bet-cta"></div><p class="fine">'+esc(d.summary)+'</p><p class="fine">18+ only. Estimates are not guarantees. Please gamble responsibly.</p>';
     $("slip").innerHTML=h;
   }).catch(()=>slipMsg("The ticket could not be built. Check your connection and try again."));
 }

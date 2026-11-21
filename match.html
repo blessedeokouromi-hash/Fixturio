@@ -101,7 +101,19 @@ function render(){
     html+='<div class="card"><h3>Model prediction</h3><div class="pred"><span class="sc2">'+esc(pred.s)+'</span><div>Predicted score<br><small style="color:var(--mu)">Top chance '+mx+'% · Expected goals '+pred.x+" – "+pred.y+"</small></div></div>";
     const rows=[["Match result",[[h.name+" win",pred.h],["Draw",pred.d],[a.name+" win",pred.a]]],["Total goals",[["Over 2.5",pred.o],["Under 2.5",100-pred.o]]],["Both teams to score",[["Yes",pred.b],["No",100-pred.b]]]];
     rows.forEach(r=>{html+='<div class="note" style="margin-top:12px">'+esc(r[0])+"</div>";r[1].forEach(x=>{html+='<div class="mrow"><span class="nm">'+esc(x[0])+'</span><span class="pv">'+x[1]+'%</span><div class="tr"><i style="width:'+x[1]+'%"></i></div></div>';});});
-    html+='<p class="note">Predicted from both teams’ results over the last 30 days. Estimates, not guarantees.</p></div>';
+    html+='<p class="note">'+esc(pred.why||"Predicted from both teams’ results over the last 30 days.")+' Estimates, not guarantees.</p></div>';
+    if(pred.form&&(pred.form.h||pred.form.a)){
+      html+='<div class="card"><h3>Recent form</h3>';
+      html+='<div class="mrow"><span class="nm">'+esc(h.name)+'</span><span class="pv">'+esc(pred.form.h||"no stored results")+'</span></div>';
+      html+='<div class="mrow"><span class="nm">'+esc(a.name)+'</span><span class="pv">'+esc(pred.form.a||"no stored results")+'</span></div>';
+      html+='<p class="note">Last five finished matches in our stored results, oldest to newest: W win, D draw, L loss.</p></div>';
+    }
+    if(pred.h2h&&pred.h2h.list&&pred.h2h.list.length){
+      const hh=pred.h2h;
+      html+='<div class="card"><h3>Head to head</h3>';
+      hh.list.slice().reverse().forEach(r=>{html+='<div class="mrow"><span class="nm">'+esc(r.d)+'</span><span class="pv">'+r.sh+' – '+r.sa+'</span></div>';});
+      html+='<p class="note">'+esc(h.name)+' '+hh.hw+(hh.hw===1?" win":" wins")+' · '+hh.dr+(hh.dr===1?" draw":" draws")+' · '+esc(a.name)+' '+hh.aw+(hh.aw===1?" win":" wins")+', from the results we store.</p></div>';
+    }
   }
   html+='<div class="card hidden" id="info"></div>';
   $("app").innerHTML=html;

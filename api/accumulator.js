@@ -19,8 +19,16 @@ module.exports = async (req, res) => {
       const all = by(m.markets);
       const singles = by(m.markets.filter(x => x.kind === "single"));
       let c = all[0];
-      if (risk === "risky") c = singles[0] || all[0];
-      else if (risk === "balanced" && singles[0] && singles[0].prob >= 0.55) c = singles[0];
+      if (risk === "safe") {
+        // Safe: double chance first, and only the comfortable ones.
+        const dc = all.find(x => x.kind === "dc" && x.prob >= 0.65);
+        c = dc || all[0];
+      } else if (risk === "balanced") c = singles[0] && singles[0].prob >= 0.55 ? singles[0] : all[0];
+      else {
+        // Risky: the sharpest playable single, i.e. the biggest odds on the card.
+        const play = singles.filter(x => x.prob >= 0.3);
+        c = play.length ? play[play.length - 1] : (singles[0] || all[0]);
+      }
       const f = m.form && m.form.home && m.form.away
         ? " Recent form: " + m.home + " " + m.form.home + " vs " + m.away + " " + m.form.away + "." : "";
       return {
@@ -28,6 +36,8 @@ module.exports = async (req, res) => {
         match: m.home + " vs " + m.away,
         market: c.market,
         probability: Math.round(Math.min(90, c.prob * 100)),
+        odd: c.odd || null,
+        value: !!(c.odd && c.prob * c.odd >= 1.08),
         reason: "Based on " + m.src + "." + f
       };
     });

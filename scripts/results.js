@@ -56,5 +56,21 @@ function grade(market, h, a) {
   hist.days.push({ date: old.date, won, lost, voided, picks });
   hist.days = hist.days.slice(-60);
   fs.writeFileSync("history.json", JSON.stringify(hist));
+  // Public performance tracker, computed here in the daily job and served as a
+  // static file, so visitors read it without any extra API use.
+  const now = Date.now();
+  const iso = t => new Date(t).toISOString().slice(0, 10);
+  const rate = days => {
+    let w = 0, l = 0;
+    days.forEach(d => { w += d.won; l += d.lost; });
+    return { won: w, lost: l, rate: (w + l) ? Math.round(w * 100 / (w + l)) : null };
+  };
+  fs.writeFileSync("track.json", JSON.stringify({
+    updated: new Date().toISOString(),
+    d7: rate(hist.days.filter(d => d.date >= iso(now - 6 * 864e5))),
+    d30: rate(hist.days.filter(d => d.date >= iso(now - 29 * 864e5))),
+    days: hist.days.length,
+    since: hist.days[0].date
+  }));
   console.log("Checked " + old.date + ": " + won + " won, " + lost + " lost, " + voided + " void");
 })();

@@ -32,6 +32,11 @@ body.hasdock .wrap{padding-bottom:96px}
 .intro h2{margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em}
 .intro p{margin:8px 0 0;color:var(--mu);max-width:46ch}
 .rec{margin:8px 16px 4px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--s1)}
+.trks{display:flex;gap:10px;margin-top:10px}
+.trk{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px}
+.trk small{display:block;font-size:11px;color:var(--mu)}
+.trk b{display:block;font-size:15px;margin:2px 0}
+.trk span{display:block;font-size:12px;color:var(--mu)}
 .rec .rt{display:block;font-weight:800;font-size:17px}
 .rec .msg0{margin:6px 0 0;color:var(--mu);font-size:14px}
 .rh{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
@@ -108,6 +113,7 @@ body.hasdock .wrap{padding-bottom:96px}
 <nav class="tabs tabsx"><a href="/">Matches</a><a class="on" href="/picks.html">Top 15</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
 <section class="intro"><h2>Today’s top 15</h2><p id="sub">Loading today’s picks…</p>
 <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="add" onclick="shareImage()">Share as image</button></div></section>
+<div id="track"></div>
 <div id="rec"></div>
 <section id="slip" class="slip" aria-live="polite"></section>
 <div id="hero"></div>
@@ -139,6 +145,8 @@ function chips(p){
   const m=mm[p.fixture]||{};
   const c=[/bookmaker/.test(m.src||p.reason||"")?"Backed by bookmaker odds":"Form and stats only"];
   if(m.form&&m.form.home&&m.form.away)c.push("Form "+m.form.home+" vs "+m.form.away);
+  if(p.cs)c.push("Model score "+p.cs);
+  if(p.value)c.push("Value pick");
   return c.map(x=>'<span class="cp">'+esc(x)+"</span>").join("");
 }
 
@@ -198,6 +206,13 @@ function toggleRec(){
   $("recBtn").textContent=e.hidden?"See those picks":"Hide those picks";
 }
 
+function renderTrack(t){
+  const box=$("track");
+  if(!t||!t.d7||!t.d30||((t.d7.won+t.d7.lost+t.d30.won+t.d30.lost)===0)){box.innerHTML="";return;}
+  const pct2=x=>x.rate==null?"\u2013":x.rate+"%";
+  const cell=(label,x)=>'<div class="trk"><small>'+label+'</small><b>'+x.won+' of '+(x.won+x.lost)+' won</b><span>'+pct2(x)+' hit rate</span></div>';
+  box.innerHTML='<section class="rec"><b class="rt">Performance tracker</b><div class="trks">'+cell("Last 7 days",t.d7)+cell("Last 30 days",t.d30)+'</div><p class="msg0">Every pick we publish is graded after full time, losses included; void picks do not count. Tracking since '+esc(t.since)+'.</p></section>';
+}
 function record(hist){
   const box=$("rec");
   const days=(hist&&hist.days)||[];
@@ -218,7 +233,7 @@ function record(hist){
     if(p.result==="won"){w++;t[k][0]++;}else{l++;t[k][1]++;}
   }));
   const pct=(a,b)=>b?Math.round(a*100/b)+"%":"–";
-  let h='<section class="rec"><div class="rh"><div><small>'+esc(label)+"</small><b>"+(fin?last.won+" of "+fin+" picks won":"No finished picks")+'</b></div><div class="rate">'+pct(w,w+l)+"<small>last "+recent.length+(recent.length===1?" day":" days")+"</small></div></div>";
+  let h='<section class="rec"><div class="rh"><div><small>'+esc(label)+"</small><b>"+(fin?last.won+" of "+fin+" picks won":"No finished picks")+'</b></div></div></div>';
   h+='<div class="dots" aria-hidden="true">'+last.picks.map(p=>'<i class="'+(p.result==="won"?"w":p.result==="lost"?"l":"")+'"></i>').join("")+"</div>";
   h+='<div class="tr2">'+["Bankers","Solid","Brave"].filter(k=>t[k][0]+t[k][1]).map(k=>"<span>"+k+" <b>"+pct(t[k][0],t[k][0]+t[k][1])+"</b> ("+t[k][0]+" of "+(t[k][0]+t[k][1])+")</span>").join("")+"</div>";
   h+='<button id="recBtn" class="link" onclick="toggleRec()">See those picks</button><div id="recList" class="rl" hidden>'+last.picks.map(p=>'<div><span class="'+(p.result==="won"?"w":p.result==="lost"?"l":"v")+'">'+(p.result==="won"?"Won":p.result==="lost"?"Lost":"Void")+"</span><span>"+esc(p.match)+"<br>"+esc(p.market)+"</span><span>"+esc(p.score||"")+"</span></div>").join("")+"</div></section>";
@@ -226,6 +241,7 @@ function record(hist){
 }
 
 $("date").textContent=new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long"});
+fetch("/track.json").then(r=>r.ok?r.json():null).then(renderTrack).catch(()=>renderTrack(null));
 fetch("/history.json").then(r=>r.ok?r.json():null).then(record).catch(()=>record(null));
 fetch("/daily.json").then(r=>{if(!r.ok)throw 0;return r.json();}).then(d=>{
   picks=d.picks||[];
