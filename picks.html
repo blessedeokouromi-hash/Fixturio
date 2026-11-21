@@ -149,13 +149,13 @@ function chips(p){
 function rowHTML(i){
   const p=picks[i];
   var lgx=(window.flagName?window.flagName(p.country)+" ":"")+esc(p.league)+(p.country?" · "+esc(p.country):"")+" · "+tm(p.kickoff);
-  return '<div class="pk"><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+lgx+'</div><div class="mk">'+esc(p.market)+"</div><div>"+chips(p)+'</div></div><div class="pr"><b>'+esc(p.probability)+"%</b>""</div></div>";
+  return '<div class="pk"><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+lgx+'</div><div class="mk">'+esc(p.market)+"</div><div>"+chips(p)+'</div></div><div class="pr"><b>'+esc(p.probability)+"%</b>"+"</div></div>";
 }
 
 function draw(){
   if(!picks.length)return;
   const h=picks[0];
-  $("hero").innerHTML='<article class="hero"><div><small>'+(h.banker?"Today\'s banker":"Pick of the day")+'</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+(window.flagName?window.flagName(h.country)+" ":"")+esc(h.league)+(h.country?" · "+esc(h.country):"")+" · "+tm(h.kickoff)+'</div><div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div>""</div><div>"+dial(h.probability,112)+"</div></article>";
+  $("hero").innerHTML='<article class="hero"><div><small>'+(h.banker?"Today\'s banker":"Pick of the day")+'</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+(window.flagName?window.flagName(h.country)+" ":"")+esc(h.league)+(h.country?" · "+esc(h.country):"")+" · "+tm(h.kickoff)+'</div><div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div></div><div>"+dial(h.probability,112)+"</div></article>";
   $("tiers").innerHTML=TIERS.map(t=>{
     const idx=picks.map((p,i)=>i).filter(i=>i>0&&t.f(picks[i].probability));
     if(!idx.length)return "";
