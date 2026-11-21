@@ -23,7 +23,7 @@
   }
   function banner(){
     var b=esc(cfg.brand||"1xBet");
-    return '<section class="betcard"><div><b>Think you can call today\'s games?</b><small>Back your picks on '+b+': live odds and a welcome bonus for new players. 18+, bet responsibly.</small></div><a class="betbtn betbtn-s" href="'+esc(cfg.url)+'" target="_blank" rel="nofollow sponsored noopener">Check the odds on '+b+'</a></section>';
+    return '<section class="betcard"><div><b>Think you can call today\'s games?</b><small>Back your picks on '+b+' and claim your 300,000 welcome bonus. 18+, T&Cs apply.</small></div><a class="betbtn betbtn-s" href="'+esc(cfg.url)+'" target="_blank" rel="nofollow sponsored noopener">Claim your 300,000 bonus</a></section>';
   }
   function fill(){
     if(!cfg)return;
