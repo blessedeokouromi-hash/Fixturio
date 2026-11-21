@@ -40,8 +40,7 @@
       }
       var native = document.getElementById("ad-native");
       if (native) run(cfg.native && cfg.native.src, native, "native");
-      var sb = document.getElementById("ad-socialbar");
-      if (sb) run(cfg.socialbar && cfg.socialbar.src, sb, "socialbar");
+      if (cfg.socialbar && cfg.socialbar.src) run(cfg.socialbar.src, document.getElementById("ad-socialbar") || document.body, "socialbar");
       if (cfg.popunder && cfg.popunder.src && !shownToday()) {
         markToday();
         run(cfg.popunder.src, document.body, "popunder");
