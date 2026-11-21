@@ -50,7 +50,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 </div>
 <div class="adslot" id="ad-native"></div>
 <main id="app"><p class="msg">Loading headlines…</p></main>
-<p class="fine">Links lead to external sites we do not control. Headlines refresh once a day.</p>
+<div class="bet-cta" data-banner="1"></div><p class="fine">Links lead to external sites we do not control. Headlines refresh once a day.</p>
 </div>
 <script src="/ads.js" defer></script>
 <script>
@@ -71,4 +71,4 @@ fetch("/news.json").then(r=>r.ok?r.json():null).then(d=>{
   render();
 }).catch(()=>{$("app").innerHTML='<p class="msg">News could not be loaded. Try again shortly.</p>';});
 </script>
-</body></html>
+<script src="/affiliate.js" defer></script></body></html>

@@ -58,7 +58,7 @@ td.p{font-weight:800}
 <div class="picker"><select id="sel" onchange="pick()" aria-label="Choose a league"></select></div>
 <main id="app"><p class="msg">Loading tables…</p></main>
 <div id="scorers"></div>
-<p class="fine">Tables update once a day, so a mid-table match played tonight may not be reflected until tomorrow morning. 18+ only.</p>
+<div class="bet-cta" data-banner="1"></div><p class="fine">Tables update once a day, so a mid-table match played tonight may not be reflected until tomorrow morning. 18+ only.</p>
 </div>
 <script src="/ads.js" defer></script>
 <script>
@@ -97,4 +97,4 @@ fetch("/standings.json").then(r=>r.ok?r.json():null).then(d=>{
 }).catch(()=>{$("app").innerHTML='<p class="msg">Tables could not be loaded. Try again shortly.</p>';});
 fetch("/scorers.json").then(r=>r.ok?r.json():null).then(d=>{if(d){if(!S)S={};S.scorers=d.leagues;if(cur)renderSc();}}).catch(function(){});
 </script>
-</body></html>
+<script src="/affiliate.js" defer></script></body></html>
