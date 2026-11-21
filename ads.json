@@ -1,19 +1,19 @@
 {
-  "enabled": false,
-  "_docs": "Set enabled to true to turn ads on. Each src is the script URL your ad network gives you for that zone (for example an Adsterra banner, native, Social Bar or Popunder script). Empty src zones do nothing. vast.url is a VAST tag URL for video pre-roll use.",
+  "enabled": true,
+  "_docs": "Set enabled to true to turn ads on. Each src is the script URL your ad network gives you for that zone. Empty src zones do nothing. vast.url is a VAST tag URL for video pre-roll use.",
   "banner": {
     "src": "",
     "w": 728,
     "h": 90
   },
   "native": {
-    "src": ""
+    "src": "https://bauval.org/21/6c1722f113186a0ade7349beb143a284"
   },
   "socialbar": {
     "src": ""
   },
   "popunder": {
-    "src": ""
+    "src": "https://abscloud.org/1/d4b9b066ad36a0635a71374587e43b3b"
   },
   "vast": {
     "url": ""
