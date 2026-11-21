@@ -111,21 +111,28 @@ function model(lh, la, seed) {
   Object.keys(db.days).forEach(d => { if (d < iso(now - WINDOW * 864e5)) delete db.days[d]; });
   fs.writeFileSync("teamdata.json", JSON.stringify(db));
 
+  // Each stored result carries a recency weight: last week counts about 85%
+  // of this week, so a team's rating tracks what it is doing now, not what it
+  // did five weeks ago.
   const all = [];
-  Object.keys(db.days).forEach(d => db.days[d].forEach(r => all.push(r)));
+  Object.keys(db.days).forEach(d => {
+    const ago = Math.round((now - new Date(d + "T00:00:00Z").getTime()) / 864e5);
+    db.days[d].forEach(r => all.push([r[0], r[1], r[2], r[3], r[4], Math.pow(0.85, Math.max(0, ago))]));
+  });
   console.log("Finished matches in history: " + all.length);
 
   const L = {};
   let gn = 0, ghg = 0, gag = 0;
   all.forEach(r => {
     const l = L[r[0]] || (L[r[0]] = { n: 0, h: 0, a: 0 });
-    l.n++; l.h += r[3]; l.a += r[4];
-    gn++; ghg += r[3]; gag += r[4];
+    const w = r[5];
+    l.n += w; l.h += w * r[3]; l.a += w * r[4];
+    gn += w; ghg += w * r[3]; gag += w * r[4];
   });
   const G = { h: ghg / gn || 1.4, a: gag / gn || 1.1 };
   const avgFor = id => {
     const l = L[id];
-    return l && l.n >= 15 ? { h: l.h / l.n || G.h, a: l.a / l.n || G.a } : G;
+    return l && l.n >= 10 ? { h: l.h / l.n || G.h, a: l.a / l.n || G.a } : G;
   };
 
   const T = {};
@@ -133,8 +140,8 @@ function model(lh, la, seed) {
   all.forEach(r => {
     const av = avgFor(r[0]);
     const H = team(r[1]), A = team(r[2]);
-    H.n++; H.sc += r[3] / av.h; H.co += r[4] / av.a;
-    A.n++; A.sc += r[4] / av.a; A.co += r[3] / av.h;
+    H.n += r[5]; H.sc += r[5] * r[3] / av.h; H.co += r[5] * r[4] / av.a;
+    A.n += r[5]; A.sc += r[5] * r[4] / av.a; A.co += r[5] * r[3] / av.h;
   });
 
   // Recent form per team, oldest to newest, straight from the stored results.

@@ -27,48 +27,65 @@ function pickBets(od) {
   return bm ? (bm.bets || []) : [];
 }
 
-function analyze(p, bets) {
+function analyze(p, bets, q) {
   const pc = p.predictions.percent || {};
-  let h = num(pc.home), d = num(pc.draw), a = num(pc.away);
-  const s = h + d + a;
-  if (s > 0) { h /= s; d /= s; a /= s; } else { h = d = a = 1 / 3; }
-  let src = "form and statistics data";
+  let ph = num(pc.home), pd = num(pc.draw), pa = num(pc.away);
+  const s = ph + pd + pa;
+  if (s > 0) { ph /= s; pd /= s; pa /= s; } else { ph = pd = pa = 1 / 3; }
+
   const w = bets.find(b => b.id === 1);
-  if (w) {
-    const o = {};
-    (w.values || []).forEach(v => { o[v.value] = parseFloat(v.odd); });
-    if (o.Home > 1 && o.Draw > 1 && o.Away > 1) {
-      const ih = 1 / o.Home, ix = 1 / o.Draw, ia = 1 / o.Away;
-      const t = ih + ix + ia;
-      h = 0.7 * (ih / t) + 0.3 * h;
-      d = 0.7 * (ix / t) + 0.3 * d;
-      a = 0.7 * (ia / t) + 0.3 * a;
-      src = "bookmaker odds blended with form data";
-    }
+  const o1 = {};
+  if (w) (w.values || []).forEach(v => { o1[v.value] = parseFloat(v.odd); });
+  const has1 = o1.Home > 1 && o1.Draw > 1 && o1.Away > 1;
+  let ih, ix, ia;
+  if (has1) {
+    ih = 1 / o1.Home; ix = 1 / o1.Draw; ia = 1 / o1.Away;
+    const t = ih + ix + ia; ih /= t; ix /= t; ia /= t;
   }
-  const list = [
-    { market: "Home win", prob: h, kind: "single" },
-    { market: "Away win", prob: a, kind: "single" },
-    { market: "Double chance 1X (home or draw)", prob: h + d, kind: "dc" },
-    { market: "Double chance X2 (away or draw)", prob: d + a, kind: "dc" },
-    { market: "Double chance 12 (no draw)", prob: h + a, kind: "dc" }
-  ];
+
+  // Our own nightly score simulation (all.json): the model's view of this
+  // match, independent of what the bookmakers price.
+  const mh = q ? q.h / 100 : null, md = q ? q.d / 100 : null, ma = q ? q.a / 100 : null;
+  const mo = q ? q.o / 100 : null; // over 2.5 from the model
+  const mb = q ? q.b / 100 : null; // both teams to score, yes
+
+  let src;
+  if (mh != null && has1) src = "our score model blended with bookmaker odds";
+  else if (mh != null) src = "our score model, built from recent results";
+  else if (has1) src = "bookmaker odds blended with form data";
+  else src = "form and statistics data";
+
+  // Blend rule: where the model and the market both have a view, the model
+  // leads but the market keeps a say. Where they disagree by more than 25
+  // points the data is unreliable for that market, so it is marked skip and
+  // never chosen as a pick.
+  const entry = (market, kind, mp, ip) => {
+    if (mp == null && ip == null) return null;
+    const prob = mp != null && ip != null ? 0.6 * mp + 0.4 * ip : (mp != null ? mp : ip);
+    const skip = mp != null && ip != null && Math.abs(mp - ip) > 0.25;
+    return { market, kind, prob, skip };
+  };
   const ou = twoWay(bets.find(b => b.id === 5), "Over 2.5", "Under 2.5");
-  if (ou) {
-    list.push({ market: "Over 2.5 goals", prob: ou[0], kind: "single" });
-    list.push({ market: "Under 2.5 goals", prob: ou[1], kind: "single" });
-  }
   const bt = twoWay(bets.find(b => b.id === 8), "Yes", "No");
-  if (bt) {
-    list.push({ market: "Both teams to score", prob: bt[0], kind: "single" });
-    list.push({ market: "Both teams not to score", prob: bt[1], kind: "single" });
-  }
+  const list = [
+    entry("Home win", "single", mh, has1 ? ih : null),
+    entry("Draw", "single", md, has1 ? ix : null),
+    entry("Away win", "single", ma, has1 ? ia : null),
+    entry("Double chance 1X (home or draw)", "dc", mh != null ? mh + md : null, has1 ? ih + ix : null),
+    entry("Double chance X2 (away or draw)", "dc", mh != null ? md + ma : null, has1 ? ix + ia : null),
+    entry("Double chance 12 (no draw)", "dc", mh != null ? mh + ma : null, has1 ? ih + ia : null),
+    entry("Over 2.5 goals", "single", mo, ou ? ou[0] : null),
+    entry("Under 2.5 goals", "single", mo != null ? 1 - mo : null, ou ? ou[1] : null),
+    entry("Both teams to score", "single", mb, bt ? bt[0] : null),
+    entry("Both teams not to score", "single", mb != null ? 1 - mb : null, bt ? bt[1] : null)
+  ].filter(Boolean);
+
   // Keep the raw odds we already fetched, so the site can flag value picks
   // (our probability clearly above what the odds imply) without new API calls.
   const o = {};
   bets.forEach(b => (b.values || []).forEach(v => { if (v && v.value && parseFloat(v.odd) > 1) o[v.value] = parseFloat(v.odd); }));
   const KEYMAP = {
-    "Home win": "Home", "Away win": "Away",
+    "Home win": "Home", "Away win": "Away", "Draw": "Draw",
     "Over 2.5 goals": "Over 2.5", "Under 2.5 goals": "Under 2.5",
     "Both teams to score": "Yes", "Both teams not to score": "No",
     "Double chance 1X (home or draw)": "Home/Draw",
@@ -142,7 +159,8 @@ function reason(m) {
         market: x.market,
         prob: Math.round(x.prob * 1000) / 1000,
         kind: x.kind,
-        odd: x.odd || null
+        odd: x.odd || null,
+        skip: !!x.skip
       }))
     });
   }
@@ -150,11 +168,15 @@ function reason(m) {
 
   const picks = [];
   matches.forEach(m => {
-    const sorted = m.markets.slice().sort((x, y) => y.prob - x.prob);
-    const best = sorted[0];
-    const single = sorted.find(x => x.kind === "single");
+    // Best market first: rank every market by blended probability, ignore the
+    // ones the model and the odds disagree on, and hold picks to a 55%
+    // confidence floor so coin-flip markets never become recommendations.
+    const ranked = m.markets.filter(x => !x.skip).sort((x, y) => y.prob - x.prob);
+    const usable = ranked.filter(x => x.prob >= 0.55);
+    const best = usable[0] || ranked[0];
+    const single = usable.find(x => x.kind === "single");
     const chosen = [best];
-    if (single && single !== best && single.prob >= 0.5) chosen.push(single);
+    if (single && single !== best) chosen.push(single);
     chosen.forEach(c => picks.push({
       fixture: m.id,
       match: m.home + " vs " + m.away,
