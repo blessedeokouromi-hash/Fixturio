@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B1220">
 <title>Football Predictions Today: Live Scores, Predicted Scores & Top Picks | Fixturio</title>
-<meta name="description" content="Free football predictions for today and this weekend, worldwide. Live scores, predicted scores, over/under 2.5 and BTTS chances for 1,500+ daily matches, plus standings, news and a smart ticket builder.">
+<meta name="description" content="Free football predictions for today and this weekend, worldwide. Live scores, predicted scores, over/under 2.5 and BTTS chances for 1,500+ daily matches, plus standings and news.">
 <link rel="canonical" href="https://fixturio.vercel.app/">
 <meta property="og:title" content="Fixturio | Live football scores and predictions">
 <meta property="og:description" content="Predicted scores and confidence bars for 1,500+ matches every day. Free, fast and mobile friendly.">
@@ -144,7 +144,6 @@ body.tm .dock{display:block}
     <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#F5B544"/><circle cx="16" cy="16" r="6" fill="none" stroke="#0B1220" stroke-width="2"/><path d="M16 4v24" stroke="#0B1220" stroke-width="2"/></svg>
     <div><b>Fixturio</b><small id="date"></small></div>
   </div>
-  <button id="tbtn" class="tbtn" onclick="toggleMode()">Smart ticket</button>
 </header>
 <nav class="tabs tabsx"><a class="on" href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
 <div class="adslot" id="ad-banner"></div>
@@ -152,28 +151,14 @@ body.tm .dock{display:block}
 <div class="sr"><input id="q" type="search" placeholder="Search team, league or country" oninput="setQ(this.value)" aria-label="Search matches" autocomplete="off"></div>
 <div id="chips" class="chips"></div>
 <p id="cov" class="cov"></p>
-<div id="hint" class="hint"></div>
-<section id="slip" class="slip" aria-live="polite"></section>
 <main id="app"><p class="msg pad">Loading matches…</p></main>
 <div class="bet-cta" data-banner="1"></div><p class="fine foot">18+ only. Predictions are estimates, not guarantees. A dot beside a time means a deeper analysis using bookmaker odds.</p>
 </div>
-<div class="dock"><div class="dk">
-  <div class="dk1">
-    <span id="cnt">0 of 10 chosen</span>
-    <div class="seg" role="group" aria-label="Risk level">
-      <button id="rsafe" onclick="setRisk('safe')">Safe</button>
-      <button id="rbalanced" class="on" onclick="setRisk('balanced')">Balanced</button>
-      <button id="rrisky" onclick="setRisk('risky')">Risky</button>
-    </div>
-  </div>
-  <button class="go" onclick="build()">Build ticket</button>
-</div></div>
 <script>
 const LIVE=["1H","2H","HT","ET","BT","P","LIVE"],DONE=["FT","AET","PEN"];
 const TOPL=[1,2,3,4,5,6,10,12,29,32,848,39,140,135,78,61,88,94,144,203,40,253,71,128,179];
-const open=new Set(),panels={},sel=new Set(),info={};
-let data=[],pred={},cov=null,loaded=false,mode=false,risk="balanced",filter="all",failed="",day=0,q="",moreOpen=false,npCol=false;
-let legs=[];try{legs=JSON.parse(localStorage.getItem("fixturio:legs")||"[]")}catch(e){}
+const open=new Set(),panels={},info={};
+let data=[],pred={},cov=null,loaded=false,filter="all",failed="",day=0,q="",moreOpen=false,npCol=false;
 let _ctx=null,_rows=[];
 window.mkMode="main";window.mkSel="all";
 const $=id=>document.getElementById(id);
@@ -218,13 +203,12 @@ function predCell(m){
 }
 
 function row(m){
-  const f=m.fixture,id=f.id,live=isLive(m),can=f.status.short==="NS"&&ana(id);
+  const f=m.fixture,id=f.id,live=isLive(m);
   const done=DONE.includes(f.status.short),gh=m.goals.home,ga=m.goals.away;
   const hw=done&&gh>ga,aw=done&&ga>gh;
   const hc=done?(hw?"w":(aw?"l":"")):"",ac=done?(aw?"w":(hw?"l":"")):"";
   const sc=gh===null?"":'<div class="'+hc+'">'+gh+'</div><div class="'+ac+'">'+ga+"</div>";
-  const ck=mode?'<div class="ck'+(sel.has(id)?" on":"")+'" id="c'+id+'"'+(can?"":' style="visibility:hidden"')+">✓</div>":"";
-  return '<div class="mw'+(mode&&!can?" dim":"")+'"><div class="m" role="button" tabindex="0" onclick="tap('+id+','+(can?1:0)+')">'+ck+'<div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span></div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+"</span></div></div>"+(npCol?"":predCell(m))+'<div class="sc'+(live?" live":"")+'">'+sc+'</div></div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
+  return '<div class="mw"><div class="m" role="button" tabindex="0" onclick="tap('+id+')">'+ck+'<div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span></div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+"</span></div></div>"+(npCol?"":predCell(m))+'<div class="sc'+(live?" live":"")+'">'+sc+'</div></div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
 }
 
 function days(){
@@ -334,7 +318,7 @@ function panel(rows,notes){
     h+='<div class="sec"><h4>'+esc(k)+'</h4>';
     g[k].forEach(r=>{
       const idx=_rows.indexOf(r);
-      h+='<div class="mrow'+(r===b1?" best":"")+'"><span class="nm">'+esc(r.label)+'</span><span class="pv">'+r.p+'%</span><div class="tr"><i style="width:'+r.p+'%"></i></div>'+(canAdd()?'<button class="add2'+(legHas(_ctx.id,r.label)?" on":"")+'" onclick="addLeg('+idx+')" aria-label="Add to ticket">'+(legHas(_ctx.id,r.label)?"✓":"Add")+'</button>':'')+'</div>';
+      h+='<div class="mrow'+(r===b1?" best":"")+'"><span class="nm">'+esc(r.label)+'</span><span class="pv">'+r.p+'%</span><div class="tr"><i style="width:'+r.p+'%"></i></div>'+'</div>';
     });
     h+='</div>';
   });
@@ -349,17 +333,6 @@ function starMatch(){
   localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));
   const b=$("starbtn");if(b){b.classList.toggle("on",i2<0);b.textContent=i2<0?"★ Saved":"☆ Save match";}
 }
-function canAdd(){const mm=_ctx?data.find(m=>m.fixture.id===_ctx.id):null;return !!(mm&&mm.fixture.status.short==="NS");}
-function legHas(id,label){return legs.some(l=>l.id===id&&l.market===label);}
-function addLeg(i){
-  if(!_ctx)return;
-  const r=_rows[i];if(!r)return;
-  if(legHas(_ctx.id,r.label)){legs=legs.filter(l=>!(l.id===_ctx.id&&l.market===r.label));}
-  else{if(legs.length>=10){$("hint").textContent="Ten selections is the limit for one ticket.";return;}legs.push({id:_ctx.id,match:_ctx.home+" vs "+_ctx.away,market:r.label,p:r.p});}
-  localStorage.setItem("fixturio:legs",JSON.stringify(legs));
-  cnt();open.delete(_ctx.id);tog(_ctx.id);
-}
-
 function dailyRows(dm,home,away){
   const mk={};dm.markets.forEach(x=>{mk[x.market]=Math.round(x.prob*100);});
   const h=mk["Home win"],a=mk["Away win"],x1=mk["Double chance 1X (home or draw)"],x2=mk["Double chance X2 (away or draw)"],x12=mk["Double chance 12 (no draw)"];
@@ -441,72 +414,7 @@ function tog(id){
   }).catch(()=>{const e=$("p"+id);if(e)e.innerHTML='<p class="note">Predictions could not be loaded. Try again later.</p>';});
 }
 
-function cnt(){$("cnt").textContent=legs.length?legs.length+" selections":"0 of 10 chosen";}
-function hintText(){return Object.keys(info).length?"Choose 2 to 10 matches that have not started. A dot beside the time means it can be used in tickets. Safe leans on double chance, Balanced mixes in singles, Risky backs bigger odds.":"This morning’s analysis is not ready yet, so tickets cannot be built right now.";}
-
-function tap(id,can){
-  if(mode){
-    if(!can)return;
-    if(sel.has(id))sel.delete(id);
-    else if(sel.size>=10){$("hint").textContent="Ten matches is the limit for one ticket.";return;}
-    else sel.add(id);
-    const c=$("c"+id);if(c)c.classList.toggle("on",sel.has(id));
-    $("hint").textContent=hintText();
-    cnt();return;
-  }
-  tog(id);
-}
-
-function toggleMode(){
-  mode=!mode;
-  document.body.classList.toggle("tm",mode);
-  $("tbtn").textContent=mode?"Close":"Smart ticket";
-  $("hint").textContent=hintText();
-  $("hint").style.display=mode?"block":"none";
-  filter=mode&&Object.keys(info).length?"ana":"all";
-  moreOpen=false;
-  if(!mode){$("slip").style.display="none";sel.clear();}
-  cnt();render();
-}
-
-function setRisk(r){risk=r;["safe","balanced","risky"].forEach(x=>$("r"+x).classList.toggle("on",x===r));}
-
-function slipMsg(t){$("slip").innerHTML='<div class="sh"><b>Your ticket</b></div><p class="msg">'+esc(t)+"</p>";}
-
-function build(){
-  $("slip").style.display="block";
-  window.scrollTo({top:0});
-  if(legs.length){
-    let combined=1;
-    let h='<div class="sh"><b>Your ticket</b><span>'+esc(legs.length)+' selections</span></div>';
-    legs.forEach((p,i)=>{
-      combined*=p.p/100;
-      h+='<div class="leg"><div><div class="mt">'+esc(p.match)+'</div><div class="mk">'+esc(p.market)+'</div></div><div style="text-align:right"><div class="pc">'+p.p+'%</div><button class="rm" onclick="rmLeg('+i+')">Remove</button></div></div>';
-    });
-    h+='<div class="tot"><span>Estimated chance all legs win</span><b>'+Math.round(combined*100)+'%</b></div>';
-    h+='<div class="sacts"><button onclick="shareTicket()">Share ticket</button><button onclick="clearTicket()">Clear ticket</button></div>';
-    h+='<p class="fine">Your selections stay saved on this device. Estimates are not guarantees. 18+ only. Please gamble responsibly.</p>';
-    $("slip").innerHTML=h;
-    return;
-  }
-  if(sel.size<2){slipMsg("Choose at least 2 matches to build a ticket. Or open a match and tap Add next to a market.");return;}
-  slipMsg("Building your ticket…");
-  const ids=[...sel].sort((a,b)=>a-b).join(",");
-  fetch("/api/accumulator?ids="+ids+"&risk="+risk).then(r=>r.json()).then(d=>{
-    if(d.error){slipMsg(d.error);return;}
-    let h='<div class="sh"><b>Your ticket</b><span>'+esc(cap(risk))+" setting, "+esc(d.legs)+" legs</span></div>";
-    (d.picks||[]).forEach(p=>{h+='<div class="leg"><div><div class="mt">'+esc(p.match)+'</div><div class="mk">'+esc(p.market)+'</div><div class="rs">'+esc(p.reason)+'</div></div><div class="pc">'+esc(p.probability)+"%</div></div>";});
-    h+='<div class="tot"><span>Estimated chance all legs win</span><b>'+esc(d.combined)+'%</b></div><div class="bet-cta"></div><p class="fine">'+esc(d.summary)+'</p><p class="fine">18+ only. Estimates are not guarantees. Please gamble responsibly.</p>';
-    $("slip").innerHTML=h;
-  }).catch(()=>slipMsg("The ticket could not be built. Check your connection and try again."));
-}
-function rmLeg(i){legs.splice(i,1);localStorage.setItem("fixturio:legs",JSON.stringify(legs));cnt();build();}
-function clearTicket(){legs=[];localStorage.setItem("fixturio:legs",JSON.stringify(legs));cnt();slipMsg("Ticket cleared. Open a match and tap Add next to any market.");}
-function shareTicket(){
-  const txt="My Fixturio ticket:\n"+legs.map(l=>l.match+" - "+l.market+" ("+l.p+"%)").join("\n")+"\nCombined chance "+Math.round(legs.reduce((c,l)=>c*l.p/100,1)*100)+"%\nhttps://fixturio.vercel.app";
-  if(navigator.share)navigator.share({title:"My Fixturio ticket",text:txt}).catch(function(){});
-  else if(navigator.clipboard)navigator.clipboard.writeText(txt);
-}
+function tap(id){tog(id);}
 
 function load(){
   const d0=day;
@@ -525,7 +433,7 @@ days();
 load();
 setInterval(()=>{if(day===0)load();},60000);
 fetch("/daily.json").then(r=>r.ok?r.json():null).then(d=>{
-  if(d&&d.matches){d.matches.forEach(m=>{info[m.id]=m;});$("hint").textContent=hintText();render();}
+  if(d&&d.matches){d.matches.forEach(m=>{info[m.id]=m;});render();}
 }).catch(()=>{});
 fetch("/all.json").then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.m){pred=d.m;cov=d;render();}

@@ -115,16 +115,11 @@ body.hasdock .wrap{padding-bottom:96px}
 <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="add" onclick="shareImage()">Share as image</button></div></section>
 <div id="track"></div>
 <div id="rec"></div>
-<section id="slip" class="slip" aria-live="polite"></section>
 <div id="hero"></div>
 <div id="tiers"></div>
 <div class="bet-cta" data-banner="1"></div><div class="advt">Advertisement</div>
 <p class="fine">18+ only. Estimates are not guarantees. Please gamble responsibly.</p>
 </div>
-<div id="dock" class="dock"><div class="dk">
-  <div><b id="dn"></b><small id="dc"></small></div>
-  <button class="go" onclick="openSlip()">View slip</button>
-</div></div>
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -134,7 +129,7 @@ const TIERS=[
   {k:"Solid",d:"A balanced chance with fair rewards.",c:"#8FB4FF",f:p=>p>=65&&p<80},
   {k:"Brave",d:"Riskier picks that can swing either way.",c:"#FF8A6B",f:p=>p<65}
 ];
-let picks=[],mm={},sel=[],slipOn=false;
+let picks=[],mm={};
 
 function dial(p,size){
   const h=size/2,r=h-7,c=2*Math.PI*r,o=c*(1-p/100);
@@ -151,54 +146,21 @@ function chips(p){
   return c.map(x=>'<span class="cp">'+esc(x)+"</span>").join("");
 }
 
-function btn(i){
-  const on=sel.indexOf(i)>=0;
-  return '<button class="add" aria-pressed="'+on+'" onclick="add('+i+')">'+(on?"Added":"Add to ticket")+"</button>";
-}
-
 function rowHTML(i){
   const p=picks[i];
   var lgx=(window.flagName?window.flagName(p.country)+" ":"")+esc(p.league)+(p.country?" · "+esc(p.country):"")+" · "+tm(p.kickoff);
-  return '<div class="pk"><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+lgx+'</div><div class="mk">'+esc(p.market)+"</div><div>"+chips(p)+'</div></div><div class="pr"><b>'+esc(p.probability)+"%</b>"+btn(i)+"</div></div>";
+  return '<div class="pk"><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+lgx+'</div><div class="mk">'+esc(p.market)+"</div><div>"+chips(p)+'</div></div><div class="pr"><b>'+esc(p.probability)+"%</b>""</div></div>";
 }
-
-function add(i){
-  const at=sel.indexOf(i);
-  if(at>=0)sel.splice(at,1);
-  else{sel=sel.filter(j=>picks[j].fixture!==picks[i].fixture);sel.push(i);}
-  if(!sel.length)slipOn=false;
-  draw();
-}
-
-function comb(){return Math.round(sel.reduce((a,i)=>a*picks[i].probability/100,1)*1000)/10;}
-
-function slip(){
-  const s=$("slip");
-  if(!slipOn||!sel.length){s.style.display="none";return;}
-  s.style.display="block";
-  let h='<div class="sh"><b>Your slip</b><span>'+sel.length+(sel.length===1?" pick":" picks")+"</span></div>";
-  sel.forEach(i=>{const p=picks[i];h+='<div class="leg"><div><div class="mt">'+esc(p.match)+'</div><div class="mk2">'+esc(p.market)+'</div></div><div class="pc">'+esc(p.probability)+"%</div></div>";});
-  h+='<div class="tot"><span>Combined chance</span><b>'+comb()+'%</b></div><p class="fine2">Each pick’s chance is multiplied together, so the total falls quickly as you add picks. You can add one pick per match.</p><div class="sacts"><button onclick="clearAll()">Clear all</button><button onclick="closeSlip()">Close</button></div><div class="bet-cta"></div>';
-  s.innerHTML=h;
-}
-function openSlip(){slipOn=true;slip();window.scrollTo({top:0});}
-function closeSlip(){slipOn=false;slip();}
-function clearAll(){sel=[];slipOn=false;draw();}
 
 function draw(){
   if(!picks.length)return;
   const h=picks[0];
-  $("hero").innerHTML='<article class="hero"><div><small>'+(h.banker?"Today\'s banker":"Pick of the day")+'</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+(window.flagName?window.flagName(h.country)+" ":"")+esc(h.league)+(h.country?" · "+esc(h.country):"")+" · "+tm(h.kickoff)+'</div><div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div>"+btn(0)+"</div><div>"+dial(h.probability,112)+"</div></article>";
+  $("hero").innerHTML='<article class="hero"><div><small>'+(h.banker?"Today\'s banker":"Pick of the day")+'</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+(window.flagName?window.flagName(h.country)+" ":"")+esc(h.league)+(h.country?" · "+esc(h.country):"")+" · "+tm(h.kickoff)+'</div><div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div>""</div><div>"+dial(h.probability,112)+"</div></article>";
   $("tiers").innerHTML=TIERS.map(t=>{
     const idx=picks.map((p,i)=>i).filter(i=>i>0&&t.f(picks[i].probability));
     if(!idx.length)return "";
     return '<section class="tier" style="--tc:'+t.c+'"><header><h3>'+t.k+"</h3><p>"+t.d+'</p></header><div class="rows">'+idx.map(rowHTML).join("")+"</div></section>";
   }).join("");
-  $("dock").style.display=sel.length?"block":"none";
-  document.body.classList.toggle("hasdock",sel.length>0);
-  $("dn").textContent=sel.length+(sel.length===1?" pick":" picks")+" added";
-  $("dc").textContent="Combined chance "+comb()+"%";
-  slip();
 }
 
 function toggleRec(){
