@@ -488,7 +488,7 @@ function build(){
     if(d.error){slipMsg(d.error);return;}
     let h='<div class="sh"><b>Your ticket</b><span>'+esc(cap(risk))+" setting, "+esc(d.legs)+" legs</span></div>";
     (d.picks||[]).forEach(p=>{h+='<div class="leg"><div><div class="mt">'+esc(p.match)+'</div><div class="mk">'+esc(p.market)+'</div><div class="rs">'+esc(p.reason)+'</div></div><div class="pc">'+esc(p.probability)+"%</div></div>";});
-    h+='<div class="tot"><span>Combined chance</span><b>'+esc(d.combined)+'%</b></div><p class="fine">'+esc(d.summary)+'</p><p class="fine">18+ only. Estimates are not guarantees. Please gamble responsibly.</p>';
+    h+='<div class="tot"><span>Combined chance</span><b>'+esc(d.combined)+'%</b></div><div class="bet-cta"></div><p class="fine">'+esc(d.summary)+'</p><p class="fine">18+ only. Estimates are not guarantees. Please gamble responsibly.</p>';
     $("slip").innerHTML=h;
   }).catch(()=>slipMsg("The ticket could not be built. Check your connection and try again."));
 }
@@ -522,4 +522,4 @@ fetch("/daily.json").then(r=>r.ok?r.json():null).then(d=>{
 fetch("/all.json").then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.m){pred=d.m;cov=d;render();}
 }).catch(()=>{});
-</script><script src="/markets.js"></script><script src="/share.js"></script><script src="/ads.js" defer></script></body></html>
+</script><script src="/markets.js"></script><script src="/share.js"></script><script src="/ads.js" defer></script><script src="/affiliate.js" defer></script></body></html>
