@@ -3,7 +3,7 @@ const fs = require("fs");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const FEEDS = [
   ["BBC Sport", "http://feeds.bbci.co.uk/sport/football/rss.xml"],
-  ["Sky Sports", "https://www.skysports.com/rss/12040"],
+  ["Sky Sports", "https://www.skysports.com/rss/11095"],
   ["ESPN", "https://www.espn.com/espn/rss/soccer/news"]
 ];
 
@@ -23,9 +23,9 @@ function tag(x, t) {
       blocks.slice(0, 14).forEach(b => {
         const title = tag(b, "title"), link = tag(b, "link");
         if (!title || !link) return;
+        const desc = tag(b, "description");
         // Sky's feed mixes sports; keep football only
         if (/cricket|tennis|rugby|boxing|golf|formula 1|f1\b|nba|nfl|darts|snooker|cycling|athletics/i.test(title + " " + desc)) return;
-        const desc = tag(b, "description");
         const dt = tag(b, "pubDate");
         const ts = dt ? new Date(dt).getTime() : Date.now();
         items.push({ title, link, source: src, desc: desc.slice(0, 220), ts,
