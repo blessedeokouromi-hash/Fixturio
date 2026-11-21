@@ -23,6 +23,8 @@ function tag(x, t) {
       blocks.slice(0, 14).forEach(b => {
         const title = tag(b, "title"), link = tag(b, "link");
         if (!title || !link) return;
+        // Sky's feed mixes sports; keep football only
+        if (/cricket|tennis|rugby|boxing|golf|formula 1|f1\b|nba|nfl|darts|snooker|cycling|athletics/i.test(title + " " + desc)) return;
         const desc = tag(b, "description");
         const dt = tag(b, "pubDate");
         const ts = dt ? new Date(dt).getTime() : Date.now();

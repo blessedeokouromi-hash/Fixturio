@@ -22,7 +22,7 @@ const CHANNELS = [
       const entries = rss.match(/<entry>[\s\S]*?<\/entry>/g) || [];
       const vids = [];
       entries.slice(0, 6).forEach(e => {
-        const id = (e.match(/<yt:videoId>([\\w-]+)</) || [])[1];
+        const id = (e.match(/<yt:videoId>([\w-]+)</) || [])[1];
         const t = (e.match(/<title>([\s\S]*?)<\/title>/) || [])[1];
         const th = (e.match(/<media:thumbnail[^>]*url="([^"]+)"/) || [])[1];
         const dt = (e.match(/<published>([\s\S]*?)<\/published>/) || [])[1];
