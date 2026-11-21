@@ -19,11 +19,11 @@
   }).catch(function(){});
   function inlineBtn(){
     var b=esc(cfg.brand||"1xBet");
-    return '<a class="betbtn" href="'+esc(cfg.url)+'" target="_blank" rel="nofollow sponsored noopener">Bet these picks on '+b+'</a><p class="betfine">18+. Opens the bookmaker in a new tab.</p>';
+    return '<a class="betbtn" href="'+esc(cfg.url)+'" target="_blank" rel="nofollow sponsored noopener">Back these picks on '+b+'</a><p class="betfine">18+. Opens the bookmaker in a new tab.</p>';
   }
   function banner(){
     var b=esc(cfg.brand||"1xBet");
-    return '<section class="betcard"><div><b>Bet these picks on '+b+'</b><small>Odds are live in one tap. 18+, please bet responsibly.</small></div><a class="betbtn betbtn-s" href="'+esc(cfg.url)+'" target="_blank" rel="nofollow sponsored noopener">Open '+b+'</a></section>';
+    return '<section class="betcard"><div><b>Think you can call today\'s games?</b><small>Back your picks on '+b+': live odds and a welcome bonus for new players. 18+, bet responsibly.</small></div><a class="betbtn betbtn-s" href="'+esc(cfg.url)+'" target="_blank" rel="nofollow sponsored noopener">Check the odds on '+b+'</a></section>';
   }
   function fill(){
     if(!cfg)return;
