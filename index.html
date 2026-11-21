@@ -208,7 +208,7 @@ function row(m){
   const hw=done&&gh>ga,aw=done&&ga>gh;
   const hc=done?(hw?"w":(aw?"l":"")):"",ac=done?(aw?"w":(hw?"l":"")):"";
   const sc=gh===null?"":'<div class="'+hc+'">'+gh+'</div><div class="'+ac+'">'+ga+"</div>";
-  return '<div class="mw"><div class="m" role="button" tabindex="0" onclick="tap('+id+')">'+ck+'<div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span></div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+"</span></div></div>"+(npCol?"":predCell(m))+'<div class="sc'+(live?" live":"")+'">'+sc+'</div></div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
+  return '<div class="mw"><div class="m" role="button" tabindex="0" onclick="tap('+id+')"><div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span></div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+"</span></div></div>"+(npCol?"":predCell(m))+'<div class="sc'+(live?" live":"")+'">'+sc+'</div></div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
 }
 
 function days(){
