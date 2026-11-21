@@ -169,7 +169,7 @@ function slip(){
   s.style.display="block";
   let h='<div class="sh"><b>Your slip</b><span>'+sel.length+(sel.length===1?" pick":" picks")+"</span></div>";
   sel.forEach(i=>{const p=picks[i];h+='<div class="leg"><div><div class="mt">'+esc(p.match)+'</div><div class="mk2">'+esc(p.market)+'</div></div><div class="pc">'+esc(p.probability)+"%</div></div>";});
-  h+='<div class="tot"><span>Combined chance</span><b>'+comb()+'%</b></div><p class="fine2">Each pick’s chance is multiplied together, so the total falls quickly as you add picks. You can add one pick per match.</p><div class="sacts"><button onclick="clearAll()">Clear all</button><button onclick="closeSlip()">Close</button></div>';
+  h+='<div class="tot"><span>Combined chance</span><b>'+comb()+'%</b></div><p class="fine2">Each pick’s chance is multiplied together, so the total falls quickly as you add picks. You can add one pick per match.</p><div class="sacts"><button onclick="clearAll()">Clear all</button><button onclick="closeSlip()">Close</button></div><div class="bet-cta"></div>';
   s.innerHTML=h;
 }
 function openSlip(){slipOn=true;slip();window.scrollTo({top:0});}
@@ -235,4 +235,4 @@ fetch("/daily.json").then(r=>{if(!r.ok)throw 0;return r.json();}).then(d=>{
   $("upd").textContent="Built at "+tm(d.generated);
   draw();
 }).catch(()=>{$("sub").textContent="Today’s picks are still being built. They appear every morning, so check back soon.";});
-</script><script src="/share-image.js"></script><script src="/share.js"></script></body></html>
+</script><script src="/share-image.js"></script><script src="/share.js"></script><script src="/affiliate.js" defer></script></body></html>
