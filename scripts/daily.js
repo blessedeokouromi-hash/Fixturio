@@ -268,19 +268,45 @@ function reason(m) {
   // banker (75% or better). Otherwise no banker is shown that day.
   if (picks[0] && picks[0].probability >= 75) picks[0].banker = true;
 
-  // Acca of the day: the strongest picks combined into one line, up to three
-  // legs from different matches so the combined odds stay realistic.
-  const seenF = {};
-  const accaLegs = [];
-  const pushLeg = p => {
-    if (accaLegs.length >= 3 || seenF[p.fixture] || !(p.odd > 1)) return;
-    seenF[p.fixture] = 1;
-    accaLegs.push({ fixture: p.fixture, match: p.match, market: p.market, odd: p.odd, probability: p.probability, kickoff: p.kickoff, league: p.league, country: p.country });
+  // Acca of the day: the strongest picks combined into one slip, built to land
+  // between 1.50 and 2.00 total odds so it is actually worth backing. Among all
+  // combinations in that band it takes the one with the best real chance of
+  // landing (highest joint probability). Falls back to the safest legs when
+  // nothing fits the band that day.
+  const candAcca = picks
+    .filter(p => p.odd > 1 && p.probability >= 60)
+    .sort((a, b) => b.probability - a.probability)
+    .slice(0, 30);
+  const seenF0 = {};
+  const uniqAcca = candAcca.filter(p => (seenF0[p.fixture] ? false : (seenF0[p.fixture] = 1, true)));
+  const mkLeg = p => ({ fixture: p.fixture, match: p.match, market: p.market, odd: p.odd, probability: p.probability, kickoff: p.kickoff, league: p.league, country: p.country });
+  let accaBest = null;
+  const consider = legs => {
+    const total = legs.reduce((t, l) => t * l.odd, 1);
+    if (total < 1.5 || total > 2.0) return;
+    const hit = legs.reduce((t, l) => t * (l.probability / 100), 1);
+    const score = hit * 1000 + legs.length;
+    if (!accaBest || score > accaBest.score) accaBest = { legs: legs.map(mkLeg), total: Math.round(total * 100) / 100, score };
   };
-  const byProb = picks.slice().sort((a, b) => b.probability - a.probability);
-  byProb.forEach(p => { if (p.banker && p.probability >= 75) pushLeg(p); });
-  byProb.forEach(p => { if (p.probability >= 65) pushLeg(p); });
-  const acca = accaLegs.length >= 2 ? { legs: accaLegs, total: Math.round(accaLegs.reduce((t, l) => t * l.odd, 1) * 100) / 100 } : null;
+  for (let i = 0; i < uniqAcca.length; i++)
+    for (let j = i + 1; j < uniqAcca.length; j++) {
+      consider([uniqAcca[i], uniqAcca[j]]);
+      for (let k = j + 1; k < uniqAcca.length; k++) consider([uniqAcca[i], uniqAcca[j], uniqAcca[k]]);
+    }
+  if (!accaBest) {
+    const seenF = {};
+    const accaLegs = [];
+    const pushLeg = p => {
+      if (accaLegs.length >= 3 || seenF[p.fixture] || !(p.odd > 1)) return;
+      seenF[p.fixture] = 1;
+      accaLegs.push({ fixture: p.fixture, match: p.match, market: p.market, odd: p.odd, probability: p.probability, kickoff: p.kickoff, league: p.league, country: p.country });
+    };
+    const byProb = picks.slice().sort((a, b) => b.probability - a.probability);
+    byProb.forEach(p => { if (p.banker && p.probability >= 75) pushLeg(p); });
+    byProb.forEach(p => { if (p.probability >= 65) pushLeg(p); });
+    if (accaLegs.length >= 2) accaBest = { legs: accaLegs, total: Math.round(accaLegs.reduce((t, l) => t * l.odd, 1) * 100) / 100 };
+  }
+  const acca = accaBest;
 
   fs.writeFileSync("daily.json", JSON.stringify({
     date,
