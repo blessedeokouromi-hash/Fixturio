@@ -54,9 +54,25 @@
       var native = document.getElementById("ad-native");
       if (native) run(cfg.native && cfg.native.src, native, "native");
       if (cfg.socialbar && cfg.socialbar.src) run(cfg.socialbar.src, document.getElementById("ad-socialbar") || document.body, "socialbar");
+      // Popunder waits for the page to finish loading and fires on the
+      // visitor's first tap, so it can never hijack the site mid-load.
       if (cfg.popunder && cfg.popunder.src && !shownToday()) {
-        markToday();
-        run(cfg.popunder.src, document.body, "popunder");
+        var armed = false;
+        var arm = function () {
+          if (armed || shownToday()) return;
+          armed = true;
+          var go = function () {
+            document.removeEventListener("click", go, true);
+            document.removeEventListener("touchstart", go, true);
+            if (shownToday()) return;
+            markToday();
+            run(cfg.popunder.src, document.body, "popunder");
+          };
+          document.addEventListener("click", go, true);
+          document.addEventListener("touchstart", go, true, { passive: true });
+        };
+        if (document.readyState === "complete") setTimeout(arm, 4000);
+        else window.addEventListener("load", function () { setTimeout(arm, 4000); });
       }
       window.fixturioVastUrl = cfg.vast && cfg.vast.url ? cfg.vast.url : null;
       // In-feed slots: small banner units between league blocks on the homepage.
