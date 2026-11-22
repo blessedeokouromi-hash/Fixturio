@@ -1,4 +1,63 @@
 const fs = require("fs");
+
+// Scoreline consistency: the predicted score must agree with the same H/D/A
+// probabilities the picks use, not drift off a cold model. Fit a Dixon-Coles
+// Poisson (same correction as all.js) to the blended probabilities, then pick
+// the modal scoreline for the top outcome.
+function fact(n){ let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
+function dcCells(lh, la, RHO){
+  const N = 6, ph = [], pa = [];
+  for (let i = 0; i < N; i++){ ph[i] = Math.exp(-lh) * Math.pow(lh, i) / fact(i); pa[i] = Math.exp(-la) * Math.pow(la, i) / fact(i); }
+  const cells = [];
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++){
+    let p = ph[i] * pa[j];
+    if (i === 0 && j === 0) p *= 1 - lh * la * RHO;
+    else if ((i === 0 && j === 1) || (i === 1 && j === 0)) p *= 1 + RHO;
+    else if (i === 1 && j === 1) p *= 1 - RHO;
+    cells.push({ i: i, j: j, w: Math.max(0, p) });
+  }
+  return cells;
+}
+function fitScore(ph, pd, pa){
+  const RHO = -0.10;
+  let best = null;
+  for (let hi = 3; hi <= 72; hi++){
+    const lh = hi / 20;
+    for (let ai = 3; ai <= 72; ai++){
+      const la = ai / 20;
+      const cs = dcCells(lh, la, RHO);
+      let h = 0, d = 0, aw = 0;
+      for (const c of cs){ if (c.i > c.j) h += c.w; else if (c.i === c.j) d += c.w; else aw += c.w; }
+      const err = (h - ph) * (h - ph) + (d - pd) * (d - pd) + (aw - pa) * (aw - pa);
+      if (!best || err < best.err) best = { err: err, lh: lh, la: la };
+    }
+  }
+  return best;
+}
+function lcg(seed){ let s = (seed % 2147483647) || 1; return function(){ s = s * 48271 % 2147483647; return s / 2147483647; }; }
+function get12(list){
+  const g = k => { const x = list.find(y => y.market === k); return x ? x.prob : null; };
+  const h = g("Home win"), d = g("Draw"), aw = g("Away win");
+  return h != null && d != null && aw != null ? [h, d, aw] : null;
+}
+function pickScore(id, ph, pd, pa){
+  if (!(ph > 0 && pd > 0 && pa > 0) || ph + pd + pa > 1.05) return null;
+  const f = fitScore(ph, pd, pa);
+  if (!f) return null;
+  const cells = dcCells(f.lh, f.la, -0.10);
+  const top = ph >= pd && ph >= pa ? "H" : (pa >= ph && pa >= pd ? "A" : "D");
+  const clear = Math.max(ph, pd, pa) >= 0.5;
+  let pool = cells.filter(c => (c.i > c.j ? "H" : (c.i === c.j ? "D" : "A")) === top);
+  if (!clear) pool = cells.slice();
+  pool.sort((x, y) => y.w - x.w);
+  pool = pool.slice(0, 12);
+  const rnd = lcg(id);
+  let total = 0; for (const c of pool) total += c.w;
+  let r = rnd() * total, pick = pool[0];
+  for (const c of pool){ r -= c.w; if (r <= 0){ pick = c; break; } }
+  return { s: pick.i + "-" + pick.j, st: pool.slice(0, 3).map(c => c.i + "-" + c.j).join(", ") };
+}
+
 const KEY = process.env.API_FOOTBALL_KEY;
 const TOP = [1,2,4,5,6,3,848,39,140,135,78,61,88,94,144,203,40,253,71,128,179,29,32,10,12];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -143,6 +202,8 @@ function reason(m) {
     }
     const a = analyze(p, pickBets(od));
     const q = pred && pred[c.fixture.id];
+    const pv = get12(a.list);
+    const os = pv ? pickScore(c.fixture.id, pv[0], pv[1], pv[2]) : null;
     matches.push({
       id: c.fixture.id,
       league: c.league.name,
@@ -152,8 +213,8 @@ function reason(m) {
       away: c.teams.away.name,
       src: a.src,
       form: p.comparison && p.comparison.form ? p.comparison.form : null,
-      cs: q ? q.s : null,
-      sTop: q ? q.st : null,
+      cs: os ? os.s : (q ? q.s : null),
+      sTop: os ? os.st : (q ? q.st : null),
       why: q ? q.why : null,
       markets: a.list.map(x => ({
         market: x.market,
