@@ -20,3 +20,6 @@ self.addEventListener("notificationclick", function (e) {
     return clients.openWindow(url);
   }));
 });
+
+self.addEventListener("install",function(){self.skipWaiting();});
+self.addEventListener("activate",function(e){e.waitUntil(self.clients.claim());});

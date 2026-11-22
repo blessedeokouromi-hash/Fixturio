@@ -164,7 +164,7 @@ body.tm .dock{display:block}
 const LIVE=["1H","2H","HT","ET","BT","P","LIVE"],DONE=["FT","AET","PEN"];
 const TOPL=[1,2,3,4,5,6,10,12,29,32,848,39,140,135,78,61,88,94,144,203,40,253,71,128,179];
 const open=new Set(),panels={},info={};
-let data=[],pred={},cov=null,loaded=false,filter="all",failed="",day=0,q="",moreOpen=false,npCol=false;
+let data=[],pred={},cov=null,loaded=false,filter="all",failed="",day=0,q="",moreOpen=false,npCol=false,feedSkip=false;
 let _ctx=null,_rows=[];
 window.mkMode="main";window.mkSel="all";
 const $=id=>document.getElementById(id);
@@ -306,7 +306,7 @@ function render(){
   const group=k=>{
     const p=k.split("|");
     const ms=g[k].sort((a,b)=>(isLive(b)-isLive(a))||(a.fixture.timestamp-b.fixture.timestamp));
-    return '<div class="lg'+(hasLive(k)?" hot":"")+'">'+img(ms[0].league.logo)+"<b>"+esc(p[2])+"</b><span>"+esc(p[1])+'</span></div><div class="grp">'+ms.map(row).join("")+"</div>"+(++feedN<=80?'<div class="adslot ad-infeed"></div>':"");
+    return '<div class="lg'+(hasLive(k)?" hot":"")+'">'+img(ms[0].league.logo)+"<b>"+esc(p[2])+"</b><span>"+esc(p[1])+'</span></div><div class="grp">'+ms.map(row).join("")+"</div>"+(feedSkip?"":(++feedN<=80?'<div class="adslot ad-infeed"></div>':""));
   };
   let h=topK.map(group).join("");
   const showRest=(expand||moreOpen)?restK.length:(topK.length?0:Math.min(15,restK.length));
@@ -441,7 +441,7 @@ function fetchMatches(d0,attempt){
     clearTimeout(t);if(d0!==day)return;
     data=d.response||[];
     failed=(!data.length&&d.errors&&Object.keys(d.errors).length)?"Match data is temporarily unavailable. Please try again in a few minutes.":"";
-    loaded=true;render();
+    loaded=true;render();feedSkip=false;
     try{localStorage.setItem("fx_matches_"+dateStr(d0),JSON.stringify(d.response));}catch(e){}
     $("upd").textContent="Updated "+tm(new Date());
   }).catch(()=>{
@@ -450,16 +450,17 @@ function fetchMatches(d0,attempt){
     let saved=null;
     try{saved=JSON.parse(localStorage.getItem("fx_matches_"+dateStr(d0))||"null");}catch(e){}
     if(saved&&saved.length){data=saved;failed="The live feed is not responding right now, showing matches saved from earlier today. Reload to try again.";loaded=true;render();}
-    else{failed="Matches could not be loaded. Check your connection and reload.";loaded=true;render();}
+    else{failed="Matches could not be loaded. Check your connection and reload.";loaded=true;render();feedSkip=false;}
   });
 }
-function load(){fetchMatches(day,1);}
+function load(auto){feedSkip=!!auto;fetchMatches(day,1);}
 
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.classList&&e.target.classList.contains("m"))e.target.click();});
 $("date").textContent=new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long"});
 days();
 load();
-setInterval(()=>{if(day===0)load();},60000);
+setTimeout(function(){if(!loaded){var a=$("app");if(a)a.innerHTML='<p class="msg pad">Still loading slowly or the connection dropped. <button class="more" onclick="location.reload()">Tap to reload</button></p>';}},45000);
+setInterval(()=>{if(day===0)load(true);},60000);
 fetch("/daily.json?v="+Date.now()).then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.matches){d.matches.forEach(m=>{info[m.id]=m;});render();}
 }).catch(()=>{});
