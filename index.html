@@ -306,7 +306,7 @@ function render(){
   const group=k=>{
     const p=k.split("|");
     const ms=g[k].sort((a,b)=>(isLive(b)-isLive(a))||(a.fixture.timestamp-b.fixture.timestamp));
-    return '<div class="lg'+(hasLive(k)?" hot":"")+'">'+img(ms[0].league.logo)+"<b>"+esc(p[2])+"</b><span>"+esc(p[1])+'</span></div><div class="grp">'+ms.map(row).join("")+"</div>"+(++feedN%2===0?'<div class="adslot ad-infeed"></div>':"");
+    return '<div class="lg'+(hasLive(k)?" hot":"")+'">'+img(ms[0].league.logo)+"<b>"+esc(p[2])+"</b><span>"+esc(p[1])+'</span></div><div class="grp">'+ms.map(row).join("")+"</div>"+(++feedN<=80?'<div class="adslot ad-infeed"></div>':"");
   };
   let h=topK.map(group).join("");
   const showRest=(expand||moreOpen)?restK.length:(topK.length?0:Math.min(15,restK.length));
