@@ -164,7 +164,12 @@ function reason(m) {
 
 (async () => {
   const date = new Date().toISOString().slice(0, 10);
-  const fx = await api("/fixtures?date=" + date);
+  let fx;
+  try {
+    const f = JSON.parse(fs.readFileSync("data/d0.json", "utf8"));
+    if (f.date === date && f.response) fx = { response: f.response };
+  } catch (e) {}
+  if (!fx) fx = await api("/fixtures?date=" + date);
   if (fx.errors && Object.keys(fx.errors).length) {
     const msg = JSON.stringify(fx.errors);
     if (/request limit|rate/i.test(msg)) {

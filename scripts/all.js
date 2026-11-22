@@ -92,9 +92,19 @@ function model(lh, la, seed) {
   const yesterday = iso(now - 864e5);
   const db = load();
 
+  // matches.js saves the day lists at the start of this build, so read those
+  // files and only fall back to the API when one is missing or stale.
+  async function loadDay(off) {
+    try {
+      const f = JSON.parse(fs.readFileSync("data/d" + off + ".json", "utf8"));
+      if (f.date === iso(now + off * 864e5)) return { response: f.response || [] };
+    } catch (e) {}
+    return api("/fixtures?date=" + iso(now + off * 864e5));
+  }
+
   // Free plans can only reach the last day or two, so history grows one day per run.
   // Every day adds yesterday's finished matches, and the model gets sharper as it grows.
-  const ry = await api("/fixtures?date=" + yesterday);
+  const ry = await loadDay(-1);
   if (hasErr(ry)) {
     console.log("Yesterday unavailable: " + JSON.stringify(ry.errors));
   } else {
@@ -176,10 +186,10 @@ function model(lh, la, seed) {
   }
 
   const tomorrow = iso(now + 864e5);
-  const fx = await api("/fixtures?date=" + today);
+  const fx = await loadDay(0);
   if (hasErr(fx)) { console.error("Fixtures error: " + JSON.stringify(fx.errors)); process.exit(1); }
   console.log("Fixtures today: " + (fx.response || []).length);
-  const fxt = await api("/fixtures?date=" + tomorrow);
+  const fxt = await loadDay(1);
   const tomorrowList = hasErr(fxt) ? [] : (fxt.response || []);
   console.log("Fixtures tomorrow: " + tomorrowList.length);
 
