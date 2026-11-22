@@ -22,7 +22,8 @@ if (d.acca && d.acca.legs && d.acca.legs.length) {
   msg += "\n<b>Acca of the day</b> \u00b7 total odds " + d.acca.total + "\n";
   d.acca.legs.forEach(l => { msg += "\u2022 " + esc(l.match) + ": " + esc(l.market) + " @" + l.odd + "\n"; });
 }
-msg += "\nAll 15 picks and stats: https://fixturio.vercel.app/picks.html\n18+. Predictions are estimates, not guarantees.";
+msg += "\nAll 15 picks and stats: https://fixturio.vercel.app/picks.html";
+msg += "\n\n<b>Back these picks on 1xBet</b>: https://refpa-65760.com/L?tag=d_6390619m_1599c_&site=6390619&ad=1599\n18+. T&amp;Cs apply. Predictions are estimates, not guarantees.";
 
 fetch("https://api.telegram.org/bot" + token + "/sendMessage", {
   method: "POST",
