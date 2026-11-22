@@ -92,6 +92,10 @@ function star(){
   localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));
   const b=$("sv");if(b){b.classList.toggle("on",i<0);b.textContent=i<0?"★ Saved":"☆ Save match";}
 }
+function hl(){
+  const q=encodeURIComponent(m.teams.home.name+" vs "+m.teams.away.name+" "+m.league.name+" highlights");
+  window.open("https://www.youtube.com/results?search_query="+q,"_blank","noopener");
+}
 function tm(t){return new Date(t).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hourCycle:"h23"});}
 function stTxt(){const s=m.fixture.status.short;if(s==="HT")return "Half time";if(LIVE.includes(s))return (m.fixture.status.elapsed||"")+"′ live";if(s==="NS")return "Kick-off "+tm(m.fixture.date);if(s==="FT")return "Full time";return s;}
 
@@ -107,7 +111,7 @@ function render(){
     const fch=v=>String(v||"").split(" ").filter(Boolean).slice(-5).map(c=>'<i class="fb '+c.toLowerCase()+'">'+c+'</i>').join("");
     html+='<div class="f5m"><span class="lb">'+esc(h.name.split(" ")[0])+'</span>'+fch(pred.form.h)+'<span class="fvs">·</span>'+fch(pred.form.a)+'<span class="lb">'+esc(a.name.split(" ")[0])+'</span></div>';
   }
-  html+='<div class="acts"><button id="sv" onclick="star()">☆ Save match</button><button onclick="share()">Share</button></div></div>';
+  html+='<div class="acts"><button id="sv" onclick="star()">☆ Save match</button><button onclick="share()">Share</button>' + (m.fixture.status.short!=="NS"?'<button onclick="hl()">▶ Highlights</button>':'') + '</div></div>';
   if(pred){
     const mx=Math.max(pred.h,pred.d,pred.a);
     html+='<div class="card"><h3>Model prediction</h3><div class="pred"><span class="sc2">'+esc(pred.s)+'</span><div>Predicted score<br><small style="color:var(--mu)">Top chance '+mx+'% · Expected goals '+pred.x+" – "+pred.y+"</small></div></div>";
