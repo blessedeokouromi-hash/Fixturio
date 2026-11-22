@@ -53,7 +53,24 @@
       }
       var native = document.getElementById("ad-native");
       if (native) run(cfg.native && cfg.native.src, native, "native");
-      if (cfg.socialbar && cfg.socialbar.src) run(cfg.socialbar.src, document.getElementById("ad-socialbar") || document.body, "socialbar");
+      // Social bar also waits for the page to load, then shows on the
+      // visitor's first tap, so the site is never covered on arrival.
+      if (cfg.socialbar && cfg.socialbar.src) {
+        var sbArmed = false;
+        var armSb = function () {
+          if (sbArmed) return;
+          sbArmed = true;
+          var go = function () {
+            document.removeEventListener("click", go, true);
+            document.removeEventListener("touchstart", go, true);
+            run(cfg.socialbar.src, document.getElementById("ad-socialbar") || document.body, "socialbar");
+          };
+          document.addEventListener("click", go, true);
+          document.addEventListener("touchstart", go, true, { passive: true });
+        };
+        if (document.readyState === "complete") setTimeout(armSb, 4000);
+        else window.addEventListener("load", function () { setTimeout(armSb, 4000); });
+      }
       // Popunder waits for the page to finish loading and fires on the
       // visitor's first tap, so it can never hijack the site mid-load.
       if (cfg.popunder && cfg.popunder.src && !shownToday()) {
