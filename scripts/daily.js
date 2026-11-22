@@ -124,7 +124,7 @@ function reason(m) {
   let pred = null;
   try {
     const pj = JSON.parse(fs.readFileSync("all.json", "utf8"));
-    if (pj && pj.date === today && pj.m) pred = pj.m;
+    if (pj && pj.date === date && pj.m) pred = pj.m;
   } catch (e) {}
 
   const matches = [];
