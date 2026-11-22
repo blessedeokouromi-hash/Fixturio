@@ -115,11 +115,75 @@ function render(){
       html+='<p class="note">'+esc(h.name)+' '+hh.hw+(hh.hw===1?" win":" wins")+' · '+hh.dr+(hh.dr===1?" draw":" draws")+' · '+esc(a.name)+' '+hh.aw+(hh.aw===1?" win":" wins")+', from the results we store.</p></div>';
     }
   }
+  html+='<div class="card" id="vote"><h3>Who will win?</h3><p class="note">Loading the fan vote…</p></div>';
+  html+='<div class="card hidden" id="odds"></div>';
   html+='<div class="card hidden" id="info"></div>';
   $("app").innerHTML=html;
+  loadVote();loadOdds();
   let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){}
   if(s.includes(+mid)){const b=$("sv");b.classList.add("on");b.textContent="★ Saved";}
   if(info)renderInfo();
+}
+const VKEY="fixturio:vote:"+mid;
+let vCnt={h:0,d:0,a:0},vTot=0,myVote=null;
+function shortName(n){return n.length>14?n.slice(0,13)+"…":n;}
+function renderVote(){
+  const el=$("vote");if(!el)return;
+  let hh='<h3>Who will win?'+'</h3>';
+  if(pred)hh+='<p class="note" style="margin:0 0 8px">Our model: '+esc(m.teams.home.name)+' '+pred.h+'% · Draw '+pred.d+'% · '+esc(m.teams.away.name)+' '+pred.a+'%</p>';
+  hh+='<div class="acts" style="justify-content:flex-start;gap:6px">'
+    +'<button id="vh"'+(myVote==="h"?' class="on"':'')+' onclick="vote(\'h\')">'+esc(shortName(m.teams.home.name))+'</button>'
+    +'<button id="vd"'+(myVote==="d"?' class="on"':'')+' onclick="vote(\'d\')">Draw</button>'
+    +'<button id="va"'+(myVote==="a"?' class="on"':'')+' onclick="vote(\'a\')">'+esc(shortName(m.teams.away.name))+'</button></div>';
+  if(vTot>0){
+    const p=k=>Math.round(vCnt[k]/vTot*100);
+    hh+='<div class="mrow"><span class="nm">'+esc(m.teams.home.name)+'</span><span class="pv">'+p("h")+'%</span><div class="tr"><i style="width:'+p("h")+'%"></i></div></div>';
+    hh+='<div class="mrow"><span class="nm">Draw</span><span class="pv">'+p("d")+'%</span><div class="tr"><i style="width:'+p("d")+'%"></i></div></div>';
+    hh+='<div class="mrow"><span class="nm">'+esc(m.teams.away.name)+'</span><span class="pv">'+p("a")+'%</span><div class="tr"><i style="width:'+p("a")+'%"></i></div></div>';
+    hh+='<p class="note">'+vTot+' vote'+(vTot===1?"":"s")+' so far.</p>';
+  }else{
+    hh+='<p class="note">'+(myVote?"Your vote is saved.":"Be the first to vote.")+'</p>';
+  }
+  el.innerHTML=hh;
+}
+function vote(c){
+  if(myVote)return;
+  myVote=c;vCnt[c]++;vTot++;
+  try{localStorage.setItem(VKEY,c);}catch(e){}
+  renderVote();
+  fetch("/api/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fixture:mid,choice:c})})
+    .then(r=>r.json()).then(d=>{
+      if(d&&d.counts){vCnt={h:d.counts.h||0,d:d.counts.d||0,a:d.counts.a||0};vTot=vCnt.h+vCnt.d+vCnt.a;}
+      renderVote();
+    }).catch(function(){});
+}
+function loadVote(){
+  try{myVote=localStorage.getItem(VKEY);}catch(e){}
+  fetch("/api/vote?fixture="+mid).then(r=>r.json()).then(d=>{
+    if(d&&d.counts){vCnt={h:d.counts.h||0,d:d.counts.d||0,a:d.counts.a||0};vTot=vCnt.h+vCnt.d+vCnt.a;}
+    renderVote();
+  }).catch(function(){renderVote();});
+}
+function loadOdds(){
+  fetch("/daily.json").then(r=>r.ok?r.json():null).then(d=>{
+    if(!d||!d.matches)return;
+    const dm=d.matches.find(x=>x.id===+mid);
+    if(!dm||!dm.markets)return;
+    const o={};
+    dm.markets.forEach(mk=>{
+      if(mk.kind!=="single")return;
+      const n=String(mk.market||"").toLowerCase();
+      if(n.indexOf("home win")===0)o.h=mk.odd;
+      else if(n.indexOf("draw")===0)o.d=mk.odd;
+      else if(n.indexOf("away win")===0)o.a=mk.odd;
+    });
+    if(o.h===undefined&&o.d===undefined&&o.a===undefined)return;
+    const el=$("odds");if(!el)return;
+    el.classList.remove("hidden");
+    el.innerHTML='<h3>Bookmaker odds</h3><div class="acts" style="justify-content:flex-start;gap:6px">'
+      +'<button>'+(o.h!==undefined?o.h:"–")+'</button><button>'+(o.d!==undefined?o.d:"–")+'</button><button>'+(o.a!==undefined?o.a:"–")+'</button></div>'
+      +'<p class="note">1 home win · X draw · 2 away win. Odds move all day; check the bookmaker for the live price.</p>';
+  }).catch(function(){});
 }
 function renderInfo(){
   const el=$("info");if(!el)return;
