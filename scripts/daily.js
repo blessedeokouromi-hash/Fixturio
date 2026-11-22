@@ -265,4 +265,36 @@ function reason(m) {
     summary: "Ranked by estimated chance of winning, from bookmaker odds and form data. Safer markets like double chance rank higher, so always check the market before you decide."
   }));
   console.log("Wrote " + matches.length + " matches");
+
+  // Head-to-head history for the featured matches: five recent meetings per
+  // match, one API request each, saved into all.json for the match pages.
+  try {
+    const aj = JSON.parse(fs.readFileSync("all.json", "utf8"));
+    if (aj && aj.date === date && aj.m) {
+      const MO = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const fmt = d => { const D = new Date(d); return D.getUTCDate() + " " + MO[D.getUTCMonth()] + " " + D.getUTCFullYear(); };
+      let got = 0;
+      for (const c of cands) {
+        const slot = aj.m[c.fixture.id];
+        if (!slot || slot.h2h) continue;
+        const hh = await api("/fixtures/headtohead?h2h=" + c.teams.home.id + "-" + c.teams.away.id);
+        if (hh.errors && Object.keys(hh.errors).length) { console.log("H2H stopped: " + JSON.stringify(hh.errors)); break; }
+        const done = (hh.response || []).filter(x => x.fixture.status.short === "FT").slice(-5);
+        if (!done.length) continue;
+        const list = done.map(x => ({ d: fmt(x.fixture.date), sh: x.goals.home, sa: x.goals.away }));
+        let hw = 0, dr = 0, aw = 0;
+        done.forEach(x => {
+          const thisHome = x.teams.home.id === c.teams.home.id;
+          const gh = thisHome ? x.goals.home : x.goals.away, ga = thisHome ? x.goals.away : x.goals.home;
+          if (gh > ga) hw++; else if (gh === ga) dr++; else aw++;
+        });
+        slot.h2h = { list, hw, dr, aw };
+        got++;
+      }
+      if (got) {
+        fs.writeFileSync("all.json", JSON.stringify(aj));
+        console.log("H2H added for " + got + " matches");
+      }
+    }
+  } catch (e) { console.log("H2H skipped: " + e.message); }
 })();

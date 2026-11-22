@@ -3,7 +3,7 @@
 const fs = require("fs");
 const KEY = process.env.API_FOOTBALL_KEY;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const MAX = parseInt(process.env.STANDINGS_MAX || "20", 10);
+const MAX = parseInt(process.env.STANDINGS_MAX || "10", 10);
 const TOP = [39,140,135,78,61,88,94,2,3,848,203,253,71,268,307,144,179,188,98,292,262,169,119,309,257];
 
 async function api(path) {
