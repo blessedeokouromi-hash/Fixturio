@@ -98,7 +98,7 @@
   }
 
   function shareImage() {
-    if (!window.picks || !picks.length) return;
+    if (typeof picks === "undefined" || !picks || !picks.length) return;
     var ready = document.fonts && document.fonts.load
       ? document.fonts.load("800 40px Manrope").catch(function () {})
       : Promise.resolve();

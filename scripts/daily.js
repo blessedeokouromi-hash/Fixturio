@@ -152,6 +152,14 @@ function analyze(p, bets, q) {
     "Double chance 12 (no draw)": "Home/Away"
   };
   list.forEach(x => { if (KEYMAP[x.market] && o[KEYMAP[x.market]]) x.odd = o[KEYMAP[x.market]]; });
+  // Guard: when the two-way odds for a market were missing the disagreement
+  // check never ran, and a nonsense price can ride along (a 65% chance tagged
+  // with a 4.8 price). If the attached odds imply a very different chance than
+  // the blended probability, trust neither and mark the market skip.
+  list.forEach(x => {
+    if (x.skip || !(x.odd > 1)) return;
+    if (Math.abs(x.prob - 1 / x.odd) > 0.25) x.skip = true;
+  });
   return { src, list };
 }
 
@@ -268,43 +276,55 @@ function reason(m) {
   // banker (75% or better). Otherwise no banker is shown that day.
   if (picks[0] && picks[0].probability >= 75) picks[0].banker = true;
 
-  // Acca of the day: the strongest picks combined into one slip, built to land
-  // between 1.50 and 2.00 total odds so it is actually worth backing. Among all
-  // combinations in that band it takes the one with the best real chance of
-  // landing (highest joint probability). Falls back to the safest legs when
-  // nothing fits the band that day.
-  const candAcca = picks
-    .filter(p => p.odd > 1 && p.probability >= 60)
-    .sort((a, b) => b.probability - a.probability)
-    .slice(0, 30);
+  // Acca of the day: a long-odds slip built only from safe legs with real
+  // bookmaker odds. It stacks the day's most reliable markets (best chance per
+  // unit of odds, one per match) until the combined odds land between 20 and
+  // 50, where a small stake is actually worth talking about. Falls back to a
+  // shorter safe slip when the day does not offer enough.
+  const candAcca = [];
+  matches.forEach(m => {
+    (m.markets || []).forEach(x => {
+      if (x.skip || !(x.odd > 1)) return;
+      const prob = Math.round(x.prob * 100);
+      if (prob < 55) return;
+      candAcca.push({ fixture: m.id, match: m.home + " vs " + m.away, market: x.market, odd: x.odd, probability: prob, kickoff: m.kickoff, league: m.league, country: m.country });
+    });
+  });
+  candAcca.sort((a, b) => (Math.log(b.probability / 100) / Math.log(b.odd)) - (Math.log(a.probability / 100) / Math.log(a.odd)));
   const seenF0 = {};
   const uniqAcca = candAcca.filter(p => (seenF0[p.fixture] ? false : (seenF0[p.fixture] = 1, true)));
   const mkLeg = p => ({ fixture: p.fixture, match: p.match, market: p.market, odd: p.odd, probability: p.probability, kickoff: p.kickoff, league: p.league, country: p.country });
-  let accaBest = null;
-  const consider = legs => {
-    const total = legs.reduce((t, l) => t * l.odd, 1);
-    if (total < 1.5 || total > 2.0) return;
-    const hit = legs.reduce((t, l) => t * (l.probability / 100), 1);
-    const score = hit * 1000 + legs.length;
-    if (!accaBest || score > accaBest.score) accaBest = { legs: legs.map(mkLeg), total: Math.round(total * 100) / 100, score };
-  };
-  for (let i = 0; i < uniqAcca.length; i++)
-    for (let j = i + 1; j < uniqAcca.length; j++) {
-      consider([uniqAcca[i], uniqAcca[j]]);
-      for (let k = j + 1; k < uniqAcca.length; k++) consider([uniqAcca[i], uniqAcca[j], uniqAcca[k]]);
-    }
+  const accaLegs = [];
+  let accaTotal = 1;
+  for (const p of uniqAcca) {
+    if (accaLegs.length >= 14) break;
+    const nt = accaTotal * p.odd;
+    if (nt > 50) continue;
+    accaLegs.push(p);
+    accaTotal = nt;
+    if (accaTotal >= 20) break;
+  }
+  let accaBest = accaLegs.length >= 2
+    ? { legs: accaLegs.map(mkLeg), total: Math.round(accaTotal * 100) / 100, chance: Math.round(accaLegs.reduce((t, l) => t * (l.probability / 100), 1) * 1000) / 10 }
+    : null;
   if (!accaBest) {
-    const seenF = {};
-    const accaLegs = [];
-    const pushLeg = p => {
-      if (accaLegs.length >= 3 || seenF[p.fixture] || !(p.odd > 1)) return;
-      seenF[p.fixture] = 1;
-      accaLegs.push({ fixture: p.fixture, match: p.match, market: p.market, odd: p.odd, probability: p.probability, kickoff: p.kickoff, league: p.league, country: p.country });
+    // Fallback: the strongest short combination between 1.50 and 2.00.
+    const candShort = picks.filter(p => p.odd > 1 && p.probability >= 60).sort((a, b) => b.probability - a.probability).slice(0, 30);
+    const seenF1 = {};
+    const uniqShort = candShort.filter(p => (seenF1[p.fixture] ? false : (seenF1[p.fixture] = 1, true)));
+    const consider = legs => {
+      const total = legs.reduce((t, l) => t * l.odd, 1);
+      if (total < 1.5 || total > 2.0) return;
+      const hit = legs.reduce((t, l) => t * (l.probability / 100), 1);
+      const score = hit * 1000 + legs.length;
+      if (!accaBest || score > accaBest.score) accaBest = { legs: legs.map(mkLeg), total: Math.round(total * 100) / 100, score };
     };
-    const byProb = picks.slice().sort((a, b) => b.probability - a.probability);
-    byProb.forEach(p => { if (p.banker && p.probability >= 75) pushLeg(p); });
-    byProb.forEach(p => { if (p.probability >= 65) pushLeg(p); });
-    if (accaLegs.length >= 2) accaBest = { legs: accaLegs, total: Math.round(accaLegs.reduce((t, l) => t * l.odd, 1) * 100) / 100 };
+    for (let i = 0; i < uniqShort.length; i++)
+      for (let j = i + 1; j < uniqShort.length; j++) {
+        consider([uniqShort[i], uniqShort[j]]);
+        for (let k = j + 1; k < uniqShort.length; k++) consider([uniqShort[i], uniqShort[j], uniqShort[k]]);
+      }
+    if (accaBest) delete accaBest.score;
   }
   const acca = accaBest;
 
