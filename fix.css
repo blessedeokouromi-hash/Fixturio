@@ -1,0 +1,3 @@
+/* Keeps ad-network injected elements from widening the page: the site stays one screen wide,
+   so after an ad closes there is no sideways scrollbar or sideways jiggle. */
+html,body{overflow-x:hidden}
