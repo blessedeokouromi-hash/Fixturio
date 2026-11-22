@@ -1,0 +1,20 @@
+name: Daily Telegram post
+
+on:
+  schedule:
+    # 06:00 UTC = 07:00 WAT, after the 00:30 UTC build has committed daily.json
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/telegram.js
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
