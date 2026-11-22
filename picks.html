@@ -241,7 +241,7 @@ fetch("/daily.json?v="+Date.now()).then(r=>{if(!r.ok)throw 0;return r.json();}).
   if(!picks.length)throw 0;
   acca=d.acca||null;
   (d.matches||[]).forEach(m=>{mm[m.id]=m;});
-  $("sub").textContent="Chosen from bookmaker odds and recent form. Built once each morning, so everyone sees the same list.";
+  $("sub").textContent="The day's safest picks with the biggest prices, from every league we follow. Built once each morning, so everyone sees the same list.";
   $("upd").textContent="Built at "+tm(d.generated);
   draw();
   drawAcca();

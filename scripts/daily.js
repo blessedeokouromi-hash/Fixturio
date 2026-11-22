@@ -246,36 +246,12 @@ function reason(m) {
   }
   if (matches.length < 2) { console.error("Not enough matches"); process.exit(1); }
 
-  const picks = [];
-  matches.forEach(m => {
-    // Best market first: rank every market by blended probability, ignore the
-    // ones the model and the odds disagree on, and hold picks to a 55%
-    // confidence floor so coin-flip markets never become recommendations.
-    const ranked = m.markets.filter(x => !x.skip).sort((x, y) => y.prob - x.prob);
-    const usable = ranked.filter(x => x.prob >= 0.55);
-    const best = usable[0] || ranked[0];
-    const single = usable.find(x => x.kind === "single");
-    const chosen = [best];
-    if (single && single !== best) chosen.push(single);
-    chosen.forEach(c => picks.push({
-      fixture: m.id,
-      match: m.home + " vs " + m.away,
-      market: c.market,
-      probability: Math.round(Math.min(90, c.prob * 100)),
-      reason: m.why || reason(m),
-      cs: m.cs,
-      odd: c.odd || null,
-      value: !!(c.odd && c.prob * c.odd >= 1.08),
-      kickoff: m.kickoff,
-      league: m.league,
-      country: m.country
-    }));
-  });
-  picks.sort((a, b) => b.probability - a.probability);
-  // The banker: the day's most confident pick, tagged only when it is a real
-  // banker (75% or better). Otherwise no banker is shown that day.
-  if (picks[0] && picks[0].probability >= 75) picks[0].banker = true;
-
+  // Wider pool: the featured slate carries per-fixture odds, but the day has
+  // hundreds of other fixtures in the leagues we already follow. One
+  // league-level odds request per league (the same endpoint, one call instead
+  // of one per match) prices the whole slate without new per-fixture API
+  // calls: the nightly model in all.json already holds every fixture's chances.
+  let wideMatches = [];
   // Wider acca pool: the featured matches above carry per-fixture odds, but the
   // day has hundreds of other fixtures in the leagues we already follow. One
   // league-level odds request per league (the same endpoint, one call instead
@@ -290,7 +266,7 @@ function reason(m) {
     todayFixtures.forEach(f => { (byLeague[f.league.id] = byLeague[f.league.id] || []).push(f); });
     const yy = Number(date.slice(0, 4));
     const season = Number(date.slice(5, 7)) >= 7 ? yy : yy - 1;
-    const wideMatches = [];
+    wideMatches = [];
     let wideLeagues = 0;
     for (const lid of Object.keys(byLeague)) {
       if (wideLeagues >= 16) break;
@@ -321,9 +297,48 @@ function reason(m) {
         });
       }
     }
-    matches.push(...wideMatches);
-    console.log("Wide acca pool: added " + wideMatches.length + " priced matches beyond the featured slate.");
+    console.log("Wide pool: added " + wideMatches.length + " priced matches beyond the featured slate.");
   } catch (e) { console.log("Wide acca pool skipped: " + (e && e.message ? e.message : e)); }
+
+  // The full candidate pool: featured matches plus every other priced fixture,
+  // so the Top 15 and the acca both shop the whole day, lower leagues included.
+  const poolMatches = matches.concat(wideMatches);
+
+  const picks = [];
+  poolMatches.forEach(m => {
+    // Best market first: rank every market by blended probability, ignore the
+    // ones the model and the odds disagree on, and hold picks to a 55%
+    // confidence floor so coin-flip markets never become recommendations.
+    const ranked = m.markets.filter(x => !x.skip).sort((x, y) => y.prob - x.prob);
+    const usable = ranked.filter(x => x.prob >= 0.55);
+    const best = usable[0] || ranked[0];
+    const single = usable.find(x => x.kind === "single");
+    const chosen = [best];
+    if (single && single !== best) chosen.push(single);
+    chosen.forEach(c => picks.push({
+      fixture: m.id,
+      match: m.home + " vs " + m.away,
+      market: c.market,
+      probability: Math.round(Math.min(90, c.prob * 100)),
+      reason: m.why || reason(m),
+      cs: m.cs,
+      odd: c.odd || null,
+      value: !!(c.odd && c.prob * c.odd >= 1.08),
+      kickoff: m.kickoff,
+      league: m.league,
+      country: m.country
+    }));
+  });
+  // Rank by the best chance per unit of odds, so safe picks with real prices
+  // lead the list and the safer-but-tiny markets no longer crowd out the
+  // higher-odds ones. Picks without odds fall back to raw probability.
+  const valScore = p => (p.odd > 1 ? Math.log(p.probability / 100) / Math.log(p.odd) : p.probability / 100);
+  picks.sort((a, b) => valScore(b) - valScore(a));
+  // The banker: the day's most confident pick, tagged only when it is a real
+  // banker (75% or better). Otherwise no banker is shown that day.
+  const bankerPick = picks.filter(p => p.probability >= 75).sort((a, b) => b.probability - a.probability)[0];
+  if (bankerPick) bankerPick.banker = true;
+
 
   // Acca of the day: a long-odds slip built only from safe legs with real
   // bookmaker odds. It stacks the day's most reliable markets (best chance per
@@ -331,7 +346,7 @@ function reason(m) {
   // 50, where a small stake is actually worth talking about. Falls back to a
   // shorter safe slip when the day does not offer enough.
   const candAcca = [];
-  matches.forEach(m => {
+  poolMatches.forEach(m => {
     (m.markets || []).forEach(x => {
       if (x.skip || !(x.odd > 1)) return;
       const prob = Math.round(x.prob * 100);
@@ -383,7 +398,7 @@ function reason(m) {
     matches,
     picks: picks.slice(0, 15),
     acca,
-    summary: "Ranked by estimated chance of winning, from bookmaker odds and form data. Safer markets like double chance rank higher, so always check the market before you decide."
+    summary: "Ranked by the best chance per unit of odds, from every league we follow. Safer picks with bigger prices lead the list, so always check the market before you decide."
   }));
   console.log("Wrote " + matches.length + " matches");
 
