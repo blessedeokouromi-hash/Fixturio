@@ -199,6 +199,31 @@ function reason(m) {
     if (pj && pj.date === date && pj.m) pred = pj.m;
   } catch (e) {}
 
+  // Odds come from one league-level request per league (the same bookmaker data
+  // the per-fixture endpoint returns), shared by the featured slate and the
+  // wider acca pool below. A full day of pricing therefore costs a handful of
+  // calls, and per-fixture odds are only a small fallback for leagues outside
+  // the cap.
+  const yy0 = Number(date.slice(0, 4));
+  const season0 = Number(date.slice(5, 7)) >= 7 ? yy0 : yy0 - 1;
+  const leagueOdds = new Map();
+  const LEAGUE_ODDS_CAP = 12;
+  async function leagueBets(lid) {
+    if (leagueOdds.has(lid)) return leagueOdds.get(lid);
+    if (leagueOdds.size >= LEAGUE_ODDS_CAP) { leagueOdds.set(lid, null); return null; }
+    const od = await api("/odds?league=" + lid + "&season=" + season0 + "&date=" + date);
+    if (od.errors && Object.keys(od.errors).length) { leagueOdds.set(lid, null); return null; }
+    const map = {};
+    (od.response || []).forEach(r => {
+      if (!r.fixture || !r.bookmakers) return;
+      const bm = r.bookmakers.find(b => (b.bets || []).some(x => x.id === 1)) || r.bookmakers[0];
+      if (bm) map[r.fixture.id] = bm.bets || [];
+    });
+    leagueOdds.set(lid, map);
+    return map;
+  }
+  let fixOddsLeft = 4;
+
   const matches = [];
   for (const c of cands) {
     const pr = await api("/predictions?fixture=" + c.fixture.id);
@@ -208,12 +233,19 @@ function reason(m) {
     }
     const p = pr.response && pr.response[0];
     if (!p) continue;
-    const od = await api("/odds?fixture=" + c.fixture.id);
-    if (od.errors && Object.keys(od.errors).length) {
-      console.log("API quota reached mid-run, keeping the existing picks.");
-      break;
+    const lm = await leagueBets(c.league.id);
+    let bets = lm && lm[c.fixture.id];
+    if (!bets) {
+      if (fixOddsLeft <= 0) continue;
+      const od = await api("/odds?fixture=" + c.fixture.id);
+      if (od.errors && Object.keys(od.errors).length) {
+        console.log("API quota reached mid-run, keeping the existing picks.");
+        break;
+      }
+      fixOddsLeft--;
+      bets = pickBets(od);
     }
-    const a = analyze(p, pickBets(od));
+    const a = analyze(p, bets);
     const q = pred && pred[c.fixture.id];
     const okForm = f => /^[WDL ]{1,9}$/.test(String(f || "")) ? String(f).replace(/ /g, "") : null;
     const hf = okForm(p.teams && p.teams.home && p.teams.home.league ? p.teams.home.league.form : "");
@@ -269,16 +301,9 @@ function reason(m) {
     wideMatches = [];
     let wideLeagues = 0;
     for (const lid of Object.keys(byLeague)) {
-      if (wideLeagues >= 16) break;
-      const od = await api("/odds?league=" + lid + "&season=" + season + "&date=" + date);
-      if (od.errors && Object.keys(od.errors).length) { console.log("Wide pool: odds unavailable for league " + lid + ", skipping."); continue; }
+      const oddsByFixture = (await leagueBets(lid)) || {};
       wideLeagues++;
-      const oddsByFixture = {};
-      (od.response || []).forEach(r => {
-        if (!r.fixture || !r.bookmakers) return;
-        const bm = r.bookmakers.find(b => (b.bets || []).some(x => x.id === 1)) || r.bookmakers[0];
-        if (bm) oddsByFixture[r.fixture.id] = bm.bets || [];
-      });
+      if (!Object.keys(oddsByFixture).length) { console.log("Wide pool: odds unavailable for league " + lid + ", skipping."); continue; }
       for (const f of byLeague[lid]) {
         if (featuredIds.has(f.fixture.id)) continue;
         if (f.fixture.status && f.fixture.status.short !== "NS") continue;
@@ -413,6 +438,7 @@ function reason(m) {
       for (const c of cands) {
         const slot = aj.m[c.fixture.id];
         if (!slot || slot.h2h) continue;
+        if (got >= 10) break;
         const hh = await api("/fixtures/headtohead?h2h=" + c.teams.home.id + "-" + c.teams.away.id);
         if (hh.errors && Object.keys(hh.errors).length) { console.log("H2H stopped: " + JSON.stringify(hh.errors)); break; }
         const done = (hh.response || []).filter(x => x.fixture.status.short === "FT").slice(-5);

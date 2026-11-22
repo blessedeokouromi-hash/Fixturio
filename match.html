@@ -106,7 +106,7 @@ function render(){
     const fch=v=>String(v||"").split(" ").filter(Boolean).slice(-5).map(c=>'<i class="fb '+c.toLowerCase()+'">'+c+'</i>').join("");
     html+='<div class="f5m"><span class="lb">'+esc(h.name.split(" ")[0])+'</span>'+fch(pred.form.h)+'<span class="fvs">·</span>'+fch(pred.form.a)+'<span class="lb">'+esc(a.name.split(" ")[0])+'</span></div>';
   }
-  html+='<div class="acts"><button id="sv" onclick="star()">☆ Save match</button><button id="evb" onclick="loadEvents()">Load events &amp; stats</button><button onclick="share()">Share</button></div></div>';
+  html+='<div class="acts"><button id="sv" onclick="star()">☆ Save match</button><button onclick="share()">Share</button></div></div>';
   if(pred){
     const mx=Math.max(pred.h,pred.d,pred.a);
     html+='<div class="card"><h3>Model prediction</h3><div class="pred"><span class="sc2">'+esc(pred.s)+'</span><div>Predicted score<br><small style="color:var(--mu)">Top chance '+mx+'% · Expected goals '+pred.x+" – "+pred.y+"</small></div></div>";
@@ -227,14 +227,6 @@ function renderInfo(){
   }
   if(info.venue)h+='<p class="note">'+esc(info.venue.name||"")+(info.venue.city?", "+esc(info.venue.city):"")+(info.referee?" · Referee: "+esc(info.referee):"")+"</p>";
   el.innerHTML=h;
-  const b=$("evb");if(b)b.style.display="none";
-}
-function loadEvents(){
-  const b=$("evb");if(b)b.textContent="Loading…";
-  fetch("/api/match?id="+mid).then(r=>r.json()).then(d=>{
-    if(d.error){if(b)b.textContent="Load events & stats";alert(d.error);return;}
-    info=d;renderInfo();
-  }).catch(()=>{const b=$("evb");if(b)b.textContent="Load events & stats";});
 }
 function share(){
   const txt=m.teams.home.name+" vs "+m.teams.away.name+" on Fixturio";
