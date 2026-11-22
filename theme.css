@@ -37,8 +37,11 @@ html[data-theme="dark"]{
 body .top{background:var(--pitch);border-bottom:0;padding-bottom:14px}
 body .tabs{background:var(--pitch);border-bottom:0}
 body .logo b{color:#fff}
-body .logo small,body .tabs a,body .tabs span{color:var(--hmu)}
-body .tabs a.on{color:#fff;border-bottom-color:#FFD54A}
+body .logo small,body .tabs span{color:var(--hmu)}
+body .tabs{gap:10px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+body .tabs::-webkit-scrollbar{display:none}
+body .tabs a{flex:none;padding:8px 14px;border:1px solid rgba(255,255,255,.30);border-radius:999px;background:rgba(255,255,255,.10);color:#fff;text-decoration:none;font-weight:700;white-space:nowrap}
+body .tabs a.on{background:#FFD54A;border-color:#FFD54A;color:#123F33}
 body .logo svg rect{fill:#FFD54A}
 body .top>a{color:#FFD54A}
 body .logo b,body .lg b,body .intro h1,body .intro h2,body .card h2,body .tier h3,body .sh b,body .tot b,body .hero .mt{font-stretch:112%}
