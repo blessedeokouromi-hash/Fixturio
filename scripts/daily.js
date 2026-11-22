@@ -207,7 +207,7 @@ function reason(m) {
   const yy0 = Number(date.slice(0, 4));
   const season0 = Number(date.slice(5, 7)) >= 7 ? yy0 : yy0 - 1;
   const leagueOdds = new Map();
-  const LEAGUE_ODDS_CAP = 12;
+  const LEAGUE_ODDS_CAP = 18;
   async function leagueBets(lid) {
     if (leagueOdds.has(lid)) return leagueOdds.get(lid);
     if (leagueOdds.size >= LEAGUE_ODDS_CAP) { leagueOdds.set(lid, null); return null; }
@@ -222,7 +222,7 @@ function reason(m) {
     leagueOdds.set(lid, map);
     return map;
   }
-  let fixOddsLeft = 4;
+  let fixOddsLeft = 8;
 
   const matches = [];
   for (const c of cands) {
@@ -365,57 +365,80 @@ function reason(m) {
   if (bankerPick) bankerPick.banker = true;
 
 
-  // Acca of the day: a long-odds slip built only from safe legs with real
-  // bookmaker odds. It stacks the day's most reliable markets (best chance per
-  // unit of odds, one per match) until the combined odds land between 20 and
-  // 50, where a small stake is actually worth talking about. Falls back to a
-  // shorter safe slip when the day does not offer enough.
+  // Acca of the day: predicted on its own, never lifted from the Top 15 or
+  // any other ranked list. Every priced match of the day (the featured slate
+  // plus the wider pool) offers its markets here, and the builder chooses legs
+  // with two passes of its own: chance per unit of odds, and pure safety. It
+  // caps how many legs one league (2) or country (4) can hold so the slip is
+  // not stacked on a single competition, refuses near-dead prices below 1.12,
+  // and keeps the slip whose legs are jointly most likely to land with total
+  // odds between 20 and 50. A shorter slip falls back to the same independent
+  // pool, never the picks list.
   const candAcca = [];
   poolMatches.forEach(m => {
     (m.markets || []).forEach(x => {
-      if (x.skip || !(x.odd > 1)) return;
+      if (x.skip || !(x.odd >= 1.12)) return;
       const prob = Math.round(x.prob * 100);
       if (prob < 55) return;
       candAcca.push({ fixture: m.id, match: m.home + " vs " + m.away, market: x.market, odd: x.odd, probability: prob, kickoff: m.kickoff, league: m.league, country: m.country });
     });
   });
-  candAcca.sort((a, b) => (Math.log(b.probability / 100) / Math.log(b.odd)) - (Math.log(a.probability / 100) / Math.log(a.odd)));
-  const seenF0 = {};
-  const uniqAcca = candAcca.filter(p => (seenF0[p.fixture] ? false : (seenF0[p.fixture] = 1, true)));
-  const mkLeg = p => ({ fixture: p.fixture, match: p.match, market: p.market, odd: p.odd, probability: p.probability, kickoff: p.kickoff, league: p.league, country: p.country });
-  const accaLegs = [];
-  let accaTotal = 1;
-  for (const p of uniqAcca) {
-    if (accaLegs.length >= 14) break;
-    const nt = accaTotal * p.odd;
-    if (nt > 50) continue;
-    accaLegs.push(p);
-    accaTotal = nt;
-    if (accaTotal >= 20) break;
+  const valS = p => Math.log(p.probability / 100) / Math.log(p.odd);
+  const buildSlip = order => {
+    const seenF = {}, seenLg = {}, seenCt = {};
+    const legs = [];
+    let total = 1;
+    for (const p of order) {
+      if (legs.length >= 14) break;
+      if (seenF[p.fixture]) continue;
+      if ((seenLg[p.league] || 0) >= 2) continue;
+      if ((seenCt[p.country] || 0) >= 4) continue;
+      const nt = total * p.odd;
+      if (nt > 50) continue;
+      legs.push(p);
+      seenF[p.fixture] = 1;
+      seenLg[p.league] = (seenLg[p.league] || 0) + 1;
+      seenCt[p.country] = (seenCt[p.country] || 0) + 1;
+      total = nt;
+      if (total >= 20) break;
+    }
+    if (legs.length < 2) return null;
+    return { legs, total, hit: legs.reduce((t, l) => t * (l.probability / 100), 1) };
+  };
+  const byValue = candAcca.slice().sort((a, b) => valS(b) - valS(a));
+  const bySafety = candAcca.slice().sort((a, b) => (b.probability - a.probability) || (valS(b) - valS(a)));
+  let accaBest = null;
+  for (const order of [byValue, bySafety]) {
+    const s = buildSlip(order);
+    if (s && s.total >= 20) {
+      const better = !accaBest
+        || s.hit > accaBest.hit * 1.005
+        || (s.hit >= accaBest.hit * 0.995 && s.legs.length < accaBest.legs.length);
+      if (better) accaBest = s;
+    }
   }
-  let accaBest = accaLegs.length >= 2
-    ? { legs: accaLegs.map(mkLeg), total: Math.round(accaTotal * 100) / 100, chance: Math.round(accaLegs.reduce((t, l) => t * (l.probability / 100), 1) * 1000) / 10 }
-    : null;
   if (!accaBest) {
-    // Fallback: the strongest short combination between 1.50 and 2.00.
-    const candShort = picks.filter(p => p.odd > 1 && p.probability >= 60).sort((a, b) => b.probability - a.probability).slice(0, 30);
-    const seenF1 = {};
-    const uniqShort = candShort.filter(p => (seenF1[p.fixture] ? false : (seenF1[p.fixture] = 1, true)));
+    // Fallback: the strongest short combination between 1.50 and 2.00, chosen
+    // from the same independent pool so the acca never borrows the picks list.
+    const short = candAcca.slice().sort((a, b) => b.probability - a.probability).slice(0, 30);
+    const seenS = {};
+    const uniqShort = short.filter(p => (seenS[p.fixture] ? false : (seenS[p.fixture] = 1, true)));
     const consider = legs => {
       const total = legs.reduce((t, l) => t * l.odd, 1);
       if (total < 1.5 || total > 2.0) return;
       const hit = legs.reduce((t, l) => t * (l.probability / 100), 1);
-      const score = hit * 1000 + legs.length;
-      if (!accaBest || score > accaBest.score) accaBest = { legs: legs.map(mkLeg), total: Math.round(total * 100) / 100, score };
+      if (!accaBest || hit > accaBest.hit) accaBest = { legs, total, hit };
     };
     for (let i = 0; i < uniqShort.length; i++)
       for (let j = i + 1; j < uniqShort.length; j++) {
         consider([uniqShort[i], uniqShort[j]]);
         for (let k = j + 1; k < uniqShort.length; k++) consider([uniqShort[i], uniqShort[j], uniqShort[k]]);
       }
-    if (accaBest) delete accaBest.score;
   }
-  const acca = accaBest;
+  const mkLeg = p => ({ fixture: p.fixture, match: p.match, market: p.market, odd: p.odd, probability: p.probability, kickoff: p.kickoff, league: p.league, country: p.country });
+  const acca = accaBest
+    ? { legs: accaBest.legs.map(mkLeg), total: Math.round(accaBest.total * 100) / 100, chance: Math.round(accaBest.hit * 1000) / 10 }
+    : null;
 
   fs.writeFileSync("daily.json", JSON.stringify({
     date,
