@@ -33,6 +33,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .score small{display:block;font-size:13px;font-weight:700;color:var(--mu)}
 .score.live small{color:var(--live)}
 .acts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;justify-content:center}
+.ytemb{position:relative;padding-top:56.25%;margin-top:12px;border-radius:12px;overflow:hidden;background:#000}
+.ytemb iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .acts button{border:1px solid var(--line);background:transparent;border-radius:8px;padding:9px 14px;font-weight:700;font-size:14px}
 .acts button.on{background:var(--amb);border-color:var(--amb);color:var(--ink)}
 .card{margin:12px 16px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--s1)}
@@ -94,7 +96,32 @@ function star(){
 }
 function hl(){
   const q=encodeURIComponent(m.teams.home.name+" vs "+m.teams.away.name+" "+m.league.name+" highlights");
-  window.open("https://www.youtube.com/results?search_query="+q,"_blank","noopener");
+  const a=document.createElement("a");
+  a.href="https://www.youtube.com/results?search_query="+q;
+  a.target="_blank";a.rel="noopener";
+  document.body.appendChild(a);a.click();a.remove();
+}
+function nm2(s){return String(s||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\b(fc|afc|cf|sc|club|calcio|deportivo)\b/g," ").replace(/\s+/g," ").trim();}
+function hlEmbed(){
+  if(!m||m.fixture.status.short==="NS")return;
+  fetch("/videos.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(v=>{
+    if(!v||!v.channels)return;
+    const vids=[];v.channels.forEach(c=>{if(c&&c.videos)vids.push.apply(vids,c.videos);});
+    const h=nm2(m.teams.home.name),a=nm2(m.teams.away.name);
+    if(!h||!a)return;
+    const parts=t=>t.split(" ").filter(Boolean);
+    const hit=vids.find(x=>{
+      const t=nm2(x.title);
+      const has=n=>t.includes(n)||(parts(n).length>1&&parts(n).every(w=>t.includes(w)));
+      return has(h)&&has(a)&&x.id;
+    });
+    if(!hit)return;
+    const box=document.createElement("div");
+    box.className="card";
+    box.innerHTML='<h3>Highlights</h3><div class="ytemb"><iframe src="https://www.youtube.com/embed/'+hit.id+'" allowfullscreen loading="lazy" title="Match highlights"></iframe></div><p class="note"><a href="https://www.youtube.com/watch?v='+hit.id+'" target="_blank" rel="noopener">Watch on YouTube</a></p>';
+    const hero=document.querySelector(".hero");
+    if(hero&&!document.querySelector(".ytemb"))hero.parentNode.insertBefore(box,hero.nextSibling);
+  }).catch(function(){});
 }
 function tm(t){return new Date(t).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hourCycle:"h23"});}
 function stTxt(){const s=m.fixture.status.short;if(s==="HT")return "Half time";if(LIVE.includes(s))return (m.fixture.status.elapsed||"")+"′ live";if(s==="NS")return "Kick-off "+tm(m.fixture.date);if(s==="FT")return "Full time";return s;}
@@ -134,7 +161,7 @@ function render(){
   html+='<div class="card" id="vote"><h3>Who will win?</h3><p class="note">Loading the fan vote…</p></div>';
   html+='<div class="card hidden" id="odds"></div>';
   html+='<div class="card hidden" id="info"></div>';
-  $("app").innerHTML=html;
+  $("app").innerHTML=html;hlEmbed();
   loadVote();loadOdds();
   let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){}
   if(s.includes(+mid)){const b=$("sv");b.classList.add("on");b.textContent="★ Saved";}
