@@ -103,7 +103,7 @@ function hl(){
 }
 function nm2(s){return String(s||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\b(fc|afc|cf|sc|club|calcio|deportivo)\b/g," ").replace(/\s+/g," ").trim();}
 function hlEmbed(){
-  if(!m||m.fixture.status.short==="NS")return;
+  if(!m)return;
   fetch("/videos.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(v=>{
     if(!v||!v.channels)return;
     const vids=[];v.channels.forEach(c=>{if(c&&c.videos)vids.push.apply(vids,c.videos);});
@@ -138,7 +138,7 @@ function render(){
     const fch=v=>String(v||"").split(" ").filter(Boolean).slice(-5).map(c=>'<i class="fb '+c.toLowerCase()+'">'+c+'</i>').join("");
     html+='<div class="f5m"><span class="lb">'+esc(h.name.split(" ")[0])+'</span>'+fch(pred.form.h)+'<span class="fvs">·</span>'+fch(pred.form.a)+'<span class="lb">'+esc(a.name.split(" ")[0])+'</span></div>';
   }
-  html+='<div class="acts"><button id="sv" onclick="star()">☆ Save match</button><button onclick="share()">Share</button>' + (m.fixture.status.short!=="NS"?'<button onclick="hl()">▶ Highlights</button>':'') + '</div></div>';
+  html+='<div class="acts"><button id="sv" onclick="star()">☆ Save match</button><button onclick="share()">Share</button>' +'<button onclick="hl()">▶ Highlights</button>'+ '</div></div>';
   if(pred){
     const mx=Math.max(pred.h,pred.d,pred.a);
     html+='<div class="card"><h3>Model prediction</h3><div class="pred"><span class="sc2">'+esc(pred.s)+'</span><div>Predicted score<br><small style="color:var(--mu)">Top chance '+mx+'% · Expected goals '+pred.x+" – "+pred.y+"</small></div></div>";
