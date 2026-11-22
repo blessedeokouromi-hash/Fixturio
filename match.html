@@ -62,6 +62,12 @@ button{font:inherit;color:inherit;cursor:pointer}
 .adslot{min-height:60px;margin:12px 16px;display:flex;justify-content:center;align-items:center}
 .adslot:empty{display:none}
 .msg{margin:24px 16px;color:var(--mu)}
+
+.f5m{margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.f5m .lb{font-size:11px;color:var(--mu);font-weight:600}
+.f5m .fvs{color:var(--mu)}
+.fb{font-style:normal;display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;font-size:10px;font-weight:800;color:#fff}
+.fb.w{background:#2E7D32}.fb.d{background:#A87B00}.fb.l{background:#C0392B}
 </style></head><body>
 <div class="wrap">
 <header class="top"><a class="logo" href="/"><img src="/logo.png" alt="Fixturio logo" style="width:32px;height:32px;flex:none;border-radius:8px"><b>Fixturio</b></a><a href="/">All matches</a></header>
@@ -95,6 +101,10 @@ function render(){
   html+='<div class="trow"><div class="t">'+(h.logo?'<img src="'+esc(h.logo)+'" alt="">':"")+"<b>"+esc(h.name)+"</b></div>";
   html+='<div class="score'+(LIVE.includes(m.fixture.status.short)?" live":"")+'">'+(m.goals.home===null?"v":m.goals.home+" – "+m.goals.away)+"<small>"+esc(stTxt())+"</small></div>";
   html+='<div class="t">'+(a.logo?'<img src="'+esc(a.logo)+'" alt="">':"")+"<b>"+esc(a.name)+"</b></div></div>";
+  if(pred&&pred.form&&(pred.form.h||pred.form.a)){
+    const fch=v=>String(v||"").split(" ").filter(Boolean).slice(-5).map(c=>'<i class="fb '+c.toLowerCase()+'">'+c+'</i>').join("");
+    html+='<div class="f5m"><span class="lb">'+esc(h.name.split(" ")[0])+'</span>'+fch(pred.form.h)+'<span class="fvs">·</span>'+fch(pred.form.a)+'<span class="lb">'+esc(a.name.split(" ")[0])+'</span></div>';
+  }
   html+='<div class="acts"><button id="sv" onclick="star()">☆ Save match</button><button id="evb" onclick="loadEvents()">Load events &amp; stats</button><button onclick="share()">Share</button></div></div>';
   if(pred){
     const mx=Math.max(pred.h,pred.d,pred.a);

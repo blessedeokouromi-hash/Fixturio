@@ -207,6 +207,11 @@ function reason(m) {
     }
     const a = analyze(p, pickBets(od));
     const q = pred && pred[c.fixture.id];
+    const okForm = f => /^[WDL ]{1,9}$/.test(String(f || "")) ? String(f).replace(/ /g, "") : null;
+    const hf = okForm(p.teams && p.teams.home && p.teams.home.league ? p.teams.home.league.form : "");
+    const af = okForm(p.teams && p.teams.away && p.teams.away.league ? p.teams.away.league.form : "");
+    const f5h = hf || (q && q.form && q.form.h ? String(q.form.h).replace(/ /g, "").slice(-5) : null);
+    const f5a = af || (q && q.form && q.form.a ? String(q.form.a).replace(/ /g, "").slice(-5) : null);
     const pv = get12(a.list);
     const os = pv ? pickScore(c.fixture.id, pv[0], pv[1], pv[2]) : null;
     matches.push({
@@ -218,6 +223,7 @@ function reason(m) {
       away: c.teams.away.name,
       src: a.src,
       form: p.comparison && p.comparison.form ? p.comparison.form : null,
+      form5: { h: f5h, a: f5a },
       cs: os ? os.s : (q ? q.s : null),
       sTop: os ? os.st : (q ? q.st : null),
       why: q ? q.why : null,
@@ -262,11 +268,26 @@ function reason(m) {
   // banker (75% or better). Otherwise no banker is shown that day.
   if (picks[0] && picks[0].probability >= 75) picks[0].banker = true;
 
+  // Acca of the day: the strongest picks combined into one line, up to three
+  // legs from different matches so the combined odds stay realistic.
+  const seenF = {};
+  const accaLegs = [];
+  const pushLeg = p => {
+    if (accaLegs.length >= 3 || seenF[p.fixture] || !(p.odd > 1)) return;
+    seenF[p.fixture] = 1;
+    accaLegs.push({ fixture: p.fixture, match: p.match, market: p.market, odd: p.odd, probability: p.probability, kickoff: p.kickoff, league: p.league, country: p.country });
+  };
+  const byProb = picks.slice().sort((a, b) => b.probability - a.probability);
+  byProb.forEach(p => { if (p.banker && p.probability >= 75) pushLeg(p); });
+  byProb.forEach(p => { if (p.probability >= 65) pushLeg(p); });
+  const acca = accaLegs.length >= 2 ? { legs: accaLegs, total: Math.round(accaLegs.reduce((t, l) => t * l.odd, 1) * 100) / 100 } : null;
+
   fs.writeFileSync("daily.json", JSON.stringify({
     date,
     generated: new Date().toISOString(),
     matches,
     picks: picks.slice(0, 15),
+    acca,
     summary: "Ranked by estimated chance of winning, from bookmaker odds and form data. Safer markets like double chance rank higher, so always check the market before you decide."
   }));
   console.log("Wrote " + matches.length + " matches");

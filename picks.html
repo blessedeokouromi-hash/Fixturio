@@ -104,6 +104,22 @@ body.hasdock .wrap{padding-bottom:96px}
 .fine2{margin:10px 0 0;font-size:12px;color:#5B563F}
 .sacts{display:flex;gap:10px;margin-top:14px}
 .sacts button{flex:1;padding:10px;border:1.5px solid var(--sink);background:transparent;border-radius:8px;font-weight:700;color:var(--sink)}
+.acca{margin:18px 16px 6px;padding:18px 16px;border-radius:16px;background:linear-gradient(160deg,#123F33,#0E3529);color:#fff;border:1px solid rgba(233,190,90,.35)}
+.acca .at{display:block;font-size:19px;font-weight:800;letter-spacing:-.01em;color:#E9BE5A}
+.acca .ad{margin:3px 0 10px;font-size:13px;color:#cfe3d8}
+.acca .lg{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px dashed rgba(255,255,255,.18)}
+.acca .lg b{display:block;font-size:14px}
+.acca .lg small{display:block;font-size:11px;color:#cfe3d8;margin-top:1px}
+.acca .lg i{font-style:normal;font-size:12px;color:#E9BE5A;font-weight:700}
+.acca .lg>span{font-size:15px;font-weight:800;white-space:nowrap}
+.acca .tot2{display:flex;justify-content:space-between;align-items:baseline;padding-top:10px}
+.acca .tot2 span{font-size:13px;color:#cfe3d8}
+.acca .tot2 b{font-size:30px;font-weight:800;color:#E9BE5A}
+.acca .betfine{color:#9db8ab}
+.f5{margin-top:4px;font-size:12px;color:var(--mu);display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.f5 .vs{color:var(--mu)}
+.fb{font-style:normal;display:inline-block;width:15px;height:15px;line-height:15px;text-align:center;border-radius:4px;font-size:9px;font-weight:800;color:#fff}
+.fb.w{background:#2E7D32}.fb.d{background:#A87B00}.fb.l{background:#C0392B}
 </style></head><body>
 <div class="wrap">
 <header class="top"><div class="logo">
@@ -113,7 +129,7 @@ body.hasdock .wrap{padding-bottom:96px}
 <nav class="tabs tabsx"><a href="/">Matches</a><a class="on" href="/picks.html">Top 15</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
 <section class="intro"><h2>Today’s top 15</h2><p id="sub">Loading today’s picks…</p>
 <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="add" onclick="shareImage()">Share as image</button></div></section>
-<div id="track"></div>
+<div id="acca"></div><div id="track"></div>
 <div id="rec"></div>
 <div id="hero"></div>
 <div id="tiers"></div>
@@ -129,7 +145,21 @@ const TIERS=[
   {k:"Solid",d:"A balanced chance with fair rewards.",c:"#8FB4FF",f:p=>p>=65&&p<80},
   {k:"Brave",d:"Riskier picks that can swing either way.",c:"#FF8A6B",f:p=>p<65}
 ];
-let picks=[],mm={};
+let picks=[],mm={},acca=null;
+
+function drawAcca(){
+  const box=$("acca");
+  if(!acca||!acca.legs||acca.legs.length<2){box.innerHTML="";return;}
+  const legs=acca.legs.map(l=>'<div class="lg"><div><b>'+esc(l.match)+'</b><small>'+(window.flagName?window.flagName(l.country)+" ":"")+esc(l.league||"")+(l.country?" · "+esc(l.country):"")+' · '+tm(l.kickoff)+'</small><i>'+esc(l.market)+'</i></div><span>@'+esc(l.odd)+'</span></div>').join("");
+  box.innerHTML='<section class="acca"><b class="at">Acca of the day</b><p class="ad">'+acca.legs.length+' legs combined: the strongest picks of the day in one line.</p>'+legs+'<div class="tot2"><span>Total odds</span><b>'+esc(acca.total)+'</b></div><div class="bet-cta" style="margin:14px 0 0"></div><p class="betfine">18+. Opens the bookmaker in a new tab.</p></section>';
+}
+
+function formRow(mid){
+  const m=mm[mid];
+  if(!m||!m.form5||(!m.form5.h&&!m.form5.a))return "";
+  const ch=v=>String(v||"").slice(-5).split("").map(c=>'<i class="fb '+c.toLowerCase()+'">'+c+'</i>').join("");
+  return '<div class="f5">'+esc(m.home)+' '+ch(m.form5.h)+'<span class="vs">·</span>'+esc(m.away)+' '+ch(m.form5.a)+'</div>';
+}
 
 function dial(p,size){
   const h=size/2,r=h-7,c=2*Math.PI*r,o=c*(1-p/100);
@@ -149,13 +179,13 @@ function chips(p){
 function rowHTML(i){
   const p=picks[i];
   var lgx=(window.flagName?window.flagName(p.country)+" ":"")+esc(p.league)+(p.country?" · "+esc(p.country):"")+" · "+tm(p.kickoff);
-  return '<div class="pk"><div><div class="mt">'+esc(p.match)+'</div><div class="lgn">'+lgx+'</div><div class="mk">'+esc(p.market)+"</div><div>"+chips(p)+'</div></div><div class="pr"><b>'+esc(p.probability)+"%</b>"+"</div></div>";
+  return '<div class="pk"><div><div class="mt">'+esc(p.match)+'</div>'+formRow(p.fixture)+'<div class="lgn">'+lgx+'</div><div class="mk">'+esc(p.market)+"</div><div>"+chips(p)+'</div></div><div class="pr"><b>'+esc(p.probability)+"%</b>"+"</div></div>";
 }
 
 function draw(){
   if(!picks.length)return;
   const h=picks[0];
-  $("hero").innerHTML='<article class="hero"><div><small>'+(h.banker?"Today\'s banker":"Pick of the day")+'</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+(window.flagName?window.flagName(h.country)+" ":"")+esc(h.league)+(h.country?" · "+esc(h.country):"")+" · "+tm(h.kickoff)+'</div><div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div></div><div>"+dial(h.probability,112)+"</div></article>";
+  $("hero").innerHTML='<article class="hero"><div><small>'+(h.banker?"Today\'s banker":"Pick of the day")+'</small><div class="mt">'+esc(h.match)+'</div><div class="lgn">'+(window.flagName?window.flagName(h.country)+" ":"")+esc(h.league)+(h.country?" · "+esc(h.country):"")+" · "+tm(h.kickoff)+'</div>'+formRow(h.fixture)+'<div class="mk">'+esc(h.market)+"</div><div>"+chips(h)+"</div></div><div>"+dial(h.probability,112)+"</div></article>";
   $("tiers").innerHTML=TIERS.map(t=>{
     const idx=picks.map((p,i)=>i).filter(i=>i>0&&t.f(picks[i].probability));
     if(!idx.length)return "";
@@ -209,9 +239,11 @@ fetch("/history.json").then(r=>r.ok?r.json():null).then(record).catch(()=>record
 fetch("/daily.json").then(r=>{if(!r.ok)throw 0;return r.json();}).then(d=>{
   picks=d.picks||[];
   if(!picks.length)throw 0;
+  acca=d.acca||null;
   (d.matches||[]).forEach(m=>{mm[m.id]=m;});
   $("sub").textContent="Chosen from bookmaker odds and recent form. Built once each morning, so everyone sees the same list.";
   $("upd").textContent="Built at "+tm(d.generated);
   draw();
+  drawAcca();
 }).catch(()=>{$("sub").textContent="Today’s picks are still being built. They appear every morning, so check back soon.";});
 </script><script src="/share-image.js"></script><script src="/share.js"></script><script src="/affiliate.js" defer></script><script src="/popunder.js" defer></script></body></html>

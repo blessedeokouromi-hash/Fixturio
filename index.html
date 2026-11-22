@@ -87,6 +87,9 @@ body.tm .wrap.np .m{grid-template-columns:24px 46px 1fr auto}
 .sig.s2 i:nth-child(-n+2){background:var(--amb)}
 .sig.s3 i{background:#5BD18B}
 .sc{text-align:right;font-weight:800;font-size:15px;min-width:20px}
+.fbs{display:inline-flex;gap:2px;margin-left:5px;flex:none}
+.fb{font-style:normal;display:inline-block;width:14px;height:14px;line-height:14px;text-align:center;border-radius:4px;font-size:9px;font-weight:800;color:#fff}
+.fb.w{background:#2E7D32}.fb.d{background:#A87B00}.fb.l{background:#C0392B}
 .sc div{height:24px;line-height:24px}
 .sc.live div{color:var(--live)}
 .sc .l{color:var(--mu);font-weight:600}
@@ -211,12 +214,17 @@ function row(m){
   const sc=gh===null?"":'<div class="'+hc+'">'+gh+'</div><div class="'+ac+'">'+ga+"</div>";
   let od="";
   const dm=info[id];
+  let fbh="",fba="";
+  if(dm&&dm.form5){
+    const ch=v=>String(v||"").slice(-5).split("").map(c=>'<i class="fb '+c.toLowerCase()+'">'+c+'</i>').join("");
+    fbh=ch(dm.form5.h);fba=ch(dm.form5.a);
+  }
   if(dm&&dm.markets){
     let o={};
     dm.markets.forEach(function(mk){if(mk.kind!=="single")return;const n=String(mk.market||"").toLowerCase();if(n.indexOf("home win")===0)o.h=mk.odd;else if(n.indexOf("draw")===0)o.d=mk.odd;else if(n.indexOf("away win")===0)o.a=mk.odd;});
     if(o.h!==undefined&&o.d!==undefined&&o.a!==undefined)od='<small style="display:block;font-size:11px;font-weight:600;color:var(--mu);margin-top:1px">1 '+o.h+' · X '+o.d+' · 2 '+o.a+'</small>';
   }
-  return '<div class="mw"><div class="m" role="button" tabindex="0" onclick="tap('+id+')"><div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span></div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+"</span></div></div>"+(npCol?"":predCell(m))+'<div class="sc'+(live?" live":"")+'">'+sc+od+'</div></div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
+  return '<div class="mw"><div class="m" role="button" tabindex="0" onclick="tap('+id+')"><div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span>'+(fbh?'<span class="fbs">'+fbh+'</span>':"")+'</div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+"</span>"+(fba?'<span class="fbs">'+fba+'</span>':"")+"</div></div>"+(npCol?"":predCell(m))+'<div class="sc'+(live?" live":"")+'">'+sc+od+'</div></div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
 }
 
 function days(){
