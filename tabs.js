@@ -15,7 +15,10 @@
     ".mks button{flex:none;border:1px solid var(--line);background:transparent;padding:6px 14px;border-radius:999px;font-weight:600;font-size:13px;white-space:nowrap;font-family:inherit;cursor:pointer;color:var(--mu)}" +
     ".mks button.on{background:var(--tx);color:var(--ink);border-color:var(--tx)}" +
     ".mkt button.on{color:var(--tx);border-bottom-color:var(--pitch,#0B6E47)}" +
-    ".cf{font-size:11px;font-weight:700;color:var(--mu)}.cf.s3{color:#0B8A4F}.cf.s2{color:#9A6400}.cf.s1{color:#C62828}";
+    ".cf{font-size:11px;font-weight:700;color:var(--mu)}.cf.s3{color:#0B8A4F}.cf.s2{color:#9A6400}.cf.s1{color:#C62828}" +
+"    .rs{font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;margin-left:6px;white-space:nowrap}" +
+".rs.ok{background:var(--okbg);border:1px solid var(--okbd);color:var(--okfg)}" +
+".rs.bad{background:var(--badbg);border:1px solid var(--badbd);color:var(--badfg)}";
   document.head.appendChild(st);
 
   function pois(l, k) { var p = Math.exp(-l); for (var i = 1; i <= k; i++) p *= l / i; return p; }
@@ -94,7 +97,16 @@
     } else {
       sub = t.c == null ? "" : '<span class="cf' + (lv ? " s" + lv : "") + '">' + t.c + "%</span>";
     }
-    return '<div class="pr" title="' + esc(tip) + '"><span class="pill' + cls + '">' + esc(t.lab || t.l) + "</span>" + sub + "</div>";
+    var res = "";
+    var fin = DONE.indexOf(m.fixture.status.short) >= 0 && m.goals.home !== null && m.goals.away !== null;
+    if (fin) {
+      var hg = m.goals.home, ag = m.goals.away, won = cls === " ok";
+      var word;
+      if (mkMode === "main" || mkMode === "1x2") word = hg > ag ? "Home win" : hg < ag ? "Away win" : "Draw";
+      else word = won ? "Hit" : "Miss";
+      res = '<span class="rs' + cls + '">' + word + "</span>";
+    }
+    return '<div class="pr" title="' + esc(tip) + '"><span class="pill' + cls + '">' + esc(t.lab || t.l) + "</span>" + res + sub + "</div>";
   };
 
   var _render = window.render;
