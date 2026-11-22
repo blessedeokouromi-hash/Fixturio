@@ -276,6 +276,55 @@ function reason(m) {
   // banker (75% or better). Otherwise no banker is shown that day.
   if (picks[0] && picks[0].probability >= 75) picks[0].banker = true;
 
+  // Wider acca pool: the featured matches above carry per-fixture odds, but the
+  // day has hundreds of other fixtures in the leagues we already follow. One
+  // league-level odds request per league (the same endpoint, one call instead
+  // of one per match) unlocks safe legs from the whole slate without new
+  // per-fixture API calls: the nightly model in all.json already holds every
+  // fixture's chances, so all we need is the prices.
+  try {
+    const d0 = JSON.parse(fs.readFileSync("data/d0.json", "utf8"));
+    const todayFixtures = (d0.response || []).filter(f => f.league && TOP.includes(f.league.id));
+    const featuredIds = new Set(matches.map(m => m.id));
+    const byLeague = {};
+    todayFixtures.forEach(f => { (byLeague[f.league.id] = byLeague[f.league.id] || []).push(f); });
+    const yy = Number(date.slice(0, 4));
+    const season = Number(date.slice(5, 7)) >= 7 ? yy : yy - 1;
+    const wideMatches = [];
+    let wideLeagues = 0;
+    for (const lid of Object.keys(byLeague)) {
+      if (wideLeagues >= 16) break;
+      const od = await api("/odds?league=" + lid + "&season=" + season + "&date=" + date);
+      if (od.errors && Object.keys(od.errors).length) { console.log("Wide pool: odds unavailable for league " + lid + ", skipping."); continue; }
+      wideLeagues++;
+      const oddsByFixture = {};
+      (od.response || []).forEach(r => {
+        if (!r.fixture || !r.bookmakers) return;
+        const bm = r.bookmakers.find(b => (b.bets || []).some(x => x.id === 1)) || r.bookmakers[0];
+        if (bm) oddsByFixture[r.fixture.id] = bm.bets || [];
+      });
+      for (const f of byLeague[lid]) {
+        if (featuredIds.has(f.fixture.id)) continue;
+        if (f.fixture.status && f.fixture.status.short !== "NS") continue;
+        const q = pred && pred[f.fixture.id];
+        if (!q) continue;
+        const bets = oddsByFixture[f.fixture.id];
+        if (!bets) continue;
+        const p = { predictions: { percent: { home: q.h + "%", draw: q.d + "%", away: q.a + "%" } }, comparison: { form: null } };
+        const a = analyze(p, bets, q);
+        wideMatches.push({
+          id: f.fixture.id, league: f.league.name, country: f.league.country,
+          kickoff: f.fixture.date, home: f.teams.home.name, away: f.teams.away.name,
+          src: a.src, form: null, form5: q.form || null, cs: q.s || null, sTop: q.st || null, why: q.why || null,
+          markets: a.list.map(x => ({ market: x.market, prob: Math.round(x.prob * 1000) / 1000, kind: x.kind, odd: x.odd || null, skip: !!x.skip })),
+          wide: true
+        });
+      }
+    }
+    matches.push(...wideMatches);
+    console.log("Wide acca pool: added " + wideMatches.length + " priced matches beyond the featured slate.");
+  } catch (e) { console.log("Wide acca pool skipped: " + (e && e.message ? e.message : e)); }
+
   // Acca of the day: a long-odds slip built only from safe legs with real
   // bookmaker odds. It stacks the day's most reliable markets (best chance per
   // unit of odds, one per match) until the combined odds land between 20 and

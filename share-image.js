@@ -97,8 +97,16 @@
     return c;
   }
 
+  function toast(msg) {
+    var t = document.createElement("div");
+    t.textContent = msg;
+    t.style.cssText = "position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:#0B1220;color:#E8EDF7;font:700 14px Manrope,system-ui,sans-serif;padding:12px 18px;border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:99999";
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 3500);
+  }
+
   function shareImage() {
-    if (typeof picks === "undefined" || !picks || !picks.length) return;
+    if (typeof picks === "undefined" || !picks || !picks.length) { toast("Picks are still loading. Try again in a moment."); return; }
     var ready = document.fonts && document.fonts.load
       ? document.fonts.load("800 40px Manrope").catch(function () {})
       : Promise.resolve();
@@ -110,7 +118,11 @@
         var f = null;
         try { f = new File([b], "fixturio-top15.png", { type: "image/png" }); } catch (e) {}
         if (f && navigator.canShare && navigator.canShare({ files: [f] })) {
-          navigator.share({ files: [f], title: "Fixturio Top 15", text: "Today\u2019s football picks" }).catch(function () {});
+          navigator.share({ files: [f], title: "Fixturio Top 15", text: "Today\u2019s football picks" }).then(function () {
+            toast("Shared. Nice one.");
+          }).catch(function () {
+            toast("Share cancelled. Use Share as image again to save it instead.");
+          });
           return;
         }
         var a = document.createElement("a");
@@ -118,6 +130,7 @@
         a.download = "fixturio-top15.png";
         a.click();
         setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+        toast("Image saved. Check your downloads or gallery.");
       }, "image/png");
     });
   }
