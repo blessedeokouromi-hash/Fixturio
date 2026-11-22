@@ -152,6 +152,7 @@ body.tm .dock{display:block}
   </div>
 </header>
 <nav class="tabs tabsx"><a class="on" href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
+<div class="adslot" id="ad-banner"></div>
 <div id="days" class="days"></div>
 <div class="sr"><input id="q" type="search" placeholder="Search team, league or country" oninput="setQ(this.value)" aria-label="Search matches" autocomplete="off"></div>
 <div id="chips" class="chips"></div>
@@ -464,5 +465,5 @@ fetch("/daily.json?v="+Date.now()).then(r=>r.ok?r.json():null).then(d=>{
 fetch("/all.json").then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.m){pred=d.m;cov=d;render();}
 }).catch(()=>{});
-</script><script src="/markets.js"></script><script src="/share.js"></script><script src="/affiliate.js" defer></script><script src="/push.js" defer></script>
+</script><script src="/markets.js"></script><script src="/share.js"></script><script src="/affiliate.js" defer></script><script src="/ads.js" defer></script><script src="/push.js" defer></script>
 </body></html>
