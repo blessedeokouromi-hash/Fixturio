@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?><Error><Code>SignatureDoesNotMatch</Code><Message>Access denied.</Message><Details>The request signature we calculated does not match the signature you provided. Check your Google secret key and signing method.</Details><StringToSign>GOOG4-RSA-SHA256
+20261122T052117Z
+20261122/auto/storage/goog4_request
+421cd5ed371af01c244a14ed09c3c12fa0a6ea6d93ff5f27c2976ae131e47136</StringToSign><CanonicalRequest>GET
+/wajo-ai-agentnet-uploads-nam4/users/f0a0d470-f591-47c8-9e05-2f7a423df753/sessions/126b3662-e4b5-4cba-8775-e022d1c08f07/58166213-ee2d-4680-a2d0-8cd95ee0c2aa/distinctive-abstract-app-icon-for-fixturio-football-predictions-app-deep-green-r.png
+X-Goog-Algorithm=GOOG4-RSA-SHA256&amp;X-Goog-Credential=agentnet-runtime%40wajo-ai.iam.gserviceaccount.com%2F20261122%2Fauto%2Fstorage%2Fgoog4_request&amp;X-Goog-Date=20261122T052117Z&amp;X-Goog-Expires=86399&amp;X-Goog-SignedHeaders=host
+host:storage.googleapis.com
+
+host
+UNSIGNED-PAYLOAD</CanonicalRequest></Error>
