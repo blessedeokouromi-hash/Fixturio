@@ -1,8 +1,8 @@
 (function () {
-  var TABS = [["main", "Predictions"], ["1x2", "1X2"], ["ou", "Over/Under 2.5"], ["btts", "Both teams to score"], ["cs", "Correct score"]];
+  var TABS = [["main", "Predictions"], ["1x2", "1X2"], ["ou", "Over/Under"], ["btts", "Both teams to score"], ["cs", "Correct score"]];
   var NOTES = {
     "1x2": "Most likely result: 1 is a home win, X a draw, 2 an away win. The percentage is the model’s chance.",
-    "ou": "Whether the model expects 3 or more goals (Over) or 2 or fewer (Under), with its chance.",
+    "ou": "Each match shows the goal line the model is most confident about: Over 2.5 means 3 or more goals in total. The percentage is the model\u2019s chance for that line.",
     "btts": "Whether the model expects both teams to score, with its chance.",
     "cs": "The most likely exact score and its chance. Exact scores are hard to predict, so these chances are small."
   };
@@ -34,7 +34,29 @@
       var l = p.h >= p.d && p.h >= p.a ? "1" : (p.a >= p.d ? "2" : "X");
       return { l: l, c: mx };
     }
-    if (mode === "ou") return p.o >= 50 ? { l: "Over", c: p.o } : { l: "Under", c: 100 - p.o };
+    if (mode === "ou") {
+      var lam = (p.x || 0) + (p.y || 0);
+      if (lam > 0) {
+        var cum = function (l, k) { var s2 = 0; for (var i2 = 0; i2 <= k; i2++) s2 += pois(l, i2); return s2; };
+        var overAt = function (l) { return 1 - cum(lam, Math.floor(l)); };
+        var side = p.o >= 50 ? "Over" : "Under";
+        var pick, c;
+        if (side === "Over") {
+          pick = 1.5;
+          var hi = [3.5, 2.5, 1.5];
+          for (var i3 = 0; i3 < hi.length; i3++) { if (overAt(hi[i3]) >= 0.6) { pick = hi[i3]; break; } }
+          c = Math.round(overAt(pick) * 100);
+        } else {
+          pick = 2.5;
+          var lo = [1.5, 2.5, 3.5];
+          for (var j2 = 0; j2 < lo.length; j2++) { if (1 - overAt(lo[j2]) >= 0.6) { pick = lo[j2]; break; } }
+          c = Math.round((1 - overAt(pick)) * 100);
+          if (pick === 2.5 && p.o != null) c = 100 - p.o;
+        }
+        return { l: side, line: pick, lab: side + " " + pick, c: c };
+      }
+      return p.o >= 50 ? { l: "Over", line: 2.5, lab: "Over 2.5", c: p.o } : { l: "Under", line: 2.5, lab: "Under 2.5", c: 100 - p.o };
+    }
     if (mode === "btts") return p.b >= 50 ? { l: "Yes", c: p.b } : { l: "No", c: 100 - p.b };
     if (mode === "cs") {
       var b = csBest(p);
@@ -49,7 +71,7 @@
       var sp = t.l.split("-"), po = +sp[0] > +sp[1] ? "H" : +sp[0] < +sp[1] ? "A" : "D";
       ok = po === (h > a ? "H" : h < a ? "A" : "D");
     } else if (mode === "1x2") ok = t.l === (h > a ? "1" : h < a ? "2" : "X");
-    else if (mode === "ou") ok = t.l === "Over" ? h + a > 2 : h + a < 3;
+    else if (mode === "ou") { var ln = t.line || 2.5; ok = t.l === "Over" ? h + a > ln : h + a < ln + 0.5; }
     else if (mode === "btts") ok = t.l === "Yes" ? (h > 0 && a > 0) : !(h > 0 && a > 0);
     else ok = t.l === h + "-" + a;
     return ok ? " ok" : " bad";
@@ -72,7 +94,7 @@
     } else {
       sub = t.c == null ? "" : '<span class="cf' + (lv ? " s" + lv : "") + '">' + t.c + "%</span>";
     }
-    return '<div class="pr" title="' + esc(tip) + '"><span class="pill' + cls + '">' + esc(t.l) + "</span>" + sub + "</div>";
+    return '<div class="pr" title="' + esc(tip) + '"><span class="pill' + cls + '">' + esc(t.lab || t.l) + "</span>" + sub + "</div>";
   };
 
   var _render = window.render;
