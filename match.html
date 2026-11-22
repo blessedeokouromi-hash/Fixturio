@@ -128,7 +128,8 @@ const VKEY="fixturio:vote:"+mid;
 let vCnt={h:0,d:0,a:0},vTot=0,myVote=null;
 function shortName(n){return n.length>14?n.slice(0,13)+"…":n;}
 function renderVote(){
-  const el=$("vote");if(!el)return;
+  const el=$("vote");if(!el||!m)return;
+  const pred=p?p[mid]:null;
   let hh='<h3>Who will win?'+'</h3>';
   if(pred)hh+='<p class="note" style="margin:0 0 8px">Our model: '+esc(m.teams.home.name)+' '+pred.h+'% · Draw '+pred.d+'% · '+esc(m.teams.away.name)+' '+pred.a+'%</p>';
   hh+='<div class="acts" style="justify-content:flex-start;gap:6px">'
