@@ -1,5 +1,6 @@
 {
   "enabled": true,
+  "inFeed": true,
   "_docs": "Set enabled to true to turn ads on. Each src is the script URL your ad network gives you for that zone. Empty src zones do nothing. vast.url is a VAST tag URL for video pre-roll use.",
   "banner": {
     "key": "bbdbf76fe719df33e4d11ce72d6108ae",

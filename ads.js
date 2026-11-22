@@ -59,6 +59,20 @@
         run(cfg.popunder.src, document.body, "popunder");
       }
       window.fixturioVastUrl = cfg.vast && cfg.vast.url ? cfg.vast.url : null;
+      // In-feed slots: small banner units between league blocks on the homepage.
+      // Refills automatically whenever the list re-renders (filter, show more).
+      if (cfg.inFeed !== false && cfg.mobileBanner && cfg.mobileBanner.invoke) {
+        var fill = function () {
+          var slots = document.querySelectorAll(".ad-infeed:not(.filled)");
+          for (var i = 0; i < slots.length; i++) {
+            slots[i].className = "adslot ad-infeed filled";
+            iframeBanner(slots[i], "feed", cfg.mobileBanner);
+          }
+        };
+        fill();
+        var appEl = document.getElementById("app");
+        if (appEl && window.MutationObserver) new MutationObserver(fill).observe(appEl, { childList: true, subtree: true });
+      }
     })
     .catch(function () {});
 })();

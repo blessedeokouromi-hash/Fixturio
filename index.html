@@ -142,7 +142,7 @@ body.tm .dock{display:block}
 .tot span{font-weight:700}
 .tot b{font-size:38px;font-weight:800;letter-spacing:-.02em}
 .slip .fine{color:#5B563F}
-</style><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-192.png"><link rel="stylesheet" href="/fix.css">
+.ad-infeed{display:block;margin:8px auto;min-height:50px;text-align:center}</style><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-192.png"><link rel="stylesheet" href="/fix.css">
 </head><body>
 <div class="wrap" id="wrap">
 <header class="top">
@@ -302,10 +302,11 @@ function render(){
   const topK=keys.filter(isTop).sort((a,b)=>(hasLive(b)-hasLive(a))||(tr(lid(a))-tr(lid(b))));
   const restK=keys.filter(k=>!isTop(k)).sort((a,b)=>(hasLive(b)-hasLive(a))||(hasPr(b)-hasPr(a))||(g[b].length-g[a].length));
   const expand=filter!=="all"||!!qq;
+  let feedN=0;
   const group=k=>{
     const p=k.split("|");
     const ms=g[k].sort((a,b)=>(isLive(b)-isLive(a))||(a.fixture.timestamp-b.fixture.timestamp));
-    return '<div class="lg'+(hasLive(k)?" hot":"")+'">'+img(ms[0].league.logo)+"<b>"+esc(p[2])+"</b><span>"+esc(p[1])+'</span></div><div class="grp">'+ms.map(row).join("")+"</div>";
+    return '<div class="lg'+(hasLive(k)?" hot":"")+'">'+img(ms[0].league.logo)+"<b>"+esc(p[2])+"</b><span>"+esc(p[1])+'</span></div><div class="grp">'+ms.map(row).join("")+"</div>"+(++feedN%2===0?'<div class="adslot ad-infeed"></div>':"");
   };
   let h=topK.map(group).join("");
   const showRest=(expand||moreOpen)?restK.length:(topK.length?0:Math.min(15,restK.length));

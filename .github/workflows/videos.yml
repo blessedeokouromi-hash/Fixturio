@@ -1,7 +1,8 @@
 name: Refresh videos
 on:
   schedule:
-        - cron: "23 23-5 * * *"
+        - cron: "23 23 * * *"
+        - cron: "23 0-5 * * *"
   workflow_dispatch:
 permissions:
   contents: write
