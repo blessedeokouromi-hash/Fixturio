@@ -1,11 +1,5 @@
-self.options = {
-    "domain": "3nbf4.com",
-    "zoneId": 12323978
-}
-self.lary = ""
-importScripts('https://3nbf4.com/act/files/service-worker.min.js?r=sw')
-
-// --- Fixturio push notifications (same worker as the ad network, so they share the root scope) ---
+// --- Fixturio push notifications ---
+// (Root-scope worker previously shared with Monetag; Monetag code removed 2026-11-22.)
 self.addEventListener("push", function (e) {
   var d = {};
   try { d = e.data ? e.data.json() : {}; } catch (err) {}
