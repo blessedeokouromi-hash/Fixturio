@@ -32,13 +32,15 @@ jobs:
         run: node scripts/results.js
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-      - name: Build standings, scorers, news and videos
+      - name: Build standings and news
         if: github.event.schedule != '23 6-22 * * *'
         continue-on-error: true
         run: |
           node scripts/standings.js
           node scripts/news.js
-          node scripts/videos.js
+      - name: Build videos
+        continue-on-error: true
+        run: node scripts/videos.js
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       - name: Predict every match
