@@ -45,14 +45,14 @@ button{font:inherit;color:inherit;cursor:pointer}
 .adslot{min-height:60px;margin:12px 16px;display:flex;justify-content:center;align-items:center}
 .adslot:empty{display:none}
 h3.sec{margin:20px 16px 8px;font-size:15px;font-weight:800}
-</style></head><body>
+</style><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-192.png"></head><body>
 <div class="wrap">
 <header class="top"><a class="logo" href="/"><img src="/logo.png" alt="Fixturio logo" style="width:32px;height:32px;flex:none;border-radius:8px"><b>Fixturio</b></a><a href="/">All matches</a></header>
 <nav class="tabs tabsx"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
 <main id="app"><p class="msg">Loading team…</p></main>
 <p class="fine">Results cover the last three days we store plus the next two. Full season fixtures come in the next update.</p>
 </div>
-<script src="/ads.js" defer></script>
+
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));

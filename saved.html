@@ -38,16 +38,15 @@ button{font:inherit;color:inherit;cursor:pointer}
 .fine{margin:16px 16px 0;font-size:12px;color:var(--mu)}
 .adslot{min-height:60px;margin:12px 16px;display:flex;justify-content:center;align-items:center}
 .adslot:empty{display:none}
-</style></head><body>
+</style><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-192.png"></head><body>
 <div class="wrap">
 <header class="top"><a class="logo" href="/"><img src="/logo.png" alt="Fixturio logo" style="width:32px;height:32px;flex:none;border-radius:8px"><b>Fixturio</b></a></header>
 <nav class="tabs tabsx"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a class="on" href="/saved.html">Saved</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
 <section class="intro"><h2>Saved matches</h2><p>Matches you starred stay here on this device, with live scores while they play.</p></section>
-<div class="adslot" id="ad-native"></div>
 <main id="app"><p class="msg">Loading…</p></main>
 <p class="fine">Saved matches live in this browser only. Clearing your browser data clears them.</p>
 </div>
-<script src="/ads.js" defer></script>
+
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
