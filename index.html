@@ -417,16 +417,25 @@ function tog(id){
 
 function tap(id){tog(id);}
 
-function load(){
-  const d0=day;
-  fetch("/api/matches?date="+dateStr(day)).then(r=>r.json()).then(d=>{
-    if(d0!==day)return;
+function fetchMatches(d0,attempt){
+  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),12000);
+  fetch("/api/matches?date="+dateStr(d0),{signal:ctl.signal}).then(r=>r.json()).then(d=>{
+    clearTimeout(t);if(d0!==day)return;
     data=d.response||[];
     failed=(!data.length&&d.errors&&Object.keys(d.errors).length)?"Match data is temporarily unavailable. Please try again in a few minutes.":"";
     loaded=true;render();
+    try{localStorage.setItem("fx_matches_"+dateStr(d0),JSON.stringify(d.response));}catch(e){}
     $("upd").textContent="Updated "+tm(new Date());
-  }).catch(()=>{if(d0!==day)return;failed="Matches could not be loaded. Check your connection and reload.";loaded=true;render();});
+  }).catch(()=>{
+    clearTimeout(t);if(d0!==day)return;
+    if(attempt<2){setTimeout(()=>{if(d0===day)fetchMatches(d0,attempt+1);},3000);return;}
+    let saved=null;
+    try{saved=JSON.parse(localStorage.getItem("fx_matches_"+dateStr(d0))||"null");}catch(e){}
+    if(saved&&saved.length){data=saved;failed="The live feed is not responding right now, showing matches saved from earlier today. Reload to try again.";loaded=true;render();}
+    else{failed="Matches could not be loaded. Check your connection and reload.";loaded=true;render();}
+  });
 }
+function load(){fetchMatches(day,1);}
 
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.classList&&e.target.classList.contains("m"))e.target.click();});
 $("date").textContent=new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long"});
