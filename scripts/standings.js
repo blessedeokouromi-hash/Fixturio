@@ -32,7 +32,7 @@ async function api(path) {
         gf: row.goalsFor, ga: row.goalsAgainst, gd: row.goalDifference,
         f: (row.form || "").replace(/,/g, ""), fd: 1
       }));
-      leagues.push({ id: code, name: d.competition.name, country: d.competition.area ? d.competition.area.name : "", logo: d.competition.emblem || "", rows });
+      leagues.push({ id: code, name: code === "PD" ? "La Liga" : (code === "BSA" ? "Serie A Brazil" : d.competition.name), country: d.competition.area ? d.competition.area.name : "", logo: d.competition.emblem || "", rows });
       console.log(code + ": " + rows.length + " teams, season " + (d.season ? d.season.startDate.slice(0, 4) : "?"));
     }
     await sleep(7000);
