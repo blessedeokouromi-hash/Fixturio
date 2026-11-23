@@ -27,6 +27,17 @@ jobs:
         run: node scripts/matches.js 0
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      - name: Live-score alerts
+        continue-on-error: true
+        run: |
+          if [ -n "$VAPID_PRIVATE_KEY" ]; then
+            cd scripts && npm install --silent && cd .. && node scripts/live-alerts.js
+          else
+            node scripts/live-alerts.js
+          fi
+        env:
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
       - name: Check yesterday's picks
         if: github.event.schedule != '23 6-22 * * *'
         run: node scripts/results.js
