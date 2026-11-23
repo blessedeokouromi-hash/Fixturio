@@ -3,12 +3,9 @@ const fs = require("fs");
 const KEY = process.env.API_FOOTBALL_KEY;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-const budget = require("./api-budget");
 async function api(path) {
-  budget.gate();
   const r = await fetch("https://v3.football.api-sports.io" + path,
     { headers: { "x-apisports-key": KEY } });
-  budget.track(path);
   const d = await r.json();
   await sleep(7000);
   return d;

@@ -45,15 +45,6 @@ textarea{width:100%;min-height:260px;background:var(--ink);border:1px solid var(
 <button class="go" id="save" style="display:none;margin-top:6px" onclick="save0()">Save and redeploy</button>
 </div>
 <div class="card">
-<h3>API usage today</h3>
-<p>Every football API request the nightly job makes is logged here. The free plan allows 100 requests per day, reset at midnight UTC (1 AM Lagos time), and the job stops itself at 97 so the plan can never be exceeded.</p>
-<p id="api-st" class="st">Loading…</p>
-<div id="api-box" style="display:none">
-<p><b id="api-used"></b></p>
-<p id="api-log" style="font:12px/1.5 monospace;white-space:pre-wrap;color:var(--mu)"></p>
-</div>
-</div>
-<div class="card">
 <h3>One-time setup (Vercel)</h3>
 <p>1. In Vercel, open your Fixturio project → Settings → Environment Variables.</p>
 <p>2. Add <code>ADMIN_TOKEN</code> with any secret phrase you choose. That is the password for this page.</p>
@@ -83,15 +74,6 @@ function save0(){
     else{$("st").textContent=d.error||"Save failed.";$("st").className="st bad";}
   }).catch(()=>{$("st").textContent="Save failed.";});
 }
-</script>
-<script>
-const E=id=>document.getElementById(id);
-fetch("/data/api-usage.json").then(r=>r.ok?r.json():null).then(d=>{
-  if(!d||!d.day){E("api-st").textContent="No usage logged yet; the ledger fills at the next 1:30 AM build.";return;}
-  E("api-st").style.display="none";E("api-box").style.display="block";
-  E("api-used").textContent=d.day+": "+d.total+" requests used, "+Math.max(0,100-d.total)+" remaining of 100";
-  E("api-log").textContent=(d.log||[]).slice(-14).map(l=>l.t+"  +"+l.n+"  "+l.what).join("\n");
-}).catch(()=>{E("api-st").textContent="Could not load the usage file.";});
 </script>
 </div>
 </body></html>
