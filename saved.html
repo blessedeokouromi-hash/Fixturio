@@ -51,6 +51,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <p class="fine">Saved matches live in this browser only. Clearing your browser data clears them.</p>
 </div>
 
+<script src="/auth.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -103,6 +104,5 @@ function start(){
 start();
 </script>
 
-<script src="/auth.js"></script>
-</body><script src="/ads.js" defer></script>
+<script src="/ads.js" defer></script>
 </html>
