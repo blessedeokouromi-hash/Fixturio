@@ -6,8 +6,8 @@ const fs = require("fs");
 const KEY = process.env.FOOTBALL_DATA_KEY;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const COMPS = [
-  ["PL", "Premier League"], ["PD", "La Liga"], ["SA", "Serie A"], ["BL1", "Bundesliga"],
-  ["FL1", "Ligue 1"], ["DED", "Eredivisie"], ["PPL", "Primeira Liga"], ["CL", "UEFA Champions League"],
+  ["PL", "Premier League"], ["CL", "UEFA Champions League"], ["PD", "La Liga"], ["SA", "Serie A"],
+  ["FL1", "Ligue 1"], ["BL1", "Bundesliga"], ["DED", "Eredivisie"], ["PPL", "Primeira Liga"],
   ["BSA", "Serie A Brazil"]
 ];
 
@@ -43,7 +43,6 @@ async function api(path) {
     await sleep(7000);
   }
   if (!leagues.length) { console.log("No tables from football-data.org; keeping the site as it is"); return; }
-  leagues.sort((a, b) => a.name.localeCompare(b.name));
   const date = new Date().toISOString().slice(0, 10);
   fs.writeFileSync("standings.json", JSON.stringify({
     date, generated: new Date().toISOString(), season: 2026,
