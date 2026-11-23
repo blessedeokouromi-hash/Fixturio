@@ -20,8 +20,9 @@ async function api(path) {
   let today;
   try { today = JSON.parse(fs.readFileSync("data/d0.json", "utf8")); } catch (e) { console.log("No d0.json, skipping standings"); return; }
   const d = today.date || new Date().toISOString().slice(0,10);
-  const y = new Date(d).getUTCFullYear();
-  const season = new Date(d).getUTCMonth() + 1 >= 7 ? y : y - 1;
+  // Free plans can only read seasons 2022-2024 (the API says so), so build the
+  // final tables for 2024 and label them clearly on the page.
+  const season = 2024;
 
   const seen = {};
   (today.response || []).forEach(m => { if (!seen[m.league.id]) seen[m.league.id] = m.league; });
@@ -57,7 +58,7 @@ async function api(path) {
   }
 
   if (!leagues.length) { console.log("No standings built (quota reached or none available); keeping the site as it is"); return; }
-  fs.writeFileSync("standings.json", JSON.stringify({ date: d, generated: new Date().toISOString(), leagues }));
+  fs.writeFileSync("standings.json", JSON.stringify({ date: d, generated: new Date().toISOString(), season: 2024, note: "Tables are the final standings for the 2024 season, the most recent our data plan can read. They do not change with today's games.", leagues }));
   fs.writeFileSync("scorers.json", JSON.stringify({ date: d, generated: new Date().toISOString(), leagues: scorers }));
   console.log("Saved standings for " + leagues.length + " leagues, scorers for " + scorers.length);
 })();

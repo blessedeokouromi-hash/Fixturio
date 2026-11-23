@@ -89,6 +89,7 @@ function renderSc(){
 fetch("/standings.json").then(r=>r.ok?r.json():null).then(d=>{
   S=d;
   if(d&&d.generated)$("upd").textContent="Built "+new Date(d.generated).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  if(d&&d.note){var nt=document.createElement("small");nt.style.display="block";nt.style.margin="8px 16px 0";nt.style.color="var(--mu)";nt.textContent=d.note;$("sel").parentNode.insertBefore(nt,$("sel"));}
   const sel=$("sel");
   if(d&&d.leagues&&d.leagues.length){
     sel.innerHTML=d.leagues.map(l=>'<option value="'+l.id+'">'+esc(l.name)+" · "+esc(l.country)+"</option>").join("");
