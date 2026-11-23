@@ -17,6 +17,35 @@ async function api(path) {
   return r.json();
 }
 
+async function matchesAll(code) {
+  let out = [], offset = 0;
+  for (let page = 0; page < 6; page++) {
+    const d = await api("/competitions/" + code + "/matches?status=FINISHED&limit=200&offset=" + offset);
+    if (!d || !d.matches) break;
+    out = out.concat(d.matches);
+    if (d.matches.length < 200 || d.count == null || out.length >= d.count) break;
+    offset += d.matches.length;
+  }
+  return out;
+}
+
+function formMap(matches) {
+  const m = {};
+  matches
+    .filter(x => x.status === "FINISHED" && x.score && x.score.fullTime && x.score.fullTime.home != null)
+    .sort((a, b) => String(a.utcDate).localeCompare(String(b.utcDate)))
+    .forEach(x => {
+      const h = x.score.fullTime.home, a = x.score.fullTime.away;
+      [[x.homeTeam, h, a], [x.awayTeam, a, h]].forEach(pr => {
+        const r = pr[0], gf = pr[1], ga = pr[2];
+        const f = m[r.id] || (m[r.id] = []);
+        f.push(gf > ga ? "W" : gf === ga ? "D" : "L");
+        if (f.length > 5) f.shift();
+      });
+    });
+  return m;
+}
+
 (async () => {
   if (!KEY) { console.log("FOOTBALL_DATA_KEY missing; keeping the site as it is"); return; }
   const leagues = [], scorers = [];
@@ -32,6 +61,8 @@ async function api(path) {
         gf: row.goalsFor, ga: row.goalsAgainst, gd: row.goalDifference,
         f: (row.form || "").replace(/,/g, ""), fd: 1
       }));
+      const fm = formMap(await matchesAll(code));
+      rows.forEach(r => { r.f = fm[r.t.id] ? fm[r.t.id].join("") : (r.f || ""); });
       leagues.push({ id: code, name: code === "PD" ? "La Liga" : (code === "BSA" ? "Serie A Brazil" : d.competition.name), country: d.competition.area ? d.competition.area.name : "", logo: d.competition.emblem || "", rows });
       console.log(code + ": " + rows.length + " teams, season " + (d.season ? d.season.startDate.slice(0, 4) : "?"));
     }
