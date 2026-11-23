@@ -65,6 +65,13 @@ body.tm .wrap{padding-bottom:180px}
 .chev.rot{transform:rotate(0)}
 .lg.hot b::after{content:"";display:inline-block;width:7px;height:7px;margin-left:8px;border-radius:50%;background:var(--live);animation:pl 1.6s ease-in-out infinite}
 @keyframes pl{50%{opacity:.25}}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:80;display:none;background:var(--s1);border-top:1px solid var(--line);padding:4px 6px calc(6px + env(safe-area-inset-bottom))}
+.tbi{flex:1;display:block;text-align:center;padding:10px 2px;font-size:12px;font-weight:800;color:var(--mu);text-decoration:none;border:0;background:none;font-family:inherit}
+.tbi.on{color:var(--amb)}
+.morelist{position:fixed;left:0;right:0;bottom:58px;z-index:79;display:none;background:var(--s1);border-top:1px solid var(--line);padding:10px 14px;grid-template-columns:repeat(3,1fr);gap:8px}
+.morelist.open{display:grid}
+.morelist a{padding:10px;border:1px solid var(--line);border-radius:10px;font-weight:700;font-size:13px;color:var(--tx);text-decoration:none;text-align:center}
+@media (max-width:767px){nav.tabs a{display:none}.tabbar{display:flex}body{padding-bottom:72px}}
 @media (prefers-reduced-motion:reduce){.lg.hot b::after{animation:none}}
 .grp{background:var(--s1)}
 .mw{border-top:1px solid var(--line)}
@@ -366,6 +373,7 @@ function starMatch(){
 }
 function att(v){return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/'/g,"&#39;");}
 function tgLg(el){const k=el.getAttribute("data-k");if(!k)return;if(lgClosed.has(k))lgClosed.delete(k);else lgClosed.add(k);render();}
+function moreTgl(){const m=document.getElementById("morelist");if(m)m.classList.toggle("open");}
 function fav(id){
   let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){}
   const i2=s.indexOf(id);
@@ -489,4 +497,6 @@ fetch("/all.json").then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.m){pred=d.m;cov=d;render();}
 }).catch(()=>{});
 </script><script src="/markets.js"></script><script src="/share.js"></script><script src="/affiliate.js" defer></script><script src="/ads.js" defer></script><script src="/push.js" defer></script>
+<div class="morelist" id="morelist"><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a><a href="/info.html">About</a></div>
+<nav class="tabbar" aria-label="Main"><a class="tbi on" href="/">Matches</a><a class="tbi" href="/picks.html">Top 15</a><a class="tbi" href="/basketball.html">Basketball</a><a class="tbi" href="/saved.html">Saved</a><button class="tbi" type="button" onclick="moreTgl()">More</button></nav>
 </body></html>
