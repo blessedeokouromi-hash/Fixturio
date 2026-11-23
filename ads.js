@@ -1,15 +1,7 @@
 // Config-driven ad loader. Reads /ads.json (edited from the admin dashboard).
-// Frequency limits: popunder once per visitor per day, social bar and banner once
-// per page. Every shown zone pings the tracker for later revenue reporting.
+// Frequency limits: popunder on every page (uncapped at the user's request),
+// social bar and banner once per page. Every shown zone pings the tracker for later revenue reporting.
 (function () {
-  var POP = "fixturio:ad:pop";
-  function shownToday() {
-    try { return JSON.parse(localStorage.getItem(POP) || '""') === new Date().toISOString().slice(0, 10); }
-    catch (e) { return false; }
-  }
-  function markToday() {
-    try { localStorage.setItem(POP, JSON.stringify(new Date().toISOString().slice(0, 10))); } catch (e) {}
-  }
   function track(zone) {
     try { fetch("/api/track?zone=" + zone, { keepalive: true }).catch(function () {}); } catch (e) {}
   }
@@ -73,16 +65,14 @@
       }
       // Popunder waits for the page to finish loading and fires on the
       // visitor's first tap, so it can never hijack the site mid-load.
-      if (cfg.popunder && cfg.popunder.src && !shownToday()) {
+      if (cfg.popunder && cfg.popunder.src) {
         var armed = false;
         var arm = function () {
-          if (armed || shownToday()) return;
+          if (armed) return;
           armed = true;
           var go = function () {
             document.removeEventListener("click", go, true);
             document.removeEventListener("touchstart", go, true);
-            if (shownToday()) return;
-            markToday();
             run(cfg.popunder.src, document.body, "popunder");
           };
           document.addEventListener("click", go, true);
