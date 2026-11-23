@@ -63,9 +63,12 @@ const TOP = [1,2,4,5,6,3,848,39,140,135,78,61,88,94,144,203,40,253,71,128,179,29
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const num = v => parseFloat(String(v == null ? "" : v).replace("%", "")) || 0;
 
+const budget = require("./api-budget");
 async function api(path) {
+  budget.gate();
   const r = await fetch("https://v3.football.api-sports.io" + path,
     { headers: { "x-apisports-key": KEY } });
+  budget.track(path);
   const d = await r.json();
   await sleep(7000);
   return d;

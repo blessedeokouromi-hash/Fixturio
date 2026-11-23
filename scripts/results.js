@@ -1,6 +1,7 @@
 const fs = require("fs");
 const KEY = process.env.API_FOOTBALL_KEY;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const budget = require("./api-budget");
 
 function load(file, fallback) {
   try { return JSON.parse(fs.readFileSync(file, "utf8")); } catch (e) { return fallback; }
@@ -28,8 +29,10 @@ function grade(market, h, a) {
   if (old.date >= today) { console.log("Previous picks are from today, nothing to check yet"); return; }
   if (hist.days.some(d => d.date === old.date)) { console.log("Already checked " + old.date); return; }
 
+  budget.gate();
   const r = await fetch("https://v3.football.api-sports.io/fixtures?date=" + old.date,
     { headers: { "x-apisports-key": KEY } });
+  budget.track("results fixtures " + old.date);
   const fx = await r.json();
   await sleep(7000);
   if ((fx.errors && Object.keys(fx.errors).length) || !fx.response) {
