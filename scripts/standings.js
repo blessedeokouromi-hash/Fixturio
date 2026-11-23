@@ -13,6 +13,7 @@ const COMPS = [
 
 async function api(path) {
   const r = await fetch("https://api.football-data.org/v4" + path, { headers: { "X-Auth-Token": KEY } });
+  await sleep(8000);
   if (!r.ok) { console.log(path + " -> HTTP " + r.status); return null; }
   return r.json();
 }
