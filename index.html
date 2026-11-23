@@ -142,7 +142,7 @@ body.tm .dock{display:block}
 .tot span{font-weight:700}
 .tot b{font-size:38px;font-weight:800;letter-spacing:-.02em}
 .slip .fine{color:#5B563F}
-.ad-infeed{display:block;margin:8px auto;min-height:50px;text-align:center}</style><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-192.png"><link rel="stylesheet" href="/fix.css">
+.ad-infeed{display:block;margin:10px auto 2px;max-width:760px;min-height:90px;text-align:center}</style><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-192.png"><link rel="stylesheet" href="/fix.css">
 </head><body>
 <div class="wrap" id="wrap">
 <header class="top">
@@ -286,7 +286,7 @@ function render(){
       $("app").innerHTML='<p class="msg pad">'+(data.length?"Predictions for this market are still building, or no matches lean that way yet.":"Predictions are loading…")+"</p>";
       return;
     }
-    $("app").innerHTML='<div class="grp">'+cand.map(row).join("")+"</div>";
+    $("app").innerHTML='<div class="grp">'+cand.map(m=>'<div class="lg">'+img(m.league.logo)+"<b>"+esc(m.league.name)+"</b><span>"+esc(m.league.country)+"</span></div>"+row(m)).join("")+"</div>";
     return;
   }
   if(!list.length){
@@ -306,7 +306,7 @@ function render(){
   const group=k=>{
     const p=k.split("|");
     const ms=g[k].sort((a,b)=>(isLive(b)-isLive(a))||(a.fixture.timestamp-b.fixture.timestamp));
-    return '<div class="lg'+(hasLive(k)?" hot":"")+'">'+img(ms[0].league.logo)+"<b>"+esc(p[2])+"</b><span>"+esc(p[1])+'</span></div><div class="grp">'+ms.map(row).join("")+"</div>"+(feedSkip?"":(++feedN<=80?'<div class="adslot ad-infeed"></div>':""));
+    return '<div class="lg'+(hasLive(k)?" hot":"")+'">'+img(ms[0].league.logo)+"<b>"+esc(p[2])+"</b><span>"+esc(p[1])+'</span></div><div class="grp">'+ms.map(row).join("")+"</div>"+(feedSkip?"":(++feedN%2===0?'<div class="adslot ad-infeed"></div>':""));
   };
   let h=topK.map(group).join("");
   const showRest=(expand||moreOpen)?restK.length:(topK.length?0:Math.min(15,restK.length));

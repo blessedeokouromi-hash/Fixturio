@@ -94,12 +94,13 @@
       window.fixturioVastUrl = cfg.vast && cfg.vast.url ? cfg.vast.url : null;
       // In-feed slots: small banner units between league blocks on the homepage.
       // Refills automatically whenever the list re-renders (filter, show more).
-      if (cfg.inFeed !== false && cfg.mobileBanner && cfg.mobileBanner.invoke) {
+      var feedUnit = window.innerWidth < 480 && cfg.mobileBanner ? cfg.mobileBanner : (cfg.banner && cfg.banner.invoke ? cfg.banner : cfg.mobileBanner);
+      if (cfg.inFeed !== false && feedUnit && feedUnit.invoke) {
         var fill = function () {
           var slots = document.querySelectorAll(".ad-infeed:not(.filled)");
           for (var i = 0; i < slots.length; i++) {
             slots[i].className = "adslot ad-infeed filled";
-            iframeBanner(slots[i], "feed", cfg.mobileBanner);
+            iframeBanner(slots[i], "feed", feedUnit);
           }
         };
         fill();
