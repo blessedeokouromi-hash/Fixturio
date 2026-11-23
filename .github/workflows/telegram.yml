@@ -2,8 +2,8 @@ name: Daily Telegram post
 
 on:
   schedule:
-    # 06:00 UTC = 07:00 WAT, after the 00:30 UTC build has committed daily.json
-    - cron: "0 6 * * *"
+    # 12:10 UTC = 13:10 WAT, after the 11:30 UTC (12:30 WAT) daily build has committed daily.json
+    - cron: "10 12 * * *"
   workflow_dispatch:
 
 jobs:

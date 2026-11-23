@@ -1,7 +1,7 @@
 name: Daily picks
 on:
   schedule:
-        - cron: "30 0 * * *"
+        - cron: "30 11 * * *"
   workflow_dispatch:
 permissions:
   contents: write
