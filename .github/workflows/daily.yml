@@ -50,6 +50,7 @@ jobs:
           node scripts/standings.js
           node scripts/news.js
         env:
+          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       - name: Build videos
         continue-on-error: true

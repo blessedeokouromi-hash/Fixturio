@@ -56,7 +56,7 @@ td.p{font-weight:800}
 <div class="wrap">
 <header class="top"><a class="logo" href="/"><img src="/logo.png" alt="Fixturio logo" style="width:32px;height:32px;flex:none;border-radius:8px"><b>Fixturio</b></a></header>
 <nav class="tabs tabsx"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a class="on" href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
-<section class="intro"><h2>Standings &amp; top scorers</h2><p>Final tables for the big leagues, with each club’s form. Our data plan serves completed seasons, so they show the last finished one.</p></section>
+<section class="intro"><h2>Standings &amp; top scorers</h2><p>Live tables for the big leagues, with each club’s form.</p></section>
 <div class="picker"><select id="sel" onchange="pick()" aria-label="Choose a league"></select></div>
 <div class="adslot" id="ad-banner"></div><main id="app"><p class="msg">Loading tables…</p></main>
 <div id="scorers"></div>
@@ -73,7 +73,7 @@ function render(){
   if(!cur){$("app").innerHTML='<p class="msg">No league tables yet. They build each morning with the predictions.</p>';return;}
   let h='<table><thead><tr><th>#</th><th class="t">Team</th><th>P</th><th>GD</th><th>Pts</th><th>Form</th></tr></thead><tbody>';
   cur.rows.forEach(r=>{
-    h+='<tr><td>'+r.r+'</td><td class="t"><a href="/team.html?id='+r.t.id+'&n='+encodeURIComponent(r.t.n)+'" style="color:inherit;text-decoration:none">'+(r.t.l?'<img src="'+esc(r.t.l)+'" alt="">':'')+esc(r.t.n)+'</a></td><td>'+r.pl+'</td><td class="gd">'+(r.gd>0?"+":"")+r.gd+'</td><td class="p">'+r.p+'</td><td><div class="fm">'+String(r.f||"").slice(-5).split("").map(c=>'<i class="'+c+'"></i>').join("")+'</div></td></tr>';
+    const cell=r.fd?'<span style="color:inherit;text-decoration:none">'+(r.t.l?'<img src="'+esc(r.t.l)+'" alt="">':'')+esc(r.t.n)+'</span>':'<a href="/team.html?id='+r.t.id+'&n='+encodeURIComponent(r.t.n)+'" style="color:inherit;text-decoration:none">'+(r.t.l?'<img src="'+esc(r.t.l)+'" alt="">':'')+esc(r.t.n)+'</a>';h+='<tr><td>'+r.r+'</td><td class="t">'+cell+'</td><td>'+r.pl+'</td><td class="gd">'+(r.gd>0?"+":"")+r.gd+'</td><td class="p">'+r.p+'</td><td><div class="fm">'+String(r.f||"").slice(-5).split("").map(c=>'<i class="'+c+'"></i>').join("")+'</div></td></tr>';
   });
   h+='</tbody></table>';
   $("app").innerHTML=h;
