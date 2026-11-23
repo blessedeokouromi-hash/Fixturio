@@ -35,12 +35,6 @@ async function api(path) {
       leagues.push({ id: code, name: code === "PD" ? "La Liga" : (code === "BSA" ? "Serie A Brazil" : d.competition.name), country: d.competition.area ? d.competition.area.name : "", logo: d.competition.emblem || "", rows });
       console.log(code + ": " + rows.length + " teams, season " + (d.season ? d.season.startDate.slice(0, 4) : "?"));
     }
-    await sleep(7000);
-    const ts = await api("/competitions/" + code + "/topscorers");
-    if (ts && ts.scorers && ts.scorers.length) {
-      scorers.push({ id: code, name: d.competition.name, list: ts.scorers.slice(0, 10).map(s => ({ n: s.player ? s.player.name : "?", t: s.team ? s.team.name : "", g: s.goals || 0 })) });
-    }
-    await sleep(7000);
   }
   if (!leagues.length) { console.log("No tables from football-data.org; keeping the site as it is"); return; }
   const date = new Date().toISOString().slice(0, 10);
