@@ -465,7 +465,7 @@ function tog(id){
 function tap(id){tog(id);}
 
 function fetchMatches(d0,attempt){
-  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),12000);
+  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),8000);
   if(attempt===0){let c=null;try{c=JSON.parse(localStorage.getItem("fx_matches_"+dateStr(d0))||"null")}catch(e){}
     if(c&&c.length){data=c;failed="";loaded=true;render();}}
   fetch("/api/matches?date="+dateStr(d0),{signal:ctl.signal}).then(r=>r.json()).then(d=>{
@@ -477,7 +477,7 @@ function fetchMatches(d0,attempt){
     $("upd").textContent="Updated "+tm(new Date());
   }).catch(()=>{
     clearTimeout(t);if(d0!==day)return;
-    if(attempt<2){setTimeout(()=>{if(d0===day)fetchMatches(d0,attempt+1);},3000);return;}
+    if(attempt<1){setTimeout(()=>{if(d0===day)fetchMatches(d0,attempt+1);},3000);return;}
     let saved=null;
     try{saved=JSON.parse(localStorage.getItem("fx_matches_"+dateStr(d0))||"null");}catch(e){}
     if(saved&&saved.length){data=saved;failed="The live feed is not responding right now, showing matches saved from earlier today. Reload to try again.";loaded=true;render();}
@@ -490,7 +490,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.classList&&
 $("date").textContent=new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long"});
 days();
 load();
-setTimeout(function(){if(!loaded){var a=$("app");if(a)a.innerHTML='<p class="msg pad">Still loading slowly or the connection dropped. <button class="more" onclick="location.reload()">Tap to reload</button></p>';}},45000);
+setTimeout(function(){if(!loaded){var a=$("app");if(a)a.innerHTML='<p class="msg pad">Still loading slowly or the connection dropped. <button class="more" onclick="location.reload()">Tap to reload</button></p>';}},20000);
 setInterval(()=>{if(day===0)load(true);},60000);
 fetch("/daily.json?v="+Date.now()).then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.matches){d.matches.forEach(m=>{info[m.id]=m;});render();}
