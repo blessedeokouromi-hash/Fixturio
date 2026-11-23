@@ -40,8 +40,9 @@
     on:function(f){subs.push(f);ready().then(function(s){if(!s)f(null);});return f;},
     signIn:function(email,pw){return sb?sb.auth.signInWithPassword({email:email,password:pw}):Promise.reject(new Error('not ready'));},
     signUp:function(email,pw){return sb?sb.auth.signUp({email:email,password:pw}):Promise.reject(new Error('not ready'));},
-    reset:function(email){return sb?sb.auth.resetPasswordForEmail(email):Promise.reject(new Error('not ready'));},
+    reset:function(email){return sb?sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/auth.html'}):Promise.reject(new Error('not ready'));},
     signOut:function(){return sb?sb.auth.signOut():Promise.resolve();},
+    setPassword:function(pw){return sb?sb.auth.updateUser({password:pw}):Promise.reject(new Error('not ready'));},
     push:push,pull:pull
   };
 })();

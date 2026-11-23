@@ -36,6 +36,7 @@ input{width:100%;box-sizing:border-box;font:inherit;padding:12px;border:1px soli
   </div>
   <p class="msg" id="msg"></p>
   <div id="signedin" class="acctin" hidden><p id="who"></p><a class="add" href="/saved.html">Go to your saved matches</a><button type="button" id="out" class="link">Sign out</button></div>
+  <div id="setpwbox" class="acctin" hidden><p><b>Choose a new password</b></p><label for="npw">New password</label><input id="npw" type="password" autocomplete="new-password" required minlength="6"><button class="add" id="savepw" type="button">Save new password</button></div>
 </div>
 </main>
 <p class="fine">By creating an account you agree to our <a href="/info.html#terms">terms</a> and <a href="/info.html#privacy">privacy policy</a>.</p>
@@ -71,7 +72,8 @@ $("forgot").onclick=async()=>{
   if(!email){$("msg").textContent="Type your email first, then tap Forgot password.";return;}
   try{const r=await fxAuth.reset(email);$("msg").textContent=r.error?r.error.message:"Reset link sent to your email.";}catch(err){$("msg").textContent="Something went wrong. Please try again.";}
 };
-$("out").onclick=async()=>{try{await fxAuth.signOut();}catch(e){}location.reload();};
+$("out").onclick=$("savepw").onclick=async()=>{  const pw=$("npw").value;  if(pw.length<6){$("msg").textContent="Password must be at least 6 characters.";return;}  $("savepw").disabled=true;  try{    const r=await fxAuth.setPassword(pw);    if(r&&r.error){$("msg").textContent=r.error.message;$("savepw").disabled=false;return;}    try{history.replaceState(null,"",location.pathname+location.search);}catch(e){}    $("msg").textContent="Password updated. You are signed in with your new password.";    $("setpwbox").hidden=true;    if(fxAuth.user())showSignedIn(fxAuth.user());  }catch(err){$("msg").textContent="Something went wrong. Please try again.";$("savepw").disabled=false;}};function showSetPw(){$("formbox").hidden=true;$("forgot").hidden=true;$("signedin").hidden=true;$("setpwbox").hidden=false;}if(/type=recovery/.test(location.hash)){  (function(){let n=0;const t=setInterval(async()=>{n++;    if(window.fxAuth&&fxAuth.enabled()){      await fxAuth.ready();      if(fxAuth.user()){clearInterval(t);showSetPw();}      else if(n>16){clearInterval(t);$("msg").textContent="This reset link has expired or was already used. Tap Forgot password to get a new one.";}    }else if(n>16){clearInterval(t);}  },300);})();}
+async()=>{try{await fxAuth.signOut();}catch(e){}location.reload();};
 if(window.fxAuth)fxAuth.on(u=>{
   if(u)showSignedIn(u);
   else if(!fxAuth.enabled())offline();
