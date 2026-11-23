@@ -49,6 +49,8 @@ jobs:
         run: |
           node scripts/standings.js
           node scripts/news.js
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       - name: Build videos
         continue-on-error: true
         run: node scripts/videos.js
