@@ -98,22 +98,43 @@
       // code, so every placement renders independently (no id clashes).
       if (cfg.inFeed !== false && cfg.native && cfg.native.src) {
         var nm = /([0-9a-f]{32})/.exec(cfg.native.src);
-        var fill = nm ? function () {
-          var slots = document.querySelectorAll(".ad-infeed:not(.filled)");
-          for (var i = 0; i < slots.length; i++) {
-            slots[i].className = "adslot ad-infeed filled";
-            var f = document.createElement("iframe");
-            f.setAttribute("width", "100%");
-            f.setAttribute("height", "300");
-            f.setAttribute("frameborder", "0");
-            f.setAttribute("scrolling", "no");
-            f.setAttribute("title", "advertisement");
-            f.srcdoc = '<body style="margin:0;overflow:hidden"><div id="container-' + nm[1] + '"></div><script async data-cfasync="false" src="' + cfg.native.src + '"><\/script>';
-            slots[i].appendChild(f);
-            track("feed");
-          }
-        } : null;
-        if (fill) {
+        if (nm) {
+          // Native placements fill one per document, so each slot carries its
+          // own isolated copy. The network refuses a burst of dozens at once,
+          // so slots are queued and filled a little at a time, nearest the top
+          // first, up to a per-page cap.
+          var CAP = 12, made = 0, queue = [], draining = false;
+          var drain = function () {
+            if (draining) return;
+            draining = true;
+            var step = function () {
+              draining = false;
+              if (!queue.length || made >= CAP) return;
+              var s = queue.shift();
+              if (!s || !s.isConnected || s.classList.contains("filled")) { step(); return; }
+              s.classList.add("filled");
+              var f = document.createElement("iframe");
+              f.setAttribute("width", "100%");
+              f.setAttribute("height", "300");
+              f.setAttribute("frameborder", "0");
+              f.setAttribute("scrolling", "no");
+              f.setAttribute("title", "advertisement");
+              f.srcdoc = '<body style="margin:0;overflow:hidden"><div id="container-' + nm[1] + '"></div><script async data-cfasync="false" src="' + cfg.native.src + '"><\/script>';
+              s.appendChild(f);
+              track("feed");
+              made++;
+              setTimeout(step, 600);
+            };
+            step();
+          };
+          var fill = function () {
+            var slots = document.querySelectorAll(".ad-infeed:not(.filled)");
+            for (var i = 0; i < slots.length; i++) {
+              if (made + queue.length >= CAP) break;
+              if (queue.indexOf(slots[i]) === -1) queue.push(slots[i]);
+            }
+            drain();
+          };
           fill();
           var appEl = document.getElementById("app");
           if (appEl && window.MutationObserver) new MutationObserver(fill).observe(appEl, { childList: true, subtree: true });
