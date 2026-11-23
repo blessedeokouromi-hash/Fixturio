@@ -37,34 +37,45 @@ body.tm .wrap{padding-bottom:180px}
 .tabs a.on{color:var(--tx);border-color:var(--amb)}
 
 .tabs span{margin-left:auto;font-size:12px;color:var(--mu)}
-.days{display:flex;gap:8px;padding:12px 16px 0}
-.days button{flex:1;border:1px solid var(--line);background:transparent;border-radius:10px;padding:8px 6px;font-weight:700;font-size:14px;line-height:1.25}
-.days button small{display:block;font-weight:500;font-size:11px;color:var(--mu)}
-.days button.on{background:var(--tx);color:var(--ink);border-color:var(--tx)}
-.days button.on small{color:#46506A}
+.days{display:flex;align-items:stretch;gap:8px;padding:12px 16px 0}
+.darr{width:42px;border:1px solid var(--line);background:var(--s1);border-radius:10px;font-size:22px;font-weight:800;color:var(--tx);flex:none}
+.darr:disabled{opacity:.3}
+.dlab{flex:1;border:1px solid var(--line);background:var(--s1);border-radius:10px;padding:7px 6px;text-align:center}
+.dlab b{display:block;font-size:15px;font-weight:800;line-height:1.2}
+.dlab small{display:block;font-weight:600;font-size:11px;color:var(--mu)}
 .sr{padding:10px 16px 0}
 .sr input{width:100%;padding:11px 14px;background:var(--s1);border:1px solid var(--line);border-radius:10px;color:var(--tx);font:inherit;font-size:16px}
 .sr input::placeholder{color:var(--mu)}
 .chips{display:flex;gap:8px;padding:12px 16px 8px;overflow-x:auto}
 .chip{flex:none;border:1px solid var(--line);background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap}
 .chip.on{background:var(--tx);color:var(--ink);border-color:var(--tx)}
+.chip.lc{color:var(--live);border-color:rgba(255,91,91,.45)}
+.chip.lc.on{background:var(--live);color:#fff;border-color:var(--live)}
 .cov{margin:0;padding:0 16px 6px;font-size:12px;color:var(--mu)}
 .cov:empty{display:none}
-.lg{display:flex;align-items:center;gap:10px;padding:18px 16px 8px}
-.lg img{width:20px;height:20px;object-fit:contain}
-.lg b{font-weight:800;font-size:15px}
-.lg span{margin-left:auto;font-size:12px;color:var(--mu);white-space:nowrap}
+.lgc{margin:12px 16px 0;background:var(--s1);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.lg{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--s2);cursor:pointer}
+.lg.static{cursor:default}
+.lg img{width:22px;height:22px;object-fit:contain;flex:none}
+.lgt{min-width:0;flex:1}
+.lg b{font-weight:800;font-size:15px;display:block;line-height:1.2}
+.lg small{display:block;font-size:12px;color:var(--mu);margin-top:1px}
+.cnt{flex:none;min-width:24px;height:24px;padding:0 7px;border-radius:999px;background:var(--s1);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--mu)}
+.chev{flex:none;width:0;height:0;border-left:6px solid var(--mu);border-top:5px solid transparent;border-bottom:5px solid transparent;transform:rotate(90deg);transition:transform .15s}
+.chev.rot{transform:rotate(0)}
 .lg.hot b::after{content:"";display:inline-block;width:7px;height:7px;margin-left:8px;border-radius:50%;background:var(--live);animation:pl 1.6s ease-in-out infinite}
 @keyframes pl{50%{opacity:.25}}
 @media (prefers-reduced-motion:reduce){.lg.hot b::after{animation:none}}
-.grp{background:var(--s1);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.grp{background:var(--s1)}
 .mw{border-top:1px solid var(--line)}
 .mw:first-child{border-top:0}
 .mw.dim{opacity:.45}
-.m{display:grid;grid-template-columns:46px 1fr auto auto;column-gap:10px;align-items:center;padding:11px 16px;cursor:pointer}
-body.tm .m{grid-template-columns:24px 46px 1fr auto auto}
-.wrap.np .m{grid-template-columns:46px 1fr auto}
-body.tm .wrap.np .m{grid-template-columns:24px 46px 1fr auto}
+.m{display:grid;grid-template-columns:46px 1fr auto auto 30px;column-gap:10px;align-items:center;padding:11px 12px 11px 16px;cursor:pointer}
+body.tm .m{grid-template-columns:24px 46px 1fr auto auto 30px}
+.wrap.np .m{grid-template-columns:46px 1fr auto 30px}
+body.tm .wrap.np .m{grid-template-columns:24px 46px 1fr auto 30px}
+.fav{width:30px;height:30px;border:0;background:transparent;font-size:18px;line-height:1;color:var(--mu);padding:0;justify-self:center}
+.fav.on{color:var(--amb)}
 .st{text-align:center;font-size:13px;font-weight:700;color:var(--mu);line-height:1.2}
 .st.live{color:var(--live)}
 .dot{display:block;width:6px;height:6px;margin:5px auto 0;border-radius:50%;background:var(--amb)}
@@ -163,7 +174,7 @@ body.tm .dock{display:block}
 <script>
 const LIVE=["1H","2H","HT","ET","BT","P","LIVE"],DONE=["FT","AET","PEN"];
 const TOPL=[1,2,3,4,5,6,10,12,29,32,848,39,140,135,78,61,88,94,144,203,40,253,71,128,179];
-const open=new Set(),panels={},info={};
+const open=new Set(),lgClosed=new Set(),panels={},info={};
 let data=[],pred={},cov=null,loaded=false,filter="all",failed="",day=0,q="",moreOpen=false,npCol=false,feedSkip=false;
 let _ctx=null,_rows=[];
 window.mkMode="main";window.mkSel="all";
@@ -226,15 +237,14 @@ function row(m){
     dm.markets.forEach(function(mk){if(mk.kind!=="single")return;const n=String(mk.market||"").toLowerCase();if(n.indexOf("home win")===0)o.h=mk.odd;else if(n.indexOf("draw")===0)o.d=mk.odd;else if(n.indexOf("away win")===0)o.a=mk.odd;});
     if(o.h!==undefined&&o.d!==undefined&&o.a!==undefined)od='<small style="display:block;font-size:11px;font-weight:600;color:var(--mu);margin-top:1px">1 '+o.h+' · X '+o.d+' · 2 '+o.a+'</small>';
   }
-  return '<div class="mw"><div class="m" role="button" tabindex="0" onclick="tap('+id+')"><div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span>'+(fbh?'<span class="fbs">'+fbh+'</span>':"")+'</div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+"</span>"+(fba?'<span class="fbs">'+fba+'</span>':"")+"</div></div>"+(npCol?"":predCell(m))+'<div class="sc'+(live?" live":"")+'">'+sc+od+'</div></div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
+  const star='<button class="fav'+(savedHas(id)?" on":"")+'" data-fav="'+id+'" aria-label="'+(savedHas(id)?"Remove from saved":"Save match")+'" onclick="event.stopPropagation();fav('+id+')">'+(savedHas(id)?"★":"☆")+"</button>";
+  return '<div class="mw"><div class="m" role="button" tabindex="0" onclick="tap('+id+')"><div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span>'+(fbh?'<span class="fbs">'+fbh+"</span>":"")+'</div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+"</span>"+(fba?'<span class="fbs">'+fba+"</span>":"")+"</div></div>"+(npCol?"":predCell(m))+'<div class="sc'+(live?" live":"")+'">'+sc+od+"</div>"+star+'</div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
 }
 
 function days(){
   const nm=["Yesterday","Today","Tomorrow"];
-  $("days").innerHTML=[-1,0,1].map(o=>{
-    const s=new Date(Date.now()+o*864e5).toLocaleDateString([],{weekday:"short",day:"numeric"});
-    return '<button class="'+(day===o?"on":"")+'" onclick="setDay('+o+')">'+nm[o+1]+"<small>"+esc(s)+"</small></button>";
-  }).join("");
+  const s=new Date(Date.now()+day*864e5).toLocaleDateString([],{weekday:"short",day:"numeric",month:"short"});
+  $("days").innerHTML='<button class="darr" onclick="setDay('+(day-1)+')"'+(day<=-1?" disabled":"")+' aria-label="Previous day">&lsaquo;</button><div class="dlab"><b>'+nm[day+1]+"</b><small>"+esc(s)+"</small></div>"+'<button class="darr" onclick="setDay('+(day+1)+')"'+(day>=1?" disabled":"")+' aria-label="Next day">&rsaquo;</button>';
 }
 function setDay(o){
   if(o===day)return;
@@ -246,12 +256,11 @@ function setQ(v){q=v;render();}
 function toggleMore(){moreOpen=!moreOpen;render();}
 
 function chips(){
-  const nl=data.filter(isLive).length,nt=data.filter(m=>tr(m.league.id)>=0).length,np=data.filter(m=>hasP(m.fixture.id)).length,na=data.filter(m=>ana(m.fixture.id)).length;
-  const c=[["all","All",data.length],["live","Live",nl],["top","Top leagues",nt]];
-  if(np)c.push(["pre","Predicted",np]);
+  const nl=data.filter(isLive).length,nf=data.filter(m=>DONE.includes(m.fixture.status.short)).length,nu=data.filter(m=>m.fixture.status.short==="NS").length,na=data.filter(m=>ana(m.fixture.id)).length;
+  const c=[["all","All",data.length],["live","Live",nl],["fin","Finished",nf],["up","Upcoming",nu]];
   if(na)c.push(["ana","Top picks",na]);
   if(!c.some(x=>x[0]===filter))filter="all";
-  $("chips").innerHTML=c.map(x=>'<button class="chip'+(filter===x[0]?" on":"")+'" onclick="setFilter(\''+x[0]+'\')">'+x[1]+" "+x[2]+"</button>").join("");
+  $("chips").innerHTML=c.map(x=>'<button class="chip'+(x[0]==="live"?" lc":"")+(filter===x[0]?" on":"")+'" onclick="setFilter(\''+x[0]+'\')">'+x[1]+(x[2]&&x[0]!=="all"?" ("+x[2]+")":"")+"</button>").join("");
   const n=Object.keys(pred).length;
   $("cov").textContent=(cov&&day===0&&n&&data.length)?"Predicted score and confidence bars for "+n+" matches in "+cov.leagues+" leagues. More green bars means more confident.":"";
 }
@@ -266,6 +275,8 @@ function render(){
   const list=data.filter(m=>{
     if(qq&&(m.teams.home.name+" "+m.teams.away.name+" "+m.league.name+" "+m.league.country).toLowerCase().indexOf(qq)<0)return false;
     if(filter==="live")return isLive(m);
+    if(filter==="fin")return DONE.includes(m.fixture.status.short);
+    if(filter==="up")return m.fixture.status.short==="NS";
     if(filter==="pre")return hasP(m.fixture.id);
     if(filter==="ana")return ana(m.fixture.id);
     if(filter==="top")return tr(m.league.id)>=0;
@@ -286,7 +297,7 @@ function render(){
       $("app").innerHTML='<p class="msg pad">'+(data.length?"Predictions for this market are still building, or no matches lean that way yet.":"Predictions are loading…")+"</p>";
       return;
     }
-    $("app").innerHTML='<div class="grp">'+cand.map(m=>'<div class="lg">'+img(m.league.logo)+"<b>"+esc(m.league.name)+"</b><span>"+esc(m.league.country)+"</span></div>"+row(m)).join("")+"</div>";
+    $("app").innerHTML=cand.map(m=>'<div class="lgc"><div class="lg static">'+img(m.league.logo)+'<div class="lgt"><b>'+esc(m.league.name)+'</b><small>'+esc(m.league.country)+'</small></div><span class="cnt">1</span></div><div class="grp">'+row(m)+"</div></div>").join("");
     return;
   }
   if(!list.length){
@@ -306,7 +317,8 @@ function render(){
   const group=k=>{
     const p=k.split("|");
     const ms=g[k].sort((a,b)=>(isLive(b)-isLive(a))||(a.fixture.timestamp-b.fixture.timestamp));
-    return '<div class="lg'+(hasLive(k)?" hot":"")+'">'+img(ms[0].league.logo)+"<b>"+esc(p[2])+"</b><span>"+esc(p[1])+'</span></div><div class="grp">'+ms.map(row).join("")+"</div>"+(feedSkip?"":(++feedN%3===0?'<div class="adslot ad-infeed"></div>':""));
+    const closed=lgClosed.has(k)&&!expand;
+    return '<div class="lgc"><div class="lg'+(hasLive(k)?" hot":"")+'" role="button" tabindex="0" data-k="'+att(k)+'" onclick="tgLg(this)">'+img(ms[0].league.logo)+'<div class="lgt"><b>'+esc(p[2])+"</b><small>"+esc(p[1])+'</small></div><span class="cnt">'+ms.length+'</span><i class="chev'+(closed?" rot":"")+'" aria-hidden="true"></i></div><div class="grp"'+(closed?' style="display:none"':"")+">"+ms.map(row).join("")+"</div></div>"+(feedSkip?"":(++feedN%3===0?'<div class="adslot ad-infeed"></div>':""));
   };
   let h=topK.map(group).join("");
   const showRest=(expand||moreOpen)?restK.length:(topK.length?0:Math.min(15,restK.length));
@@ -351,6 +363,15 @@ function starMatch(){
   if(i2>=0)s.splice(i2,1);else s.unshift(_ctx.id);
   localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));
   const b=$("starbtn");if(b){b.classList.toggle("on",i2<0);b.textContent=i2<0?"★ Saved":"☆ Save match";}
+}
+function att(v){return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/'/g,"&#39;");}
+function tgLg(el){const k=el.getAttribute("data-k");if(!k)return;if(lgClosed.has(k))lgClosed.delete(k);else lgClosed.add(k);render();}
+function fav(id){
+  let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){}
+  const i2=s.indexOf(id);
+  if(i2>=0)s.splice(i2,1);else s.unshift(id);
+  localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));
+  document.querySelectorAll('[data-fav="'+id+'"]').forEach(b=>{b.classList.toggle("on",i2<0);b.textContent=i2<0?"★":"☆";});
 }
 function dailyRows(dm,home,away){
   const mk={};dm.markets.forEach(x=>{mk[x.market]=Math.round(x.prob*100);});
