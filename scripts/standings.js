@@ -20,9 +20,10 @@ async function api(path) {
   let today;
   try { today = JSON.parse(fs.readFileSync("data/d0.json", "utf8")); } catch (e) { console.log("No d0.json, skipping standings"); return; }
   const d = today.date || new Date().toISOString().slice(0,10);
-  // Free plans can only read seasons 2022-2024 (the API says so), so build the
-  // final tables for 2024 and label them clearly on the page.
-  const season = 2024;
+  // Current season. The standings ENDPOINT is blocked on free plans, but the
+  // fixtures endpoint is not, so each table is computed from every played
+  // match of the live season.
+  const season = 2026;
 
   const seen = {};
   (today.response || []).forEach(m => { if (!seen[m.league.id]) seen[m.league.id] = m.league; });
@@ -53,12 +54,12 @@ async function api(path) {
       return { r: 0, t: r.t, p, pl: r.pl, w: r.w, d: r.d, l: r.l, gf: r.gf, ga: r.ga, gd, f: form };
     }).sort((a, b) => b.p - a.p || b.gd - a.gd || b.gf - a.gf);
     rows.forEach((r, i) => { r.r = i + 1; });
-    console.log(lg.id + ": table computed from the season's finished fixtures (" + rows.length + " teams)");
+    console.log(lg.id + ": table computed from the current season's played fixtures (" + rows.length + " teams)");
     if (rows && rows.length) leagues.push({ id: lg.id, name: lg.name, country: lg.country, logo: lg.logo, rows });
   }
 
   if (!leagues.length) { console.log("No standings built (quota reached or none available); keeping the site as it is"); return; }
-  fs.writeFileSync("standings.json", JSON.stringify({ date: d, generated: new Date().toISOString(), season: 2024, note: "Tables are the final standings for the 2024 season, the most recent our data plan can read. They do not change with today's games.", leagues }));
+  fs.writeFileSync("standings.json", JSON.stringify({ date: d, generated: new Date().toISOString(), season: 2026, note: "Live tables for the current season, built from every played match and refreshed each morning.", leagues }));
   fs.writeFileSync("scorers.json", JSON.stringify({ date: d, generated: new Date().toISOString(), leagues: scorers }));
   console.log("Saved standings for " + leagues.length + " leagues, scorers for " + scorers.length);
 })();
