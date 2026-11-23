@@ -18,12 +18,12 @@ jobs:
         run: node scripts/standings.js
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-        FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
+          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
       - name: Save results
         run: |
           git config user.name "fixturio-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add standings.json scorers.json data/standings-state.json
+          git add standings.json scorers.json
           git commit -m "Rebuild standings" || echo "No changes"
           git pull --rebase origin main || true
           git push
