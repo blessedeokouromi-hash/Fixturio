@@ -92,6 +92,7 @@ function star(){
   const i=s.indexOf(+mid);
   if(i>=0)s.splice(i,1);else s.unshift(+mid);
   localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));
+  if(window.fxAuth){try{fxAuth.push(s.slice(0,60));}catch(e){}}
   const b=$("sv");if(b){b.classList.toggle("on",i<0);b.textContent=i<0?"★ Saved":"☆ Save match";}
 }
 function hl(){
