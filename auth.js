@@ -43,6 +43,6 @@
     reset:function(email){return sb?sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/auth.html'}):Promise.reject(new Error('not ready'));},
     signOut:function(){return sb?sb.auth.signOut():Promise.resolve();},
     setPassword:function(pw){return sb?sb.auth.updateUser({password:pw}):Promise.reject(new Error('not ready'));},
-    push:push,pull:pull
+    token:function(){return sb?sb.auth.getSession().then(function(g){return g&&g.data&&g.data.session?g.data.session.access_token:null;}):Promise.resolve(null);},push:push,pull:pull
   };
 })();
