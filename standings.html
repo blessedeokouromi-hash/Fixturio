@@ -58,9 +58,9 @@ td.p{font-weight:800}
 <nav class="tabs tabsx"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a class="on" href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><span id="upd"></span></nav>
 <section class="intro"><h2>Standings &amp; top scorers</h2><p>Final tables for the big leagues, with each club’s form. Our data plan serves completed seasons, so they show the last finished one.</p></section>
 <div class="picker"><select id="sel" onchange="pick()" aria-label="Choose a league"></select></div>
-<main id="app"><p class="msg">Loading tables…</p></main>
+<div class="adslot" id="ad-banner"></div><main id="app"><p class="msg">Loading tables…</p></main>
 <div id="scorers"></div>
-<div class="bet-cta" data-banner="1"></div><p class="fine">Tables update once a day, so a mid-table match played tonight may not be reflected until tomorrow morning. 18+ only.</p>
+<div id="ad-native"></div><div class="bet-cta" data-banner="1"></div><p class="fine">Tables update once a day, so a mid-table match played tonight may not be reflected until tomorrow morning. 18+ only.</p>
 </div>
 
 <script>
@@ -101,4 +101,4 @@ fetch("/standings.json").then(r=>r.ok?r.json():null).then(d=>{
 fetch("/scorers.json").then(r=>r.ok?r.json():null).then(d=>{if(d){if(!S)S={};S.scorers=d.leagues;if(cur)renderSc();}}).catch(function(){});
 </script>
 <script src="/affiliate.js" defer></script>
-</body></html>
+<script src="/ads.js" defer></script></body></html>
