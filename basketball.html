@@ -72,6 +72,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <h3>Top 15</h3>
 <p class="note" style="margin-top:0">The day's safest basketball calls, ranked by win chance.</p>
 <div id="picks"></div>
+<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="add" onclick="shareImageBB()">Share as image</button></div>
 </div>
 <div class="card" id="all-card">
 <h3>All today's priced games</h3>
@@ -105,10 +106,11 @@ fetch("/api/basketball",{cache:"no-store"}).then(r=>r.json()).then(d=>{
   $("picks").innerHTML=d.picks.map(row).join("");
   const all=d.m||[];
   if(all.length)$("all").innerHTML=all.map((p,i)=>row(p,i)).join("");
+  window.bbData=d;
 }).catch(()=>{
   $("meta").textContent="Could not load basketball picks. Try again shortly.";
 });
 </script>
-<script src="/affiliate.js" defer></script>
+<script src="/share-image.js"></script><script src="/affiliate.js" defer></script>
 <script src="/auth.js"></script><script src="/ads.js" defer></script>
 </body></html>

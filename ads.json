@@ -12,7 +12,9 @@
     "src": "https://bauval.org/21/6c1722f113186a0ade7349beb143a284"
   },
   "socialbar": {
-    "src": "https://bauval.org/14/1c9515d32e6dfefe5f4a8f2a679dc4ff"
+    "src": "",
+    "_paused": "https://bauval.org/14/1c9515d32e6dfefe5f4a8f2a679dc4ff",
+    "_paused_reason": "paused 2026-11-23: the social bar's fake 'confirm you are not a robot' creative erodes trust; restore by moving _paused into src"
   },
   "popunder": {
     "src": "https://abscloud.org/1/d4b9b066ad36a0635a71374587e43b3b"
