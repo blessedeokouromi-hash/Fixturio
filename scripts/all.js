@@ -219,8 +219,13 @@ function model(lh, la, seed) {
     mod.y = +la.toFixed(2);
     mod.form = { h: fh.join(" "), a: fa.join(" ") };
     mod.h2h = h2hFor(m.teams.home.id, m.teams.away.id);
-    mod.why = formWords(m.teams.home.name, fh) + ". " + formWords(m.teams.away.name, fa) +
+    let why = formWords(m.teams.home.name, fh) + ". " + formWords(m.teams.away.name, fa) +
       ". The model expects about " + (lh + la).toFixed(1) + " goals.";
+    const hh = mod.h2h;
+    if (hh && hh.hw + hh.aw >= 3 && (hh.hw >= hh.aw + 2 || hh.aw >= hh.hw + 2)) {
+      why += " Recent meetings favour " + (hh.hw > hh.aw ? m.teams.home.name : m.teams.away.name) + ".";
+    }
+    mod.why = why;
     out[m.fixture.id] = mod;
     lg[m.league.id] = 1;
   }

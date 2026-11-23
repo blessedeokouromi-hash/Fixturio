@@ -66,7 +66,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .adslot:empty{display:none}
 .msg{margin:24px 16px;color:var(--mu)}
 
-.f5m{margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.schips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.schips span{border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12px;font-weight:700;color:var(--tx)}.f5m{margin-top:8px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
 .f5m .lb{font-size:11px;color:var(--mu);font-weight:600}
 .f5m .fvs{color:var(--mu)}
 .fb{font-style:normal;display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;font-size:10px;font-weight:800;color:#fff}
@@ -143,8 +143,9 @@ function render(){
   if(pred){
     const mx=Math.max(pred.h,pred.d,pred.a);
     html+='<div class="card"><h3>Model prediction</h3><div class="pred"><span class="sc2">'+esc(pred.s)+'</span><div>Predicted score<br><small style="color:var(--mu)">Top chance '+mx+'% · Expected goals '+pred.x+" – "+pred.y+"</small></div></div>";
-    const rows=[["Match result",[[h.name+" win",pred.h],["Draw",pred.d],[a.name+" win",pred.a]]],["Total goals",[["Over 2.5",pred.o],["Under 2.5",100-pred.o]]],["Both teams to score",[["Yes",pred.b],["No",100-pred.b]]]];
+    const rows=[["Match result",[[h.name+" win",pred.h],["Draw",pred.d],[a.name+" win",pred.a]]],["Total goals",[["Over 2.5",pred.o],["Under 2.5",100-pred.o]]],["Both teams to score",[["Yes",pred.b],["No",100-pred.b]]],["Double chance",[["Home or draw",pred.h+pred.d],["Draw or away",pred.d+pred.a],["Home or away",pred.h+pred.a]]]];
     rows.forEach(r=>{html+='<div class="note" style="margin-top:12px">'+esc(r[0])+"</div>";r[1].forEach(x=>{html+='<div class="mrow"><span class="nm">'+esc(x[0])+'</span><span class="pv">'+x[1]+'%</span><div class="tr"><i style="width:'+x[1]+'%"></i></div></div>';});});
+    if(pred.st){html+='<div class="note" style="margin-top:12px">Most likely scorelines</div>'+'<div class="schips">'+pred.st.split(",").map(function(c){return '<span>'+esc(c.trim())+'</span>';}).join("")+'</div>';}
     html+='<p class="note">'+esc(pred.why||"Predicted from both teams’ results over the last 30 days.")+' Estimates, not guarantees.</p></div>';
     if(pred.form&&(pred.form.h||pred.form.a)){
       html+='<div class="card"><h3>Recent form</h3>';
