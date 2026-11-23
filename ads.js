@@ -94,18 +94,30 @@
       window.fixturioVastUrl = cfg.vast && cfg.vast.url ? cfg.vast.url : null;
       // In-feed slots: small banner units between league blocks on the homepage.
       // Refills automatically whenever the list re-renders (filter, show more).
-      var feedUnit = window.innerWidth < 480 && cfg.mobileBanner ? cfg.mobileBanner : (cfg.banner && cfg.banner.invoke ? cfg.banner : cfg.mobileBanner);
-      if (cfg.inFeed !== false && feedUnit && feedUnit.invoke) {
-        var fill = function () {
+      // Each slot gets its own isolated iframe carrying the native banner
+      // code, so every placement renders independently (no id clashes).
+      if (cfg.inFeed !== false && cfg.native && cfg.native.src) {
+        var nm = /([0-9a-f]{32})/.exec(cfg.native.src);
+        var fill = nm ? function () {
           var slots = document.querySelectorAll(".ad-infeed:not(.filled)");
           for (var i = 0; i < slots.length; i++) {
             slots[i].className = "adslot ad-infeed filled";
-            iframeBanner(slots[i], "feed", feedUnit);
+            var f = document.createElement("iframe");
+            f.setAttribute("width", "100%");
+            f.setAttribute("height", "300");
+            f.setAttribute("frameborder", "0");
+            f.setAttribute("scrolling", "no");
+            f.setAttribute("title", "advertisement");
+            f.srcdoc = '<body style="margin:0;overflow:hidden"><div id="container-' + nm[1] + '"></div><script async data-cfasync="false" src="' + cfg.native.src + '"><\/script>';
+            slots[i].appendChild(f);
+            track("feed");
           }
-        };
-        fill();
-        var appEl = document.getElementById("app");
-        if (appEl && window.MutationObserver) new MutationObserver(fill).observe(appEl, { childList: true, subtree: true });
+        } : null;
+        if (fill) {
+          fill();
+          var appEl = document.getElementById("app");
+          if (appEl && window.MutationObserver) new MutationObserver(fill).observe(appEl, { childList: true, subtree: true });
+        }
       }
     })
     .catch(function () {});
