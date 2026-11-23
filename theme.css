@@ -104,3 +104,15 @@ body .chk{color:var(--tx)}
 .star2.on,.add2.on{background:var(--amb);border-color:var(--amb);color:var(--ink)}
 .mrow .add2{padding:4px 10px;font-size:12px}
 .leg .rm{margin-top:6px;padding:2px 8px;font-size:11px;color:var(--mu)}
+
+/* Dark mode: selected states in the dark pitch green were invisible on the dark page */
+@media (prefers-color-scheme:dark){
+  html:root:not([data-theme="light"]) body .chip.on,
+  html:root:not([data-theme="light"]) body .days button.on,
+  html:root:not([data-theme="light"]) body .seg button.on{background:var(--bar);border-color:var(--bar);color:#08130D}
+}
+html[data-theme="dark"] body .chip.on,
+html[data-theme="dark"] body .days button.on,
+html[data-theme="dark"] body .seg button.on{background:var(--bar);border-color:var(--bar);color:#08130D}
+/* Keep the floating theme toggle clear of the bottom tab bar on phones */
+@media (max-width:767px){#themeBtn{bottom:calc(78px + env(safe-area-inset-bottom))}}
