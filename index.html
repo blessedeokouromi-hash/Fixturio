@@ -466,6 +466,8 @@ function tap(id){tog(id);}
 
 function fetchMatches(d0,attempt){
   const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),12000);
+  if(attempt===0){let c=null;try{c=JSON.parse(localStorage.getItem("fx_matches_"+dateStr(d0))||"null")}catch(e){}
+    if(c&&c.length){data=c;failed="";loaded=true;render();}}
   fetch("/api/matches?date="+dateStr(d0),{signal:ctl.signal}).then(r=>r.json()).then(d=>{
     clearTimeout(t);if(d0!==day)return;
     data=d.response||[];
