@@ -50,6 +50,15 @@ const dead = [];
     }
   }));
   console.log("sent", sent, "failed", failed, "dead", dead.length);
+  // Basketball picks push, only when today's basketball build ran.
+  try {
+    const b = JSON.parse(fs.readFileSync("data/basketball.json", "utf8"));
+    if (b && b.date === new Date().toISOString().slice(0, 10) && b.picks && b.picks.length) {
+      const bp = JSON.stringify({ title: "Fixturio: basketball picks are in", body: "Today\u2019s basketball top picks and acca are live. Top pick: " + b.picks[0].match + ".", url: "/basketball.html", tag: "fixturio-bball-" + b.date });
+      await Promise.all(subs.map(async s => { try { await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, bp); } catch (e) {} }));
+      console.log("basketball push sent");
+    }
+  } catch (e) {}
   const kept = subs.filter(s => dead.indexOf(s.endpoint) === -1);
   if (dead.length && process.env.GITHUB_TOKEN) {
     const headers = { "Accept": "application/vnd.github+json", "User-Agent": "fixturio-push", "Authorization": "Bearer " + process.env.GITHUB_TOKEN };

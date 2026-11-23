@@ -67,6 +67,12 @@ jobs:
         run: node scripts/daily.js
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      - name: Build basketball picks
+        if: github.event.schedule != '23 6-22 * * *'
+        continue-on-error: true
+        run: node scripts/basketball.js
+        env:
+          BASKETBALL_KEY: ${{ secrets.BASKETBALL_KEY }}
       - name: Save results
         if: always()
         run: |

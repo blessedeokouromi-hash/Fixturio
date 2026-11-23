@@ -25,11 +25,35 @@ if (d.acca && d.acca.legs && d.acca.legs.length) {
 msg += "\nAll 15 picks and stats: https://fixturio.vercel.app/picks.html";
 msg += "\n\n<b>Back these picks on 1xBet</b>: https://refpa-65760.com/L?tag=d_6390619m_1599c_&site=6390619&ad=1599\n18+. T&amp;Cs apply. Predictions are estimates, not guarantees.";
 
-fetch("https://api.telegram.org/bot" + token + "/sendMessage", {
-  method: "POST",
-  headers: { "content-type": "application/json" },
-  body: JSON.stringify({ chat_id: chat, text: msg, parse_mode: "HTML" })
-}).then(r => r.json()).then(j => {
-  if (j.ok) console.log("Posted to Telegram: message id " + j.result.message_id);
-  else { console.error("Telegram refused the post: " + JSON.stringify(j)); process.exit(1); }
+function send(text) {
+  return fetch("https://api.telegram.org/bot" + token + "/sendMessage", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ chat_id: chat, text: text, parse_mode: "HTML" })
+  }).then(r => r.json()).then(j => {
+    if (!j.ok) throw new Error(JSON.stringify(j));
+    return j.result.message_id;
+  });
+}
+
+// Basketball picks, only when today's basketball build actually ran.
+let bbMsg = null;
+try {
+  const b = JSON.parse(fs.readFileSync("data/basketball.json", "utf8"));
+  if (b && b.date === new Date().toISOString().slice(0, 10) && b.picks && b.picks.length) {
+    const bp = (b.picks || []).slice(0, 5);
+    let m2 = "<b>Fixturio basketball \u2014 today\u2019s top picks</b>\n<i>" + esc(b.date) + "</i>\n\n";
+    bp.forEach((p, i) => { m2 += (i + 1) + ". <b>" + esc(p.match) + "</b>\n" + esc(p.market) + " @" + p.odd + " \u00b7 " + p.probability + "%\n"; });
+    if (b.acca && b.acca.legs && b.acca.legs.length) {
+      m2 += "\n<b>Basketball acca</b> \u00b7 total odds " + b.acca.total + "\n";
+      b.acca.legs.forEach(l => { m2 += "\u2022 " + esc(l.match) + ": " + esc(l.market) + " @" + l.odd + "\n"; });
+    }
+    m2 += "\nAll basketball picks: https://fixturio.vercel.app/basketball.html";
+    m2 += "\n\n<b>Back these picks on 1xBet</b>: https://refpa-65760.com/L?tag=d_6390619m_1599c_&site=6390619&ad=1599\n18+. Predictions are estimates, not guarantees.";
+    bbMsg = m2;
+  }
+} catch (e) {}
+
+send(msg).then(() => bbMsg ? send(bbMsg) : null).then(() => {
+  console.log("Posted to Telegram" + (bbMsg ? " (football + basketball)" : " (football)"));
 }).catch(e => { console.error("Telegram post failed: " + (e && e.message ? e.message : e)); process.exit(1); });
