@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en"><head>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B5A3C">
@@ -20,13 +21,35 @@ button{font:inherit;color:inherit;cursor:pointer}
 .tabs::-webkit-scrollbar{display:none}
 .tabs a{padding:11px 0;color:var(--hmu);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
 .tabs a.on{color:#fff;border-color:var(--amb)}
+.sr{padding:12px 16px 0}
+.sr input{width:100%;border:1px solid var(--line);background:var(--s1);color:var(--tx);border-radius:12px;padding:11px 14px;font:inherit}
+.chips{display:flex;gap:8px;padding:12px 16px 8px;overflow-x:auto}
+.chip{flex:none;border:1px solid var(--line);background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap}
+.chip.on{background:var(--tx);color:var(--ink);border-color:var(--tx)}
+.chip.lc{color:var(--live);border-color:rgba(255,91,91,.45)}
+.chip.lc.on{background:var(--live);color:#fff;border-color:var(--live)}
+.cov{margin:0;padding:0 16px 6px;font-size:12px;color:var(--mu)}
+.cov:empty{display:none}
+.lgc{margin:12px 16px 0;background:var(--s1);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.lg{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--s2);cursor:pointer}
+.lgt{min-width:0;flex:1}
+.lg b{font-weight:800;font-size:15px;display:block;line-height:1.2}
+.lg small{display:block;font-size:12px;color:var(--mu);margin-top:1px}
+.cnt{flex:none;min-width:24px;height:24px;padding:0 7px;border-radius:999px;background:var(--s1);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--mu)}
+.chev{flex:none;width:0;height:0;border-left:6px solid var(--mu);border-top:5px solid transparent;border-bottom:5px solid transparent;transform:rotate(90deg);transition:transform .15s}
+.chev.rot{transform:rotate(0)}
+.game{display:flex;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid var(--line)}
+.game .star{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:transparent;border:0;font-size:17px;color:var(--mu)}
+.game .star.on{color:var(--amb)}
+.gm{min-width:0;flex:1}
+.gm b{display:block;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gm small{display:block;font-size:12px;color:var(--mu)}
+.gm .live{color:var(--live);font-weight:800}
+.pr{display:grid;justify-items:center;gap:5px;min-width:66px;flex:none}
+.pill{font-weight:800;font-size:14px;padding:3px 9px;border-radius:7px;background:var(--s2);border:1px solid var(--line)}
 .card{margin:12px 16px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--s1)}
 .card h3{margin:0 0 10px;font-size:16px;font-weight:800}
 .note{font-size:13px;color:var(--mu);margin:8px 0 0}
-.hero{margin:16px;padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--s1)}
-.hero h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.02em}
-.hero p{margin:6px 0 0;font-size:14px;color:var(--mu)}
-.lg2{text-align:center;font-size:13px;color:var(--mu)}
 .pick{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
 .pick:first-of-type{border-top:0}
 .rk{font-weight:800;color:var(--mu)}
@@ -45,6 +68,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .leg:first-of-type{border-top:0}
 .leg small{color:var(--mu);display:block;font-size:12px}
 .leg b{white-space:nowrap;color:var(--amb)}
+.add{border:1px solid var(--line);background:var(--s2);border-radius:10px;padding:9px 14px;font-weight:700}
 .adslot{min-height:60px;margin:12px 16px;display:flex;justify-content:center;align-items:center}
 .adslot:empty{display:none}
 .fine{margin:16px 16px 0;font-size:12px;color:var(--mu)}
@@ -57,11 +81,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 <nav class="tabs"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/basketball.html" class="on">Basketball</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a></nav>
 <div class="adslot" id="ad-banner"></div>
 <main id="app">
-<div class="hero">
-<h1>Basketball picks</h1>
-<p class="lg2" id="meta">Loading…</p>
-</div>
-<div class="adslot" id="ad-native"></div>
+<div class="sr"><input id="q" type="search" placeholder="Search team or league" oninput="setQ(this.value)" aria-label="Search basketball games" autocomplete="off"></div>
+<div id="chips" class="chips"></div>
+<p id="cov" class="cov"></p>
 <div class="card acca" id="acca-card" style="display:none">
 <h3>Acca of the day</h3>
 <div class="tot" id="acca-total"></div>
@@ -74,10 +96,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <div id="picks"></div>
 <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="add" onclick="shareImageBB()">Share as image</button></div>
 </div>
-<div class="card" id="all-card">
-<h3>All today's priced games</h3>
-<div id="all"></div>
-</div>
+<div id="lgcs"></div>
 <div class="bet-cta" data-banner="1"></div>
 <p class="fine">Predictions are estimates based on bookmaker odds, not guarantees. 18+ only.</p>
 </main>
@@ -85,30 +104,80 @@ button{font:inherit;color:inherit;cursor:pointer}
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-function flag(c){return "\U0001F3C0";}
+const LIVE=["Q1","Q2","Q3","Q4","OT","BT","HT","LIVE"],DONE=["FT","AOT"];
+let BB=null,mode="all",q="",lgsNow=[],lgClosed=new Set(),pickSet=new Set();
+function setQ(v){q=(v||"").toLowerCase().trim();draw();}
+function setMode(m){mode=m;draw();}
+function saved(){let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){}return s;}
+function fav(id){const s=saved();const i=s.indexOf(id);if(i>=0)s.splice(i,1);else s.unshift(id);localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));draw();}
+function utcNow(){const n=new Date();return String(n.getUTCHours()).padStart(2,"0")+":"+String(n.getUTCMinutes()).padStart(2,"0");}
+function games(){
+  const by={};(BB.m||[]).forEach(p=>{const g=by[p.game_id]||(by[p.game_id]={game_id:p.game_id,league:p.league,country:p.country,time:p.time,status:p.status||"",h:p.h,a:p.a,ph:0,pa:0,oh:null,oa:null});if(/^home/i.test(p.market)){g.ph=p.probability;g.oh=p.odd;}else{g.pa=p.probability;g.oa=p.odd;}});
+  return Object.values(by);
+}
+function keep(g){
+  if(q&&((g.h+" "+g.a+" "+g.league+" "+g.country).toLowerCase().indexOf(q)<0))return false;
+  if(mode==="live")return LIVE.includes(g.status);
+  if(mode==="finished")return DONE.includes(g.status);
+  if(mode==="upcoming"){if(g.status)return !LIVE.includes(g.status)&&!DONE.includes(g.status);return !g.time||g.time>utcNow();}
+  if(mode==="top")return pickSet.has(g.game_id)||pickSet.has(g.h+" vs "+g.a);
+  return true;
+}
+function chipRow(){
+  const gs=games(),n=gs.length;
+  const lv=gs.filter(g=>LIVE.includes(g.status)).length,fn=gs.filter(g=>DONE.includes(g.status)).length,up=gs.filter(g=>keep({status:g.status,time:g.time,modeless:1})||true).length;
+  const hasStatus=gs.some(g=>g.status);
+  let h=chip("all","All",n);
+  if(hasStatus)h+=chip("live","Live",lv,"lc")+chip("finished","Finished",fn);
+  h+=chip("upcoming","Upcoming",gs.filter(g=>(!g.status&&!LIVE.includes(g.status)&&!DONE.includes(g.status))&&( !g.time||g.time>utcNow())).length);
+  h+=chip("top","Top picks",15);
+  return h;
+}
+function draw(){
+  if(!BB)return;
+  const gs=games().filter(keep);
+  $("chips").innerHTML=chipRow();
+  $("cov").textContent="";
+  const byLg={};gs.forEach(g=>{(byLg[g.league]=byLg[g.league]||[]).push(g);});
+  lgsNow=Object.keys(byLg).sort((x,y)=>byLg[y].length-byLg[x].length||x.localeCompare(y));
+  if(!gs.length){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">No games here.</p>';return;}
+  $("lgcs").innerHTML=lgsNow.map((lg,i)=>{
+    const items=byLg[lg],closed=lgClosed.has(lg);
+    return '<div class="lgc"><div class="lg" onclick="tgLg('+i+')"><div class="lgt"><b>'+esc(lg)+'</b><small>'+esc(items[0].country||"Basketball")+'</small></div><span class="cnt">'+items.length+'</span><span class="chev'+(closed?"":" rot")+'"></span></div><div'+(closed?' style="display:none"':'')+'>'+items.map(gameRow).join("")+"</div></div>";
+  }).join("");
+}
+function tgLg(i){const l=lgsNow[i];if(lgClosed.has(l))lgClosed.delete(l);else lgClosed.add(l);draw();}
+function gameRow(g){
+  const best=g.ph>=g.pa?{lab:"1",p:g.ph,odd:g.oh}:{lab:"2",p:g.pa,odd:g.oa};
+  const lv=LIVE.includes(g.status),dn=DONE.includes(g.status);
+  const stTxt=lv?'<span class="live">'+esc(g.status==="BT"?"Break":g.status)+"</span> · ":"";
+  const pill=dn?"":'<span class="pill">'+best.lab+" "+Math.round(best.p)+"%</span>";
+  const odds=g.oh&&g.oa?" · 1 "+g.oh+" · 2 "+g.oa:"";
+  return '<div class="game"><button class="star'+(saved().indexOf(g.game_id)>=0?" on":"")+'" onclick="fav(\''+g.game_id+'\')" aria-label="Save match">&#9733;</button><div class="gm"><b>'+esc(g.h)+" v "+esc(g.a)+'</b><small>'+stTxt+esc(g.time)+odds+"</small></div>"+'<div class="pr">'+pill+"</div></div>";
+}
 function row(p,i){
-  return '<div class="pick"><div class="rk">'+(i+1)+'</div><div class="tm"><b>'+esc(p.match)+'</b><small>'+flag(p.country)+' '+esc(p.league)+(p.time?" · "+esc(p.time):"")+'</small><div class="bar"><i style="width:'+p.probability+'%"></i></div></div><div class="od"><b>@'+p.odd+'</b><small>'+p.probability+'%</small></div></div>';
+  return '<div class="pick"><div class="rk">'+(i+1)+'</div><div class="tm"><b>'+esc(p.match)+'</b><small>'+esc(p.league)+(p.time?" · "+esc(p.time):"")+'</small><div class="bar"><i style="width:'+p.probability+'%"></i></div></div><div class="od"><b>@'+p.odd+'</b><small>'+p.probability+'%</small></div></div>';
 }
 fetch("/api/basketball",{cache:"no-store"}).then(r=>r.json()).then(d=>{
   if(!d||!d.picks||!d.picks.length){
-    $("meta").textContent="Basketball picks start once the data connection is live.";
-    $("picks-card").innerHTML='<h3>Top 15</h3><p class="note" style="margin-top:0">No basketball data yet. The daily build fills this page once the basketball data key is connected.</p>';
-    $("all-card").style.display="none";
+    $("chips").style.display="none";$("q").parentNode.style.display="none";
+    $("picks-card").innerHTML='<h3>Top 15</h3><p class="note" style="margin-top:0">No basketball data yet. The daily build fills this page once the basketball data connection is live.</p>';
     return;
   }
-  $("meta").textContent="Today \u00b7 "+d.picks.length+" ranked picks";
+  BB=d;window.bbData=d;
+  pickSet=new Set((d.picks||[]).map(p=>p.match));
   if(d.acca&&d.acca.legs&&d.acca.legs.length){
     $("acca-card").style.display="";
     $("acca-total").textContent="Total odds "+d.acca.total;
     $("acca-joint").textContent=d.acca.joint+"% chance every leg lands";
-    $("acca-legs").innerHTML=d.acca.legs.map(l=>'<div class="leg"><div><b style="color:var(--tx);font-size:14px">'+esc(l.match)+'</b><small>'+esc(l.market)+" \u00b7 "+esc(l.league)+(l.time?" \u00b7 "+esc(l.time):"")+'</small></div><b>@'+l.odd+'</b></div>').join("");
+    $("acca-legs").innerHTML=d.acca.legs.map(l=>'<div class="leg"><div><b style="color:var(--tx);font-size:14px">'+esc(l.match)+'</b><small>'+esc(l.market)+" · "+esc(l.league)+(l.time?" · "+esc(l.time):"")+'</small></div><b>@'+l.odd+'</b></div>').join("");
   }
   $("picks").innerHTML=d.picks.map(row).join("");
-  const all=d.m||[];
-  if(all.length)$("all").innerHTML=all.map((p,i)=>row(p,i)).join("");
-  window.bbData=d;
+  if(!(d.m||[]).length){$("chips").style.display="none";$("q").parentNode.style.display="none";}
+  else draw();
 }).catch(()=>{
-  $("meta").textContent="Could not load basketball picks. Try again shortly.";
+  $("chips").style.display="none";$("q").parentNode.style.display="none";
+  $("picks-card").innerHTML='<h3>Top 15</h3><p class="note" style="margin-top:0">Could not load basketball picks. Try again shortly.</p>';
 });
 </script>
 <script src="/share-image.js"></script><script src="/affiliate.js" defer></script>
