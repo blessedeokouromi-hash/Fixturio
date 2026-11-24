@@ -79,8 +79,11 @@ function implProb(oh, oa) {
 
 (async () => {
   const gs = await games();
+  console.log("basketball debug: games returned " + gs.length);
   const kept = gs.filter(g => g && g.teams && g.teams.home && g.teams.away && KEEP.test(g.league && g.league.name || ""));
+  console.log("basketball debug: kept after league filter " + kept.length);
   const open = kept.filter(g => !g.status || g.status.short === "NS").slice(0, 18);
+  console.log("basketball debug: upcoming to price " + open.length);
 
   const priced = [];
   for (const g of open) {
@@ -90,7 +93,8 @@ function implProb(oh, oa) {
       try {
         const rows = await api("/odds?game=" + g.id);
         ml = moneyline(rows);
-      } catch (e) { ml = null; }
+        if (!ml || !ml.home || !ml.away) console.log("basketball debug: no moneyline in odds for game " + g.id + ", rows " + (rows.length||0) + ", bets " + (((rows[0]||{}).bookmakers||[]).reduce((a,b)=>a+((b.bets||[]).length||0),0)));
+      } catch (e) { console.log("basketball debug: odds failed for game " + g.id + ": " + String(e.message).slice(0, 180)); ml = null; }
     }
     if (!ml || !ml.home || !ml.away) continue;
     const p = implProb(ml.home, ml.away);
