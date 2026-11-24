@@ -14,6 +14,8 @@ module.exports = async (req, res) => {
         predictions: {
           percent: { home: String(p.h), draw: String(p.d), away: String(p.a) },
           under_over: (p.o >= 50 ? "+" : "-") + "2.5",
+          over: p.o,
+          btts: p.b,
           advice: "The model leans " + lean + " 2.5 goals (" + Math.max(p.o, 100 - p.o) + "%)"
         }
       }]

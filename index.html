@@ -95,7 +95,7 @@ body.tm .wrap.np .m{grid-template-columns:24px 46px 1fr auto 30px}
 .tn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tn .w{font-weight:800}
 .tn .l{color:var(--mu);font-weight:500}
-.pr{display:grid;justify-items:center;gap:5px;min-width:54px}
+.pr{display:grid;justify-items:center;gap:5px;min-width:66px}
 .pill{font-weight:800;font-size:14px;padding:3px 9px;border-radius:7px;background:var(--s2);border:1px solid var(--line)}
 .val{align-self:center;font-size:10px;font-weight:800;letter-spacing:.03em;color:#0B1220;background:#F5B544;border-radius:6px;padding:2px 6px;margin-left:4px}
 .pill.ok{background:#1D4D33;border-color:#2F7F52;color:#8CE6B0}
@@ -215,19 +215,56 @@ function valChip(id){
   (inf.markets||[]).forEach(x=>{if(x.odd&&x.prob&&x.prob*x.odd>ev)ev=x.prob*x.odd;});
   return ev>=1.08?'<span class="val" title="Our estimate is clearly higher than the bookmaker odds imply">Value</span>':"";
 }
+const MKLAB={"Home win":"1","Draw":"X","Away win":"2","Double chance 1X (home or draw)":"1X","Double chance X2 (away or draw)":"X2","Double chance 12 (no draw)":"12","Over 2.5 goals":"O2.5","Under 2.5 goals":"U2.5","Both teams to score":"BTTS","Both teams not to score":"No BTTS"};
+function mkWon(mk,g){
+  const t=g.home+g.away;
+  switch(mk){
+    case "Home win":return g.home>g.away;
+    case "Draw":return g.home===g.away;
+    case "Away win":return g.away>g.home;
+    case "Double chance 1X (home or draw)":return g.home>=g.away;
+    case "Double chance X2 (away or draw)":return g.away>=g.home;
+    case "Double chance 12 (no draw)":return g.home!==g.away;
+    case "Over 2.5 goals":return t>2;
+    case "Under 2.5 goals":return t<3;
+    case "Both teams to score":return g.home>0&&g.away>0;
+    case "Both teams not to score":return !(g.home>0&&g.away>0);
+  }
+  return null;
+}
+function mkList(id){
+  const p=pred[id];if(!p)return[];
+  const H=+p.h/100,D=+p.d/100,A=+p.a/100,O=p.o==null?null:+p.o/100,B=p.b==null?null:+p.b/100;
+  const l=[
+    {market:"Home win",p:H},{market:"Draw",p:D},{market:"Away win",p:A},
+    {market:"Double chance 1X (home or draw)",p:H+D},{market:"Double chance X2 (away or draw)",p:D+A},{market:"Double chance 12 (no draw)",p:H+A}
+  ];
+  if(O!=null&&!isNaN(O)){l.push({market:"Over 2.5 goals",p:O});l.push({market:"Under 2.5 goals",p:1-O});}
+  if(B!=null&&!isNaN(B)){l.push({market:"Both teams to score",p:B});l.push({market:"Both teams not to score",p:1-B});}
+  return l.filter(x=>x.p!=null&&!isNaN(x.p)&&x.p>0.01&&x.p<0.999);
+}
+function bestMkt(id){
+  const inf=info[id];
+  if(inf&&inf.markets){
+    const l=inf.markets.filter(x=>!x.skip&&x.prob>0.01&&x.prob<0.999);
+    if(l.length){l.sort((a,b)=>b.prob-a.prob);const w=l[0];return{market:w.market,p:w.prob,odd:w.odd||null};}
+  }
+  const l=mkList(id);if(!l.length)return null;
+  l.sort((a,b)=>b.p-a.p);return l[0];
+}
 function predCell(m){
-  const p=pred[m.fixture.id];
-  if(!p)return '<div class="pr"></div>';
-  const sp=p.s.split("-"),ps=+sp[0],pa=+sp[1];
-  const mx=Math.max(p.h,p.d,p.a);
-  const lv=mx>=60?3:mx>=45?2:1;
+  const id=m.fixture.id,bm=bestMkt(id);
+  if(!bm)return '<div class="pr"></div>';
+  const pc=Math.round(bm.p*100);
+  const lv=pc>=60?3:pc>=45?2:1;
   let cls="";
   if(DONE.includes(m.fixture.status.short)&&m.goals.home!==null){
-    const po=ps>pa?"H":ps<pa?"A":"D";
-    const ao=m.goals.home>m.goals.away?"H":m.goals.home<m.goals.away?"A":"D";
-    cls=po===ao?" ok":" bad";
+    const w=mkWon(bm.market,m.goals);
+    cls=w===true?" ok":w===false?" bad":"";
   }
-  return '<div class="pr" title="Predicted score, confidence '+mx+'%"><span class="pill'+cls+'">'+esc(p.s)+'</span>'+valChip(m.fixture.id)+'<span class="sig s'+lv+'" role="img" aria-label="Confidence '+(lv===3?"high":lv===2?"medium":"low")+'"><i></i><i></i><i></i></span></div>';
+  const lab=MKLAB[bm.market]||bm.market;
+  const t="Best market: "+bm.market+(bm.odd?" at odds "+bm.odd:"")+", "+pc+"% chance. Predicted score "+(pred[id]&&pred[id].s?pred[id].s:"")+". Estimates, not guarantees.";
+  return '<div class="pr" title="'+esc(t)+'"><span class="pill'+cls+'">'+esc(lab)+' '+pc+'%</span>'+valChip(id)+'<span class="sig s'+lv+'" role="img" aria-label="Confidence '+(lv===3?"high":lv===2?"medium":"low")+'"><i></i><i></i><i></i></span></div>';
 }
 
 function row(m){
@@ -273,7 +310,7 @@ function chips(){
   if(!c.some(x=>x[0]===filter))filter="all";
   $("chips").innerHTML=c.map(x=>'<button class="chip'+(x[0]==="live"?" lc":"")+(filter===x[0]?" on":"")+'" onclick="setFilter(\''+x[0]+'\')">'+x[1]+(x[2]&&x[0]!=="all"?" ("+x[2]+")":"")+"</button>").join("");
   const n=Object.keys(pred).length;
-  $("cov").textContent=(cov&&day===0&&n&&data.length)?"Predicted score and confidence bars for "+n+" matches in "+cov.leagues+" leagues. More green bars means more confident.":"";
+  $("cov").textContent=(cov&&day===0&&n&&data.length)?"Best market and confidence bars for "+n+" matches in "+cov.leagues+" leagues. More green bars means more confident.":"";
 }
 function setFilter(f){filter=f;moreOpen=false;render();}
 
@@ -442,6 +479,8 @@ function predPanel(d,home,away){
     {g:"Double chance",label:away+" or draw",p:Math.min(100,x+a)},
     {g:"Double chance",label:home+" or "+away,p:Math.min(100,h+a)}
   ];
+  if(pr.over!=null&&!isNaN(+pr.over)){rows.push({g:"Total goals",label:"Over 2.5 goals",p:Math.round(+pr.over)});rows.push({g:"Total goals",label:"Under 2.5 goals",p:Math.max(0,100-Math.round(+pr.over))});}
+  if(pr.btts!=null&&!isNaN(+pr.btts)){rows.push({g:"Both teams to score",label:"Yes",p:Math.round(+pr.btts)});rows.push({g:"Both teams to score",label:"No",p:Math.max(0,100-Math.round(+pr.btts))});}
   let note=pr.advice?pr.advice+". ":"";
   const uo=pr.under_over?String(pr.under_over):"";
   if(uo)note+="Goals lean "+(uo.charAt(0)==="-"?"under ":"over ")+uo.replace(/^[+-]/,"")+". ";
