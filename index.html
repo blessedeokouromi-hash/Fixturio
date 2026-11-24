@@ -260,12 +260,12 @@ function mkList(id){
   return l.filter(x=>x.p!=null&&!isNaN(x.p)&&x.p>0.01&&x.p<0.999);
 }
 function bestMkt(id){
-  const inf=info[id];
+  const inf=info[id],have={},l=[];
   if(inf&&inf.markets){
-    const l=inf.markets.filter(x=>!x.skip&&x.prob>0.01&&x.prob<0.999);
-    if(l.length){l.sort((a,b)=>b.prob-a.prob);const w=l[0];return{market:w.market,p:w.prob,odd:w.odd||null};}
+    inf.markets.filter(x=>!x.skip&&x.prob>0.01&&x.prob<0.999).forEach(x=>{have[x.market]=1;l.push({market:x.market,p:x.prob,odd:x.odd||null});});
   }
-  const l=mkList(id);if(!l.length)return null;
+  mkList(id).forEach(x=>{if(!have[x.market])l.push({market:x.market,p:x.p,odd:null});});
+  if(!l.length)return null;
   l.sort((a,b)=>b.p-a.p);return l[0];
 }
 function predCell(m){
@@ -279,7 +279,7 @@ function predCell(m){
     cls=w===true?" ok":w===false?" bad":"";
   }
   const lab=MKLAB[bm.market]||bm.market;
-  const t="Best market: "+bm.market+(bm.odd?" at odds "+bm.odd:"")+", "+pc+"% chance. Predicted score "+(pred[id]&&pred[id].s?pred[id].s:"")+". Estimates, not guarantees.";
+  const t="Best market: "+bm.market+(bm.odd?" at odds "+bm.odd:"")+", "+pc+"% chance. Estimates, not guarantees.";
   return '<div class="pr" title="'+esc(t)+'"><span class="pill'+cls+'">'+esc(lab)+' '+pc+'%</span>'+valChip(id)+'<span class="sig s'+lv+'" role="img" aria-label="Confidence '+(lv===3?"high":lv===2?"medium":"low")+'"><i></i><i></i><i></i></span></div>';
 }
 
@@ -513,7 +513,7 @@ function tog(id){
   const home=mm.teams.home.name,away=mm.teams.away.name;
   _ctx={id:id,home:home,away:away};
   if(info[id]){_rows=dailyRows(info[id],home,away);panels[id]=panel(_rows,dailyNote(info[id],home,away));el.innerHTML=panels[id];return;}
-  if(pred[id]){_rows=modelRows(pred[id],home,away);panels[id]=panel(_rows,"Predicted score "+pred[id].s+". Estimated from both teams’ results over the last 30 days. Estimates, not guarantees.");el.innerHTML=panels[id];return;}
+  if(pred[id]){_rows=modelRows(pred[id],home,away);panels[id]=panel(_rows,"Estimated from both teams’ results over the last 30 days. Estimates, not guarantees.");el.innerHTML=panels[id];return;}
   el.innerHTML='<p class="note">Loading predictions…</p>';
   fetch("/api/predictions?fixture="+id).then(r=>r.json()).then(d=>{
     panels[id]=predPanel(d,home,away);

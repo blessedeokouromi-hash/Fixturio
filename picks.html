@@ -173,7 +173,6 @@ function chips(p){
   const c=[/bookmaker/.test(m.src||p.reason||"")?"Backed by bookmaker odds":"Form and stats only"];
   if(p.banker)c.unshift("Banker");
   if(m.form&&m.form.home&&m.form.away)c.push("Form "+m.form.home+" vs "+m.form.away);
-  if(p.cs)c.push("Model score "+p.cs);
   if(p.value)c.push("Value pick");
   return c.map(x=>'<span class="cp">'+esc(x)+"</span>").join("");
 }
