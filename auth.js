@@ -23,14 +23,18 @@
     return readyProm;
   }
   function push(list){
-    if(!sb||!user)return Promise.resolve();
-    return sb.auth.updateUser({data:{fx_saves:list}}).then(function(r){return r&&r.error?Promise.reject(r.error):undefined;});
+    return ready().then(function(){
+      if(!sb||!user)return undefined;
+      return sb.auth.updateUser({data:{fx_saves:list}}).then(function(r){return r&&r.error?Promise.reject(r.error):undefined;});
+    }).catch(function(e){try{console.warn('fxAuth.push failed',e);}catch(_){}});
   }
   function pull(){
-    if(!sb||!user)return Promise.resolve(null);
-    return sb.auth.getSession().then(function(g){
-      var u=g&&g.data&&g.data.session&&g.data.session.user;
-      return u&&u.user_metadata&&u.user_metadata.fx_saves?u.user_metadata.fx_saves:null;
+    return ready().then(function(){
+      if(!sb||!user)return null;
+      return sb.auth.getSession().then(function(g){
+        var u=g&&g.data&&g.data.session&&g.data.session.user;
+        return u&&u.user_metadata&&u.user_metadata.fx_saves?u.user_metadata.fx_saves:null;
+      });
     });
   }
   window.fxAuth={
