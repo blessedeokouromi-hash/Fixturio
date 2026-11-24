@@ -86,8 +86,9 @@
             document.addEventListener("click", go, true);
             document.addEventListener("touchstart", go, true, { passive: true });
           };
-        if (document.readyState === "complete") setTimeout(arm, 4000);
-        else window.addEventListener("load", function () { setTimeout(arm, 4000); });
+          if (document.readyState === "complete") setTimeout(arm, 4000);
+          else window.addEventListener("load", function () { setTimeout(arm, 4000); });
+        }
       }
       window.fixturioVastUrl = cfg.vast && cfg.vast.url ? cfg.vast.url : null;
       // In-feed slots: small banner units between league blocks on the homepage.
