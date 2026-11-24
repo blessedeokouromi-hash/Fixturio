@@ -212,7 +212,7 @@ function valChip(id){
   const inf=info[id];
   if(!inf||!inf.markets)return "";
   let ev=0;
-  (inf.markets||[]).forEach(x=>{if(x.odd&&x.prob&&x.prob*x.odd>ev)ev=x.prob*x.odd;});
+  (inf.markets||[]).forEach(x=>{if(x.skip)return;if(x.odd&&x.prob&&x.prob*x.odd>ev)ev=x.prob*x.odd;});
   return ev>=1.08?'<span class="val" title="Our estimate is clearly higher than the bookmaker odds imply">Value</span>':"";
 }
 const MKLAB={"Home win":"1","Draw":"X","Away win":"2","Double chance 1X (home or draw)":"1X","Double chance X2 (away or draw)":"X2","Double chance 12 (no draw)":"12","Over 2.5 goals":"O2.5","Under 2.5 goals":"U2.5","Both teams to score":"BTTS","Both teams not to score":"No BTTS"};
