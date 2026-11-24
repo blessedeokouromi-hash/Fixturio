@@ -61,12 +61,14 @@ async function games() {
 function moneyline(oddsRows) {
   const acc = { Home: [], Away: [] };
   (oddsRows || []).forEach(b => (b.bets || []).forEach(bt => {
-    (bt.values || []).forEach(v => {
-      if (/^game odds$|^home\/away$/i.test(bt.name) && /^(home|away)$/i.test(v.value)) {
-        const o = parseFloat(v.odd);
-        if (o >= MIN_ODD) acc[/^home$/i.test(v.value) ? "Home" : "Away"].push(o);
-      }
-    });
+    const nm = (bt.name || "").toLowerCase();
+    if (/half|quarter|period|set/.test(nm)) return; // only full-game lines
+    const vals = bt.values || [];
+    const vh = vals.find(v => /^home$/i.test(v.value)), va = vals.find(v => /^away$/i.test(v.value));
+    if (!vh || !va) return; // needs both sides at exact Home/Away (spreads carry points, so they never match)
+    const oh = parseFloat(vh.odd), oa = parseFloat(va.odd);
+    if (oh >= MIN_ODD) acc.Home.push(oh);
+    if (oa >= MIN_ODD) acc.Away.push(oa);
   }));
   const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
   return { home: avg(acc.Home), away: avg(acc.Away) };
@@ -93,7 +95,8 @@ function implProb(oh, oa) {
       try {
         const rows = await api("/odds?game=" + g.id);
         ml = moneyline(rows);
-        if (!ml || !ml.home || !ml.away) console.log("basketball debug: no moneyline in odds for game " + g.id + ", rows " + (rows.length||0) + ", bets " + (((rows[0]||{}).bookmakers||[]).reduce((a,b)=>a+((b.bets||[]).length||0),0)));
+        if (!ml || !ml.home || !ml.away) console.log("basketball debug: no moneyline in odds for game " + g.id + ", rows " + (rows.length||0) + ", bets " + (((rows[0]||{}).bookmakers||[]).reduce((a,b)=>a+((b.bets||[]).length||0),0))
+        + (rows.length ? ", names: " + Array.from(new Set(((rows[0]||{}).bookmakers||[]).flatMap(b=>(b.bets||[]).map(bt=>bt.name)))).slice(0,8).join("|") : ""));
       } catch (e) { console.log("basketball debug: odds failed for game " + g.id + ": " + String(e.message).slice(0, 180)); ml = null; }
     }
     if (!ml || !ml.home || !ml.away) continue;
