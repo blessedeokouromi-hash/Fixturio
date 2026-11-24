@@ -65,19 +65,27 @@
       }
       // Popunder waits for the page to finish loading and fires on the
       // visitor's first tap, so it can never hijack the site mid-load.
+      // Frequency-capped: at most once per 12 hours per visitor (localStorage
+      // gate). An uncapped popunder was redirecting visitors to third-party
+      // sign-up pages (a bookmaker) over and over, which reads as the site
+      // itself misbehaving.
       if (cfg.popunder && cfg.popunder.src) {
-        var armed = false;
-        var arm = function () {
-          if (armed) return;
-          armed = true;
-          var go = function () {
-            document.removeEventListener("click", go, true);
-            document.removeEventListener("touchstart", go, true);
-            run(cfg.popunder.src, document.body, "popunder");
+        var CAPMS = 12 * 3600 * 1000, last = 0;
+        try { last = parseInt(localStorage.getItem("fx_pu") || "0", 10) || 0; } catch (e) {}
+        if (Date.now() - last >= CAPMS) {
+          var armed = false;
+          var arm = function () {
+            if (armed) return;
+            armed = true;
+            var go = function () {
+              document.removeEventListener("click", go, true);
+              document.removeEventListener("touchstart", go, true);
+              try { localStorage.setItem("fx_pu", String(Date.now())); } catch (e) {}
+              run(cfg.popunder.src, document.body, "popunder");
+            };
+            document.addEventListener("click", go, true);
+            document.addEventListener("touchstart", go, true, { passive: true });
           };
-          document.addEventListener("click", go, true);
-          document.addEventListener("touchstart", go, true, { passive: true });
-        };
         if (document.readyState === "complete") setTimeout(arm, 4000);
         else window.addEventListener("load", function () { setTimeout(arm, 4000); });
       }
