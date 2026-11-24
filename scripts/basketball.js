@@ -102,7 +102,7 @@ function implProb(oh, oa) {
         const rows = await api("/odds?game=" + g.id);
         ml = moneyline(rows);
         if (!ml || !ml.home || !ml.away) console.log("basketball debug: no moneyline in odds for game " + g.id + ", rows " + (rows.length||0) + ", bets " + (((rows[0]||{}).bookmakers||[]).reduce((a,b)=>a+((b.bets||[]).length||0),0))
-        + (rows.length ? ", names: " + Array.from(new Set(((rows[0]||{}).bookmakers||[]).flatMap(b=>(b.bets||[]).map(bt=>bt.name)))).slice(0,8).join("|") : "") + (rows.length && (((rows[0]||{}).bookmakers||[])[0]||{}).bets ? ", sample: " + JSON.stringify((((rows[0].bookmakers||[])[0].bets||[]).find(bt=>/home\\/away|3way/i.test(bt.name||""))||{}).values||[]).slice(0,160) : ""));
+        + (rows.length ? ", names: " + Array.from(new Set(((rows[0]||{}).bookmakers||[]).flatMap(b=>(b.bets||[]).map(bt=>bt.name)))).slice(0,8).join("|") : "") + (rows.length && (((rows[0]||{}).bookmakers||[])[0]||{}).bets ? ", sample: " + JSON.stringify((((rows[0].bookmakers||[])[0].bets||[]).find(bt=>/home\/away|3way/i.test(bt.name||""))||{}).values||[]).slice(0,160) : ""));
       } catch (e) { console.log("basketball debug: odds failed for game " + g.id + ": " + String(e.message).slice(0, 180)); ml = null; }
     }
     if (!ml || !ml.home || !ml.away) continue;

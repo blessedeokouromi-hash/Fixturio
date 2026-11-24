@@ -128,7 +128,8 @@ function chipRow(){
   const lv=gs.filter(g=>LIVE.includes(g.status)).length,fn=gs.filter(g=>DONE.includes(g.status)).length,up=gs.filter(g=>keep({status:g.status,time:g.time,modeless:1})||true).length;
   const hasStatus=gs.some(g=>g.status);
   let h=chip("all","All",n);
-  if(hasStatus)h+=chip("live","Live",lv,"lc")+chip("finished","Finished",fn);
+  if(hasStatus&&lv)h+=chip("live","Live",lv,"lc");
+  if(hasStatus&&fn)h+=chip("finished","Finished",fn);
   h+=chip("upcoming","Upcoming",gs.filter(g=>(!g.status&&!LIVE.includes(g.status)&&!DONE.includes(g.status))&&( !g.time||g.time>utcNow())).length);
   h+=chip("top","Top picks",15);
   return h;
