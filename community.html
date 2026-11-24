@@ -141,7 +141,7 @@ function fmtDate(s){
 }
 function render(){
   const box=$("list");
-  if(!posts.length){box.textContent="No slips posted yet. Be the first.";return;}
+  if(!posts.length){box.textContent=loadErr?"Could not load the slips. Check your connection and reload the page.":"No slips posted yet. Be the first.";return;}
   box.innerHTML="";
   posts.forEach(p=>{
     const own=me&&me.id===p.uid;
@@ -191,8 +191,11 @@ function render(){
 const openC=new Set();
 let tokCache=null;
 function token(){return me?fxAuth.token().then(t=>{tokCache=t;return t;}):Promise.resolve(null);}
+var loadErr=false;
 function load(){
-  fetch("/api/community",{cache:"no-store"}).then(r=>r.json()).then(d=>{posts=d.posts||[];chat=d.chat||[];render();renderChat();}).catch(()=>{posts=[];chat=[];render();renderChat();});
+  var ac=window.AbortController?new AbortController():null;
+  var to=ac?setTimeout(function(){try{ac.abort();}catch(e){}},12000):null;
+  fetch("/api/community",ac?{cache:"no-store",signal:ac.signal}:{cache:"no-store"}).then(r=>r.json()).then(d=>{if(to)clearTimeout(to);loadErr=false;posts=d.posts||[];chat=d.chat||[];render();renderChat();}).catch(()=>{if(to)clearTimeout(to);loadErr=true;posts=[];chat=[];render();renderChat();});
 }
 function fail(msg){const e=$("err");e.textContent=msg;e.style.display="";}
 function post(){
@@ -223,7 +226,7 @@ function del(id){
 function renderChat(){
   const box=$("chatbox");
   box.innerHTML="";
-  if(!chat.length){const e=document.createElement("p");e.className="empty";e.textContent="The room is quiet. Be the first to say something.";box.appendChild(e);}
+  if(!chat.length){const e=document.createElement("p");e.className="empty";e.textContent=loadErr?"Could not load the room. Check your connection and reload the page.":"The room is quiet. Be the first to say something.";box.appendChild(e);}
   chat.forEach(m=>{
     const own=me&&me.id===m.uid;
     const r=document.createElement("div");r.className="chatrow"+(own?" own":"");
@@ -306,11 +309,13 @@ $("submit").onclick=post;
 $("showform").onclick=function(){const f=$("post-form");const open=f.style.display!=="none";f.style.display=open?"none":"";$("showform").textContent=open?"Post your slip":"Close";};
 $("chatsend").onclick=sendChat;
 if(window.fxAuth){
+  var ltf=setTimeout(load,4000);
   fxAuth.ready().then(u=>{
+    clearTimeout(ltf);
     me=u;tokCache=null;
     if(u){$("signed-out").style.display="none";$("showform").style.display="";$("chat-signout").style.display="none";$("chat-compose").style.display="";}
     load();
-  }).catch(()=>{load();});
+  }).catch(()=>{clearTimeout(ltf);load();});
 }else{load();}
 </script>
 <script src="/affiliate.js" defer></script>
