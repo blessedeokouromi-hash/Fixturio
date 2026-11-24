@@ -60,7 +60,8 @@ async function games() {
 // Average moneyline odds across bookmakers for one game.
 function moneyline(oddsRows) {
   const acc = { Home: [], Away: [] };
-  (oddsRows || []).forEach(b => {
+  // shape: response[] -> bookmakers[] -> bets[] -> values[]
+  (oddsRows || []).forEach(r => (r.bookmakers || []).forEach(b => {
     const bets = b.bets || [];
     // try the two-way moneyline first, then the 3-way result's home/away legs
     const cands = bets.filter(bt => /^home\/away$/i.test((bt.name || "").trim()) || /3way result/i.test(bt.name || ""));
@@ -75,7 +76,7 @@ function moneyline(oddsRows) {
       });
       if (vh && va) { acc.Home.push(vh); acc.Away.push(va); break; }
     }
-  });
+  }));
   const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
   return { home: avg(acc.Home), away: avg(acc.Away) };
 }
