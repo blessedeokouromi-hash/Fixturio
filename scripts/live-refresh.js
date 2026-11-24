@@ -3,7 +3,7 @@
 // refreshes can never push the account into suspension.
 const fs = require("fs");
 const KEY = process.env.API_FOOTBALL_KEY;
-const FLOOR = 4;
+const FLOOR = 2;
 
 (async () => {
   fs.mkdirSync("data", { recursive: true });

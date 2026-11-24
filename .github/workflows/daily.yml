@@ -22,10 +22,6 @@ jobs:
         run: node scripts/matches.js -1,0,1
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-      - name: Refresh today's matches
-        run: node scripts/matches.js 0
-        env:
-          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
       - name: Live-score alerts
         continue-on-error: true
         run: |
