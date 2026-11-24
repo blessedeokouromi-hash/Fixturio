@@ -81,6 +81,9 @@ textarea{resize:vertical;min-height:56px}
 .compose input:focus{outline:none}
 .compose button{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:var(--bar);color:#fff;display:flex;align-items:center;justify-content:center}
 :root:not([data-theme="light"]) .compose button,html[data-theme="dark"] .compose button{color:#08130D}
+.ctoggle{border:1px solid var(--line);background:transparent;border-radius:20px;padding:5px 12px;font-weight:800;font-size:12px;color:var(--mu)}
+.crow input{padding:8px 12px;font-size:13.5px;border-radius:20px}
+.crow button{padding:7px 14px;font-size:13px}
 </style><link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="stylesheet" href="/fix.css">
@@ -171,10 +174,21 @@ function render(){
     ac.appendChild(rp);
     if(own){const dl=document.createElement("button");dl.className="flag";dl.textContent="Delete";dl.onclick=function(){del(p.id);};ac.appendChild(dl);}
     div.appendChild(ac);
-    const cw=document.createElement("div");cw.className="cw";div.appendChild(cw);fillC(p,cw);
+    const tg=document.createElement("button");tg.className="ctoggle";
+    tg.textContent="Comments"+((p.c||[]).length?" \u00b7 "+(p.c||[]).length:"");
+    tg.onclick=function(){
+      const open=cw.style.display!=="none";
+      cw.style.display=open?"none":"";
+      if(!open&&!cw.dataset.f){cw.dataset.f="1";fillC(p,cw);}
+      if(open)openC.delete(p.id);else openC.add(p.id);
+    };
+    div.appendChild(tg);
+    const cw=document.createElement("div");cw.className="cw";cw.style.display="none";div.appendChild(cw);
+    if(openC.has(p.id)){cw.style.display="";cw.dataset.f="1";fillC(p,cw);}
     box.appendChild(div);
   });
 }
+const openC=new Set();
 let tokCache=null;
 function token(){return me?fxAuth.token().then(t=>{tokCache=t;return t;}):Promise.resolve(null);}
 function load(){
@@ -277,7 +291,7 @@ function fillC(p,cw){
         if(!out)return;
         const ep=cw.querySelector(".err");
         if(!out.ok){if(ep){ep.textContent=(out.d&&out.d.error)||"Could not send.";ep.style.display="";}return;}
-        load();
+        openC.add(p.id);load();
       }).catch(()=>{btn.disabled=false;});
     };
     row.appendChild(inp);row.appendChild(btn);
