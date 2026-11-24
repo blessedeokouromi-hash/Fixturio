@@ -57,6 +57,16 @@ button{font:inherit;color:inherit;cursor:pointer}
 .st2 .bar .lft{background:var(--amb);border-radius:3px 0 0 3px}
 .st2 .bar .rgt{background:#7FB3E8;border-radius:0 3px 3px 0}
 .st2 .lbl{text-align:center;font-size:12px;color:var(--mu);margin-top:2px}
+.prow{display:grid;grid-template-columns:22px 24px 1fr auto 30px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.prow:first-of-type{border-top:0}
+.prow img{width:20px;height:20px;object-fit:contain}
+.prow b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .prk{color:var(--mu);font-weight:700}
+.prow .ppt{font-weight:800;text-align:right}
+.pfd{display:flex;gap:2px}
+.sd{width:14px;height:14px;border-radius:3px;color:#fff;font-size:9px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
+.sd.w{background:#1FA055}.sd.d{background:#8A97A5}.sd.l{background:#D64545}
+#pstand a{color:var(--amb);font-weight:700;text-decoration:none}
 .xi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .xi>div{background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px}
 .xi b{display:block;font-size:13px;font-weight:800;margin-bottom:4px}
@@ -160,10 +170,11 @@ function render(){
     }
   }
   html+='<div class="card" id="vote"><h3>Who will win?</h3><p class="note">Loading the fan vote…</p></div>';
+  html+='<div class="card hidden" id="pstand"></div>';
   html+='<div class="card hidden" id="odds"></div>';
   html+='<div class="card hidden" id="info"></div>';
   $("app").innerHTML=html;hlEmbed();
-  loadVote();loadOdds();
+  loadVote();loadStand();loadOdds();
   let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){}
   if(s.includes(+mid)){const b=$("sv");b.classList.add("on");b.textContent="★ Saved";}
   if(info)renderInfo();
@@ -201,6 +212,44 @@ function vote(c){
       if(d&&d.counts){vCnt={h:d.counts.h||0,d:d.counts.d||0,a:d.counts.a||0};vTot=vCnt.h+vCnt.d+vCnt.a;}
       renderVote();
     }).catch(function(){});
+}
+function loadStand(){
+  fetch("/standings.json").then(r=>r.ok?r.json():null).then(d=>{
+    const el=$("pstand");if(!el||!d||!d.leagues||!m)return;
+    const lg=pickLeague(d.leagues,m.league);if(!lg)return;
+    const hr=findTeam(lg.rows,m.teams.home.name),ar=findTeam(lg.rows,m.teams.away.name);
+    if(!hr||!ar)return;
+    el.classList.remove("hidden");
+    let hh='<h3>Pre-match standings</h3><p class="note" style="margin:0 0 8px">'+esc(lg.name)+(d.season?" · "+esc(d.season):"")+'</p>';
+    hh+=srow(hr)+srow(ar);
+    hh+='<p class="note" style="margin-top:10px"><a href="/standings.html">View all standings →</a></p>';
+    el.innerHTML=hh;
+  }).catch(function(){});
+}
+function pickLeague(leagues,ml){
+  const nm=norm2(ml.name||""),cn=norm2(ml.country||"");if(!nm)return null;
+  let best=null,bs=0;
+  leagues.forEach(l=>{
+    let s=0;const ln=norm2(l.name||""),lcn=norm2(l.country||"");
+    if(ln===nm)s+=4;else if(ln&&ln.indexOf(nm)>-1)s+=2;
+    if(cn&&ln.indexOf(cn)>-1)s+=3;else if(cn&&lcn===cn)s+=1;
+    if(s>bs){bs=s;best=l;}
+  });
+  return bs>=4?best:null;
+}
+function findTeam(rows,name){
+  const n=norm2(name);let hit=null;
+  rows.forEach(r=>{if(norm2(r.t.n||"")===n)hit=r;});
+  if(hit)return hit;
+  rows.forEach(r=>{const t=norm2(r.t.n||"");if(!hit&&n&&t&&(t.indexOf(n)>-1||n.indexOf(t)>-1))hit=r;});
+  return hit;
+}
+function norm2(s){
+  return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\bfc\b/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+}
+function srow(r){
+  const dots=String(r.f||"").slice(-5).split("").map(c=>'<i class="sd '+c.toLowerCase()+'">'+c.toUpperCase()+'</i>').join("");
+  return '<div class="prow"><span class="prk">'+r.r+'</span>'+(r.t.l?'<img src="'+esc(r.t.l)+'" alt="">':'<i></i>')+'<b>'+esc(r.t.n)+'</b><span class="pfd">'+dots+'</span><span class="ppt">'+r.p+'</span></div>';
 }
 function loadVote(){
   try{myVote=localStorage.getItem(VKEY);}catch(e){}
