@@ -216,7 +216,7 @@ function valChip(id){
   (inf.markets||[]).forEach(x=>{if(x.skip)return;if(x.odd&&x.prob&&x.prob*x.odd>ev)ev=x.prob*x.odd;});
   return ev>=1.08?'<span class="val" title="Our estimate is clearly higher than the bookmaker odds imply">Value</span>':"";
 }
-const MKLAB={"Home win":"1","Draw":"X","Away win":"2","Double chance 1X (home or draw)":"1X","Double chance X2 (away or draw)":"X2","Double chance 12 (no draw)":"12","Over 2.5 goals":"O2.5","Under 2.5 goals":"U2.5","Both teams to score":"BTTS","Both teams not to score":"No BTTS"};
+const MKLAB={"Home win":"1","Draw":"X","Away win":"2","Double chance 1X (home or draw)":"1X","Double chance X2 (away or draw)":"X2","Double chance 12 (no draw)":"12","Over 2.5 goals":"O2.5","Under 2.5 goals":"U2.5","Both teams to score":"BTTS","Both teams not to score":"No BTTS","Home team over 0.5 goals":"H O0.5","Home team over 1.5 goals":"H O1.5","Home team under 1.5 goals":"H U1.5","Away team over 0.5 goals":"A O0.5","Away team over 1.5 goals":"A O1.5","Away team under 1.5 goals":"A U1.5","Handicap home -1.5":"Hcp H-1.5","Handicap away -1.5":"Hcp A-1.5","First half home":"1H 1","First half draw":"1H X","First half away":"1H 2","First half over 0.5":"1H O0.5","First half under 0.5":"1H U0.5","First half over 1.5":"1H O1.5","First half under 1.5":"1H U1.5"};
 function mkWon(mk,g){
   const t=g.home+g.away;
   switch(mk){
@@ -230,6 +230,14 @@ function mkWon(mk,g){
     case "Under 2.5 goals":return t<3;
     case "Both teams to score":return g.home>0&&g.away>0;
     case "Both teams not to score":return !(g.home>0&&g.away>0);
+    case "Home team over 0.5 goals":return g.home>0;
+    case "Home team over 1.5 goals":return g.home>1;
+    case "Home team under 1.5 goals":return g.home<2;
+    case "Away team over 0.5 goals":return g.away>0;
+    case "Away team over 1.5 goals":return g.away>1;
+    case "Away team under 1.5 goals":return g.away<2;
+    case "Handicap home -1.5":return g.home-g.away>=2;
+    case "Handicap away -1.5":return g.away-g.home>=2;
   }
   return null;
 }
@@ -242,6 +250,13 @@ function mkList(id){
   ];
   if(O!=null&&!isNaN(O)){l.push({market:"Over 2.5 goals",p:O});l.push({market:"Under 2.5 goals",p:1-O});}
   if(B!=null&&!isNaN(B)){l.push({market:"Both teams to score",p:B});l.push({market:"Both teams not to score",p:1-B});}
+  if(p.x>0&&p.y>0){
+    const N=9,pois=(lam,k)=>{let s=Math.exp(-lam);for(let i=1;i<=k;i++)s*=lam/i;return s;};
+    const mk=(lh,la)=>{const g=[];let t=0;for(let i=0;i<=N;i++){g[i]=[];for(let j=0;j<=N;j++){g[i][j]=pois(lh,i)*pois(la,j);t+=g[i][j];}}for(let i=0;i<=N;i++)for(let j=0;j<=N;j++)g[i][j]/=t;return g;};
+    const sm=(g,f)=>{let s=0;for(let i=0;i<=N;i++)for(let j=0;j<=N;j++)if(f(i,j))s+=g[i][j];return s;};
+    const g=mk(+p.x,+p.y),hg=mk(+p.x*0.45,+p.y*0.45);
+    l.push({market:"Home team over 0.5 goals",p:sm(g,(i)=>i>0)},{market:"Home team over 1.5 goals",p:sm(g,(i)=>i>1)},{market:"Home team under 1.5 goals",p:sm(g,(i)=>i<2)},{market:"Away team over 0.5 goals",p:sm(g,(i,j)=>j>0)},{market:"Away team over 1.5 goals",p:sm(g,(i,j)=>j>1)},{market:"Away team under 1.5 goals",p:sm(g,(i,j)=>j<2)},{market:"Handicap home -1.5",p:sm(g,(i,j)=>i-j>=2)},{market:"Handicap away -1.5",p:sm(g,(i,j)=>j-i>=2)},{market:"First half home",p:sm(hg,(i,j)=>i>j)},{market:"First half draw",p:sm(hg,(i,j)=>i===j)},{market:"First half away",p:sm(hg,(i,j)=>i<j)},{market:"First half over 0.5",p:sm(hg,(i,j)=>i+j>0.5)},{market:"First half under 0.5",p:sm(hg,(i,j)=>i+j<0.5)},{market:"First half over 1.5",p:sm(hg,(i,j)=>i+j>1.5)},{market:"First half under 1.5",p:sm(hg,(i,j)=>i+j<1.5)});
+  }
   return l.filter(x=>x.p!=null&&!isNaN(x.p)&&x.p>0.01&&x.p<0.999);
 }
 function bestMkt(id){

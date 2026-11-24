@@ -124,6 +124,36 @@ function analyze(p, bets, q) {
     const skip = mp != null && ip != null && Math.abs(mp - ip) > 0.25;
     return { market, kind, prob, skip };
   };
+  // Markets the model can price on its own, straight from the goal-expectation
+  // grid the score model uses, with no odds needed: team totals, handicaps and
+  // first-half lines (first half modelled as about 45% of full-time goals).
+  const gridMkts = (() => {
+    if (!(q && q.x > 0 && q.y > 0)) return [];
+    const N = 9;
+    const pois = (lam, k) => { let p = Math.exp(-lam); for (let i = 1; i <= k; i++) p *= lam / i; return p; };
+    const mk = (lh, la) => { const g = []; let tot = 0; for (let i = 0; i <= N; i++) { g[i] = []; for (let j = 0; j <= N; j++) { g[i][j] = pois(lh, i) * pois(la, j); tot += g[i][j]; } } for (let i = 0; i <= N; i++) for (let j = 0; j <= N; j++) g[i][j] /= tot; return g; };
+    const sm = (g, f) => { let s = 0; for (let i = 0; i <= N; i++) for (let j = 0; j <= N; j++) if (f(i, j)) s += g[i][j]; return s; };
+    const g = mk(q.x, q.y);
+    const hg = mk(q.x * 0.45, q.y * 0.45);
+    const out = [];
+    const add = (market, v) => { const e = entry(market, "single", v, null); if (e) out.push(e); };
+    add("Home team over 0.5 goals", sm(g, (i) => i > 0));
+    add("Home team over 1.5 goals", sm(g, (i) => i > 1));
+    add("Home team under 1.5 goals", sm(g, (i) => i < 2));
+    add("Away team over 0.5 goals", sm(g, (i, j) => j > 0));
+    add("Away team over 1.5 goals", sm(g, (i, j) => j > 1));
+    add("Away team under 1.5 goals", sm(g, (i, j) => j < 2));
+    add("Handicap home -1.5", sm(g, (i, j) => i - j >= 2));
+    add("Handicap away -1.5", sm(g, (i, j) => j - i >= 2));
+    add("First half home", sm(hg, (i, j) => i > j));
+    add("First half draw", sm(hg, (i, j) => i === j));
+    add("First half away", sm(hg, (i, j) => i < j));
+    add("First half over 0.5", sm(hg, (i, j) => i + j > 0.5));
+    add("First half under 0.5", sm(hg, (i, j) => i + j < 0.5));
+    add("First half over 1.5", sm(hg, (i, j) => i + j > 1.5));
+    add("First half under 1.5", sm(hg, (i, j) => i + j < 1.5));
+    return out;
+  })();
   const ou = twoWay(bets.find(b => b.id === 5), "Over 2.5", "Under 2.5");
   const bt = twoWay(bets.find(b => b.id === 8), "Yes", "No");
   const list = [
@@ -137,7 +167,7 @@ function analyze(p, bets, q) {
     entry("Under 2.5 goals", "single", mo != null ? 1 - mo : null, ou ? ou[1] : null),
     entry("Both teams to score", "single", mb, bt ? bt[0] : null),
     entry("Both teams not to score", "single", mb != null ? 1 - mb : null, bt ? bt[1] : null)
-  ].filter(Boolean);
+  ].filter(Boolean).concat(gridMkts);
 
   // Keep the raw odds we already fetched, so the site can flag value picks
   // (our probability clearly above what the odds imply) without new API calls.

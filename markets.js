@@ -42,12 +42,22 @@
     var bt = sum(g, function (i, j) { return i > 0 && j > 0; });
     add("Both teams to score", "Yes", bt);
     add("Both teams to score", "No", 1 - bt);
+    var hg = grid(p.x * 0.45, p.y * 0.45);
+    add("First half", "1st half " + home + " win", sum(hg, function (i, j) { return i > j; }));
+    add("First half", "1st half draw", sum(hg, function (i, j) { return i === j; }));
+    add("First half", "1st half " + away + " win", sum(hg, function (i, j) { return i < j; }));
+    add("First half", "1st half over 0.5", sum(hg, function (i, j) { return i + j > 0.5; }));
+    add("First half", "1st half under 0.5", sum(hg, function (i, j) { return i + j < 0.5; }));
+    add("First half", "1st half over 1.5", sum(hg, function (i, j) { return i + j > 1.5; }));
+    add("First half", "1st half under 1.5", sum(hg, function (i, j) { return i + j < 1.5; }));
     add("Draw no bet", home, H / (H + A));
     add("Draw no bet", away, A / (H + A));
     add("Team goals", home + " over 0.5", sum(g, function (i) { return i > 0; }));
     add("Team goals", home + " over 1.5", sum(g, function (i) { return i > 1; }));
     add("Team goals", away + " over 0.5", sum(g, function (i, j) { return j > 0; }));
     add("Team goals", away + " over 1.5", sum(g, function (i, j) { return j > 1; }));
+    add("Team goals", home + " under 1.5", sum(g, function (i) { return i < 2; }));
+    add("Team goals", away + " under 1.5", sum(g, function (i, j) { return j < 2; }));
     add("Clean sheet and win to nil", home + " win to nil", sum(g, function (i, j) { return i > 0 && j === 0; }));
     add("Clean sheet and win to nil", away + " win to nil", sum(g, function (i, j) { return j > 0 && i === 0; }));
     add("Clean sheet and win to nil", home + " clean sheet", sum(g, function (i, j) { return j === 0; }));
@@ -82,7 +92,7 @@
     h += "</div>";
     var order = [], grp = {};
     rows.forEach(function (r) { if (!grp[r.g]) { grp[r.g] = []; order.push(r.g); } grp[r.g].push(r); });
-    var main = ["Match result", "Double chance", "Total goals", "Both teams to score"];
+    var main = ["Match result", "Double chance", "Total goals", "Both teams to score", "First half"];
     function block(k) {
       var s = '<div class="sec"><h4>' + esc(k) + "</h4>";
       grp[k].forEach(function (r) {
