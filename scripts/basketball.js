@@ -62,19 +62,19 @@ function moneyline(oddsRows) {
   const acc = { Home: [], Away: [] };
   (oddsRows || []).forEach(b => {
     const bets = b.bets || [];
-    // prefer the two-way moneyline; fall back to the 3-way result's home/away legs
-    const pick = bets.find(bt => /^home\/away$/i.test((bt.name || "").trim()))
-      || bets.find(bt => /3way result/i.test(bt.name || ""));
-    if (!pick) return;
-    let vh = null, va = null;
-    (pick.values || []).forEach(v => {
-      const s2 = String(v.value || "").trim().toLowerCase();
-      const o = parseFloat(v.odd);
-      if (!isFinite(o) || o < MIN_ODD) return;
-      if (s2 === "home" || s2 === "1") vh = vh || o;
-      if (s2 === "away" || s2 === "2") va = va || o;
-    });
-    if (vh && va) { acc.Home.push(vh); acc.Away.push(va); }
+    // try the two-way moneyline first, then the 3-way result's home/away legs
+    const cands = bets.filter(bt => /^home\/away$/i.test((bt.name || "").trim()) || /3way result/i.test(bt.name || ""));
+    for (const pick of cands) {
+      let vh = null, va = null;
+      (pick.values || []).forEach(v => {
+        const s2 = String(v.value || "").trim().toLowerCase();
+        const o = parseFloat(v.odd);
+        if (!isFinite(o) || o < MIN_ODD) return;
+        if (s2 === "home" || s2 === "1") vh = vh || o;
+        if (s2 === "away" || s2 === "2") va = va || o;
+      });
+      if (vh && va) { acc.Home.push(vh); acc.Away.push(va); break; }
+    }
   });
   const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
   return { home: avg(acc.Home), away: avg(acc.Away) };
