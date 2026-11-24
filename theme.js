@@ -29,3 +29,37 @@
   set(theme, false);
   (document.body || root).appendChild(btn);
 })();
+
+/* Self-heal stale copies: an old service worker left over from the previous
+   ad setup can keep serving an outdated page even after deploys. Drop any
+   worker not registered from /sw.js, and if this page is older than one this
+   browser has seen before, clear everything and reload once. */
+(function () {
+  try {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.getRegistrations().then(function (rs) {
+      (rs || []).forEach(function (r) {
+        try { if (!/\/sw\.js(\?|$)/.test(r.scriptURL)) r.unregister(); } catch (e) {}
+      });
+    }).catch(function () {});
+    var m = document.querySelector('meta[name="fx-build"]');
+    if (!m) return;
+    var b = m.getAttribute("content") || "";
+    if (!b) return;
+    var seen = null;
+    try { seen = localStorage.getItem("fx_build"); } catch (e) {}
+    if (!seen) { try { localStorage.setItem("fx_build", b); } catch (e) {} return; }
+    if (b >= seen) { try { if (b > seen) localStorage.setItem("fx_build", b); } catch (e) {} return; }
+    var once = false;
+    try { once = sessionStorage.getItem("fx_swreload") === "1"; } catch (e) {}
+    if (once) return;
+    try { sessionStorage.setItem("fx_swreload", "1"); } catch (e) {}
+    navigator.serviceWorker.getRegistrations().then(function (rs2) {
+      return Promise.all((rs2 || []).map(function (r) {
+        try { return r.unregister().catch(function () {}); } catch (e) { return Promise.resolve(); }
+      }));
+    }).then(function () {
+      try { if (navigator.serviceWorker.controller) location.reload(); } catch (e) {}
+    }).catch(function () {});
+  } catch (e) {}
+})();
