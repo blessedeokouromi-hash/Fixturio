@@ -30,15 +30,29 @@ textarea{resize:vertical;min-height:56px}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .post{margin-top:14px;width:100%;padding:12px;background:var(--amb);border:1px solid var(--amb);color:var(--ink);border-radius:10px;font-weight:800;font-size:15px}
 .post[disabled]{opacity:.55}
-.slip{border:1px solid var(--line);border-left:3px solid var(--bar);border-radius:12px;padding:12px;margin-top:10px}
-.sh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.slip{background:var(--s2);border:1px solid var(--line);border-radius:16px;padding:14px;margin-top:10px}
+.sh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
 .who{font-size:13px;font-weight:700;color:var(--mu);word-break:break-all}
-.code{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
-.code b{font-size:19px;letter-spacing:.06em;font-weight:800;color:var(--amb);word-break:break-all;background:rgba(255,213,74,.13);padding:4px 10px;border-radius:9px}
-.code button{border:1px solid var(--line);background:transparent;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700}
+.bkb{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--bar);color:#fff;padding:5px 10px;border-radius:8px}
+:root:not([data-theme="light"]) .bkb,html[data-theme="dark"] .bkb{color:#08130D}
+.when{font-size:12px;color:var(--mu)}
+.cbx{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px dashed var(--amb);border-radius:12px;padding:10px 12px}
+.cbx b{font-size:22px;letter-spacing:.08em;font-weight:800;color:var(--amb);word-break:break-all}
+.copybtn{flex:none;border:1px solid var(--line);background:var(--s1);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip2{font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:20px;padding:5px 10px;color:var(--mu)}
+.chip2.odds{color:var(--amb);border-color:rgba(255,213,74,.35)}
+.chip2.note{max-width:100%;white-space:normal}
+.prow{display:flex;align-items:center;gap:8px;margin-top:10px}
+.ava{flex:none;width:30px;height:30px;border-radius:50%;background:var(--bar);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+:root:not([data-theme="light"]) .ava,html[data-theme="dark"] .ava{color:#08130D}
+.pname{font-size:13.5px;font-weight:800;word-break:break-all}
+.likebtn{border:1px solid var(--line);background:transparent;border-radius:20px;padding:6px 12px;font-weight:800;font-size:13px}
+.likebtn.on{background:var(--bar);border-color:var(--bar);color:#fff}
+:root:not([data-theme="light"]) .likebtn.on,html[data-theme="dark"] .likebtn.on{color:#08130D}
 .meta{font-size:13px;color:var(--mu);margin-top:4px}
-.acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-.acts button{border:1px solid var(--line);background:transparent;border-radius:8px;padding:6px 12px;font-weight:700;font-size:13px}
+.acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.acts button{border:1px solid var(--line);background:transparent;border-radius:20px;padding:6px 12px;font-weight:700;font-size:13px}
 .flag{color:var(--mu)}
 .err{color:var(--live);font-size:13px;margin-top:8px}
 .empty{color:var(--mu);margin:6px 0 0}
@@ -57,7 +71,7 @@ textarea{resize:vertical;min-height:56px}
 .cmt.own{align-items:flex-end}
 .cmt .bub{max-width:88%;font-size:13.5px;padding:7px 11px;border-radius:12px 12px 12px 3px}
 .cmt.own .bub{border-radius:12px 12px 3px 12px}
-.cw{margin-top:10px;background:var(--s2);border-radius:12px;padding:10px}
+.cw{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
 .cw .bub{background:var(--s1)}
 .crow{display:flex;gap:8px;margin-top:10px}
 .crow input{flex:1;min-width:0}
@@ -84,6 +98,8 @@ textarea{resize:vertical;min-height:56px}
 <div id="post-form" style="display:none">
 <label for="code">Booking code</label>
 <input id="code" autocomplete="off" maxlength="32" placeholder="e.g. 8XK2QP">
+<label for="bk">Bookmaker (optional)</label>
+<input id="bk" autocomplete="off" maxlength="20" placeholder="e.g. SportyBet">
 <div class="frow">
 <div><label for="games">Games on the slip</label><input id="games" inputmode="numeric" maxlength="3" placeholder="1-30"></div>
 <div><label for="odds">Total odds</label><input id="odds" inputmode="decimal" maxlength="9" placeholder="e.g. 24.5"></div>
@@ -126,21 +142,35 @@ function render(){
   box.innerHTML="";
   posts.forEach(p=>{
     const own=me&&me.id===p.uid;
+    const likes=p.likes||[];
+    const liked=me&&likes.indexOf(me.id)>=0;
     const div=document.createElement("div");
     div.className="slip";
-    div.innerHTML='<div class="sh"><span class="who">'+esc(p.name)+" · "+esc(fmtDate(p.created))+'</span>'+(own?'<button class="flag">Delete</button>':'')+'</div>';
-    const cr=document.createElement("div");cr.className="code";
-    const cb=document.createElement("b");cb.textContent=p.code;cr.appendChild(cb);
-    const cp=document.createElement("button");cp.textContent="Copy";cp.dataset.code=p.code;
+    const top=document.createElement("div");top.className="sh";
+    top.innerHTML='<span class="bkb">'+esc(p.bk||"Booking code")+"</span"+">"+'<span class="when">'+esc(fmtDate(p.created))+"</span"+">";
+    div.appendChild(top);
+    const cbx=document.createElement("div");cbx.className="cbx";
+    const cb=document.createElement("b");cb.textContent=p.code;cbx.appendChild(cb);
+    const cp=document.createElement("button");cp.className="copybtn";cp.textContent="Copy";cp.dataset.code=p.code;
     cp.onclick=function(){if(navigator.clipboard)navigator.clipboard.writeText(cp.dataset.code).then(()=>{cp.textContent="Copied";setTimeout(()=>{cp.textContent="Copy";},1200);}).catch(()=>{});};
-    cr.appendChild(cp);
-    const mt=document.createElement("div");mt.className="meta";mt.textContent=p.games+" game"+(p.games===1?"":"s")+" · total odds "+p.odds+(p.note?" · "+p.note:"");
+    cbx.appendChild(cp);
+    div.appendChild(cbx);
+    const chips=document.createElement("div");chips.className="chips";
+    chips.innerHTML='<span class="chip2 odds">Odds '+esc(p.odds)+'</span><span class="chip2">'+p.games+" game"+(p.games===1?"":"s")+"</span>"+(p.note?'<span class="chip2 note">'+esc(p.note)+"</span>":"");
+    div.appendChild(chips);
+    const prow=document.createElement("div");prow.className="prow";
+    prow.innerHTML='<span class="ava">'+esc(String(p.name||"?").charAt(0).toUpperCase())+"</span"+">"+'<span class="pname">'+esc(p.name)+"</span"+">";
+    div.appendChild(prow);
     const ac=document.createElement("div");ac.className="acts";
+    const lk=document.createElement("button");lk.className="likebtn"+(liked?" on":"");
+    lk.textContent=(liked?"Liked":"Like")+(likes.length?" · "+likes.length:"");
+    lk.onclick=function(){token().then(tok=>{if(!tok)return;return fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,action:"like",id:p.id})});}).then(()=>load()).catch(()=>{});};
+    ac.appendChild(lk);
     const rp=document.createElement("button");rp.className="flag";rp.textContent="Report";
     rp.onclick=function(){fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tokCache,action:"report",id:p.id})}).then(()=>load()).catch(()=>{});};
     ac.appendChild(rp);
-    if(own){const dl=rp.cloneNode(true);dl.textContent="Delete";dl.className="flag";dl.onclick=function(){del(p.id);};ac.appendChild(dl);}
-    div.appendChild(cr);div.appendChild(mt);div.appendChild(ac);
+    if(own){const dl=document.createElement("button");dl.className="flag";dl.textContent="Delete";dl.onclick=function(){del(p.id);};ac.appendChild(dl);}
+    div.appendChild(ac);
     const cw=document.createElement("div");cw.className="cw";div.appendChild(cw);fillC(p,cw);
     box.appendChild(div);
   });
@@ -152,17 +182,17 @@ function load(){
 }
 function fail(msg){const e=$("err");e.textContent=msg;e.style.display="";}
 function post(){
-  const code=$("code").value.trim(),games=parseInt($("games").value,10),odds=parseFloat($("odds").value),note=$("note").value.trim();
+  const code=$("code").value.trim(),games=parseInt($("games").value,10),odds=parseFloat($("odds").value),note=$("note").value.trim(),bk=$("bk").value.trim();
   $("submit").disabled=true;
   token().then(tok=>{
     if(!tok){fail("Sign in again to post.");$("submit").disabled=false;return;}
-    return fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,action:"post",code,games,odds,note})})
+    return fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,action:"post",code,games,odds,note,bookmaker:bk})})
       .then(r=>r.json().then(d=>({ok:r.ok,d})));
   }).then(out=>{
     if(!out)return;
     $("submit").disabled=false;
     if(!out.ok){fail(out.d&&out.d.error||"Could not post. Try again.");return;}
-    $("code").value="";$("games").value="";$("odds").value="";$("note").value="";
+    $("code").value="";$("games").value="";$("odds").value="";$("note").value="";$("bk").value="";
     $("err").style.display="none";
     load();
   }).catch(()=>{$("submit").disabled=false;fail("Could not post. Try again.");});

@@ -82,6 +82,22 @@ module.exports = async (req, res) => {
       return await save(res, cur, d, "Report a community slip");
     }
 
+    if (action === "like") {
+      const me = await who(b.token, host);
+      if (!me) return res.status(401).json({ error: "Sign in to like a slip." });
+      const id = String(b.id || "").replace(/[^a-zA-Z0-9]/g, "");
+      if (!id) return res.status(400).json({ error: "id required" });
+      const cur = await current();
+      const d = prune(cur.data && typeof cur.data === "object" ? cur.data : { posts: [] });
+      const p = d.posts.find(x => x.id === id);
+      if (!p) return res.status(404).json({ error: "Slip not found." });
+      p.likes = p.likes || [];
+      const i = p.likes.indexOf(me.id);
+      if (i >= 0) p.likes.splice(i, 1);
+      else { if (p.likes.length >= 500) return res.status(429).json({ error: "Too many likes on this slip." }); p.likes.push(me.id); }
+      return await save(res, cur, d, "Like a community slip");
+    }
+
     if (action === "comment") {
       const me = await who(b.token, host);
       if (!me) return res.status(401).json({ error: "Sign in to comment." });
@@ -190,7 +206,8 @@ module.exports = async (req, res) => {
     const odds = Math.round(Number(b.odds) * 100) / 100;
     if (!(odds >= 1.01 && odds <= 10000)) return res.status(400).json({ error: "Enter the slip's total odds." });
     let note = String(b.note || "").replace(/\s+/g, " ").trim().slice(0, 140);
-    if (BANNED.test(note) || BANNED.test(code)) return res.status(400).json({ error: "Keep it honest: slips are never guaranteed. Rephrase without the sure-win claim." });
+    let bk = String(b.bookmaker || "").replace(/\s+/g, " ").trim().slice(0, 20);
+    if (BANNED.test(note) || BANNED.test(code) || (bk && BANNED.test(bk))) return res.status(400).json({ error: "Keep it honest: slips are never guaranteed. Rephrase without the sure-win claim." });
 
     const cur = await current();
     const d = prune(cur.data && typeof cur.data === "object" ? cur.data : { posts: [] });
@@ -201,7 +218,7 @@ module.exports = async (req, res) => {
     d.posts.push({
       id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
       uid: me.id, name: String(me.email).split("@")[0].slice(0, 20),
-      code, games, odds, note,
+      code, games, odds, note, bk,
       created: new Date().toISOString(), reports: 0
     });
     return await save(res, cur, d, "Post a community slip");
