@@ -33,7 +33,8 @@
 /* Self-heal stale copies: an old service worker left over from the previous
    ad setup can keep serving an outdated page even after deploys. Drop any
    worker not registered from /sw.js, and if this page is older than one this
-   browser has seen before, clear everything and reload once. */
+   browser has seen before (or carries no build marker at all), clear
+everything and reload once. */
 (function () {
   try {
     if (!("serviceWorker" in navigator)) return;
@@ -43,13 +44,12 @@
       });
     }).catch(function () {});
     var m = document.querySelector('meta[name="fx-build"]');
-    if (!m) return;
-    var b = m.getAttribute("content") || "";
-    if (!b) return;
+    var b = m ? (m.getAttribute("content") || "") : "";
     var seen = null;
     try { seen = localStorage.getItem("fx_build"); } catch (e) {}
-    if (!seen) { try { localStorage.setItem("fx_build", b); } catch (e) {} return; }
-    if (b >= seen) { try { if (b > seen) localStorage.setItem("fx_build", b); } catch (e) {} return; }
+    if (b && !seen) { try { localStorage.setItem("fx_build", b); } catch (e) {} return; }
+    if (b && seen && b >= seen) { try { if (b > seen) localStorage.setItem("fx_build", b); } catch (e) {} return; }
+    /* No build marker at all means a copy from before markers existed: just as stale. */
     var once = false;
     try { once = sessionStorage.getItem("fx_swreload") === "1"; } catch (e) {}
     if (once) return;
@@ -59,7 +59,14 @@
         try { return r.unregister().catch(function () {}); } catch (e) { return Promise.resolve(); }
       }));
     }).then(function () {
-      try { if (navigator.serviceWorker.controller) location.reload(); } catch (e) {}
+      var clr = (window.caches && caches.keys) ? caches.keys().then(function (ks) {
+        return Promise.all((ks || []).map(function (k) {
+          try { return caches.delete(k).catch(function () {}); } catch (e) { return Promise.resolve(); }
+        }));
+      }).catch(function () {}) : Promise.resolve();
+      return clr;
+    }).then(function () {
+      try { location.reload(); } catch (e) {}
     }).catch(function () {});
   } catch (e) {}
 })();
