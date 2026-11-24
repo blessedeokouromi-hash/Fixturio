@@ -8,9 +8,9 @@ module.exports = async (req, res) => {
     if (Math.abs(diff) > 1) { diff = 0; date = today; }
     const base = "https://" + req.headers.host;
 
-    async function fromFile(maxAgeMin) {
+    async function fromFile(fileIdx, maxAgeMin) {
       try {
-        const r = await fetch(base + "/data/d" + diff + ".json");
+        const r = await fetch(base + "/data/d" + fileIdx + ".json");
         if (!r.ok) return null;
         const d = await r.json();
         if (!d || !d.response || !d.response.length) return null;
@@ -26,7 +26,13 @@ module.exports = async (req, res) => {
     // Matches are served from the files the daily job keeps fresh, so any
     // number of visitors costs the football API nothing. The live API is only
     // used when the saved file is missing or out of date.
-    const saved = await fromFile(diff === 0 ? 35 : 0);
+    // A neighbouring day's file that carries the requested date (the gap
+    // between midnight and the daily build, or the reverse) is served before
+    // the live API is touched, so this still costs the API nothing.
+    const saved =
+      (await fromFile(diff, diff === 0 ? 35 : 0)) ||
+      (diff === 0 ? await fromFile(1, 0) : null) ||
+      (diff === -1 ? await fromFile(0, 0) : null);
     if (saved) {
       res.setHeader("Cache-Control", "s-maxage=300, stale-while-revalidate=600");
       return res.status(200).json(saved);
