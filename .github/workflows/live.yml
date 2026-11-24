@@ -1,0 +1,30 @@
+name: Live scores refresh
+on:
+  schedule:
+    - cron: "23 12-22 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: data
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Refresh today's match statuses
+        run: node scripts/live-refresh.js
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+      - name: Save refresh
+        run: |
+          git config user.name "fixturio-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add -A
+          git commit -m "Live scores refresh" || echo "No changes"
+          git pull --rebase origin main || true
+          git push

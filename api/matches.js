@@ -23,14 +23,15 @@ module.exports = async (req, res) => {
       } catch (e) { return null; }
     }
 
-    // Matches are served from the files the daily job keeps fresh, so any
-    // number of visitors costs the football API nothing. The live API is only
-    // used when the saved file is missing or out of date.
+    // Matches are served from the files the daily and live-refresh jobs keep
+    // fresh, so any number of visitors costs the football API nothing. The
+    // live API is only touched when no saved file carries the requested date
+    // (a failed build), never just because a file is a few hours old.
     // A neighbouring day's file that carries the requested date (the gap
     // between midnight and the daily build, or the reverse) is served before
     // the live API is touched, so this still costs the API nothing.
     const saved =
-      (await fromFile(diff, diff === 0 ? 35 : 0)) ||
+      (await fromFile(diff)) ||
       (diff === 0 ? await fromFile(1, 0) : null) ||
       (diff === -1 ? await fromFile(0, 0) : null);
     if (saved) {
