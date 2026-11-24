@@ -45,6 +45,15 @@ textarea{resize:vertical;min-height:56px}
 .fine{margin:16px 16px 0;font-size:12px;color:var(--mu)}
 .adslot{min-height:60px;margin:12px 16px;display:flex;justify-content:center;align-items:center}
 .adslot:empty{display:none}
+.chatrow{border-top:1px solid var(--line);padding:9px 0}
+.chatrow:first-child{border-top:0}
+.cmt{border-top:1px dashed var(--line);padding:8px 0}
+.cmt:first-child{border-top:0}
+.cw{margin-top:10px}
+.t{margin:2px 0 0;word-break:break-word}
+.crow{display:flex;gap:8px;margin-top:10px}
+.crow input{flex:1;min-width:0}
+.crow button{flex:none;border:0;background:var(--amb);color:var(--ink);border-radius:10px;font-weight:800;padding:10px 16px}
 </style><link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="stylesheet" href="/fix.css">
@@ -72,6 +81,16 @@ textarea{resize:vertical;min-height:56px}
 </div>
 <p class="note">Fixturio cannot look inside a booking code, so slips are never verified and never guaranteed. By posting you confirm you are 18+. Max 3 slips a day.</p>
 </div>
+<div class="card">
+<h3>The room</h3>
+<p class="note" style="margin-top:0">Open chat for members. Banter, reactions, questions. Same house rules: no guaranteed-win claims.</p>
+<div id="chatbox"><p class="empty">Loading…</p></div>
+<div id="chat-signout"><button class="post" onclick="location.href='/auth.html'">Sign in to join the room</button></div>
+<div id="chat-compose" style="display:none">
+<div class="crow"><input id="chatmsg" maxlength="280" autocomplete="off" placeholder="Say something to the room…"><button id="chatsend" type="button">Send</button></div>
+<p class="err" id="chaterr" style="display:none"></p>
+</div>
+</div>
 <div class="card"><h3>Latest slips</h3><p class="empty" id="list">Loading…</p></div>
 <div class="bet-cta" data-banner="1"></div>
 <p class="fine">Slips are posted by community members, not by Fixturio. Predictions on this site are estimates, not guarantees. 18+ only.</p>
@@ -81,7 +100,7 @@ textarea{resize:vertical;min-height:56px}
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-let me=null,posts=[];
+let me=null,posts=[],chat=[];const openC=new Set();
 
 function fmtDate(s){
   const d=new Date(s);
@@ -107,14 +126,18 @@ function render(){
     rp.onclick=function(){fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tokCache,action:"report",id:p.id})}).then(()=>load()).catch(()=>{});};
     ac.appendChild(rp);
     if(own){const dl=rp.cloneNode(true);dl.textContent="Delete";dl.className="flag";dl.onclick=function(){del(p.id);};ac.appendChild(dl);}
+    const cmb=document.createElement("button");cmb.className="flag";cmb.textContent="Comment"+((p.c&&p.c.length)?" ("+p.c.length+")":"");
+    cmb.onclick=function(){toggleC(p,div);};
+    ac.appendChild(cmb);
     div.appendChild(cr);div.appendChild(mt);div.appendChild(ac);
+    if(openC.has(p.id)){const cw=document.createElement("div");cw.className="cw";div.appendChild(cw);fillC(p,cw);}
     box.appendChild(div);
   });
 }
 let tokCache=null;
 function token(){return me?fxAuth.token().then(t=>{tokCache=t;return t;}):Promise.resolve(null);}
 function load(){
-  fetch("/api/community",{cache:"no-store"}).then(r=>r.json()).then(d=>{posts=d.posts||[];render();}).catch(()=>{posts=[];render();});
+  fetch("/api/community",{cache:"no-store"}).then(r=>r.json()).then(d=>{posts=d.posts||[];chat=d.chat||[];render();renderChat();}).catch(()=>{posts=[];chat=[];render();renderChat();});
 }
 function fail(msg){const e=$("err");e.textContent=msg;e.style.display="";}
 function post(){
@@ -142,11 +165,98 @@ function del(id){
     return fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,action:"delete",id})}).then(()=>load());
   }).catch(()=>{});
 }
+function renderChat(){
+  const box=$("chatbox");
+  box.innerHTML="";
+  if(!chat.length){const e=document.createElement("p");e.className="empty";e.textContent="The room is quiet. Be the first to say something.";box.appendChild(e);}
+  chat.forEach(m=>{
+    const own=me&&me.id===m.uid;
+    const r=document.createElement("div");r.className="chatrow";
+    r.innerHTML='<span class="who">'+esc(m.name)+" · "+esc(fmtDate(m.created))+"</span>";
+    const t=document.createElement("p");t.className="t";t.textContent=m.text;
+    r.appendChild(t);
+    const ac=document.createElement("div");ac.className="acts";
+    const rp=document.createElement("button");rp.className="flag";rp.textContent="Report";
+    rp.onclick=function(){msgAction("reportm",m.id);};
+    ac.appendChild(rp);
+    if(own){const dl=document.createElement("button");dl.className="flag";dl.textContent="Delete";dl.onclick=function(){msgAction("delchat",m.id);};ac.appendChild(dl);}
+    r.appendChild(ac);
+    box.appendChild(r);
+  });
+}
+function msgAction(action,mid){
+  token().then(tok=>{if(!tok)return;return fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,action,mid})});}).then(()=>load()).catch(()=>{});
+}
+function cAction(action,id,cid){
+  token().then(tok=>{if(!tok)return;return fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,action,id,cid})});}).then(()=>load()).catch(()=>{});
+}
+function chatFail(msg){const e=$("chaterr");e.textContent=msg;e.style.display="";}
+function sendChat(){
+  const inp=$("chatmsg"),text=inp.value.trim();
+  $("chatsend").disabled=true;
+  token().then(tok=>{
+    if(!tok){chatFail("Sign in again to post.");$("chatsend").disabled=false;return;}
+    return fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,action:"chat",text})}).then(r=>r.json().then(d=>({ok:r.ok,d})));
+  }).then(out=>{
+    if(!out)return;
+    $("chatsend").disabled=false;
+    if(!out.ok){chatFail(out.d&&out.d.error||"Could not send. Try again.");return;}
+    inp.value="";$("chaterr").style.display="none";
+    load();
+  }).catch(()=>{$("chatsend").disabled=false;chatFail("Could not send. Try again.");});
+}
+function toggleC(p,slipDiv){
+  if(openC.has(p.id)){openC.delete(p.id);const cw=slipDiv.querySelector(".cw");if(cw)cw.remove();}
+  else{openC.add(p.id);const cw=document.createElement("div");cw.className="cw";slipDiv.appendChild(cw);fillC(p,cw);}
+}
+function fillC(p,cw){
+  cw.innerHTML="";
+  (p.c||[]).forEach(c=>{
+    const own=me&&me.id===c.uid;
+    const r=document.createElement("div");r.className="cmt";
+    r.innerHTML='<span class="who">'+esc(c.name)+" · "+esc(fmtDate(c.created))+"</span>";
+    const t=document.createElement("p");t.className="t";t.textContent=c.text;
+    r.appendChild(t);
+    const ac=document.createElement("div");ac.className="acts";
+    const rp=document.createElement("button");rp.className="flag";rp.textContent="Report";
+    rp.onclick=function(){cAction("reportc",p.id,c.id);};
+    ac.appendChild(rp);
+    if(own){const dl=document.createElement("button");dl.className="flag";dl.textContent="Delete";dl.onclick=function(){cAction("delcomment",p.id,c.id);};ac.appendChild(dl);}
+    r.appendChild(ac);
+    cw.appendChild(r);
+  });
+  if(!((p.c||[]).length)){const e=document.createElement("p");e.className="empty";e.textContent="No comments yet.";cw.appendChild(e);}
+  if(me){
+    const row=document.createElement("div");row.className="crow";
+    const inp=document.createElement("input");inp.maxLength=280;inp.placeholder="Add a comment…";inp.autocomplete="off";
+    const btn=document.createElement("button");btn.textContent="Send";btn.type="button";
+    btn.onclick=function(){
+      btn.disabled=true;
+      token().then(tok=>{
+        if(!tok){btn.disabled=false;return;}
+        return fetch("/api/community",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,action:"comment",id:p.id,text:inp.value.trim()})}).then(r=>r.json().then(d=>({ok:r.ok,d})));
+      }).then(out=>{
+        btn.disabled=false;
+        if(!out)return;
+        const ep=cw.querySelector(".err");
+        if(!out.ok){if(ep){ep.textContent=(out.d&&out.d.error)||"Could not send.";ep.style.display="";}return;}
+        load();
+      }).catch(()=>{btn.disabled=false;});
+    };
+    row.appendChild(inp);row.appendChild(btn);
+    const ep=document.createElement("p");ep.className="err";ep.style.display="none";
+    cw.appendChild(row);cw.appendChild(ep);
+  }else{
+    const s=document.createElement("p");s.className="empty";s.textContent="Sign in to comment.";
+    cw.appendChild(s);
+  }
+}
 $("submit").onclick=post;
+$("chatsend").onclick=sendChat;
 if(window.fxAuth){
   fxAuth.ready().then(u=>{
     me=u;tokCache=null;
-    if(u){$("signed-out").style.display="none";$("post-form").style.display="";}
+    if(u){$("signed-out").style.display="none";$("post-form").style.display="";$("chat-signout").style.display="none";$("chat-compose").style.display="";}
     load();
   }).catch(()=>{load();});
 }else{load();}

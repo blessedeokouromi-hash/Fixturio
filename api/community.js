@@ -45,6 +45,7 @@ const BANNED = /guarantee|100\s?%|sure\s?win|sure\s?game|fixed\s?match|fixed\s?g
 function prune(d) {
   const cut = Date.now() - 30 * 864e5;
   d.posts = (d.posts || []).filter(p => new Date(p.created).getTime() >= cut).slice(-200);
+  if (d.chat) d.chat = d.chat.filter(m => new Date(m.created).getTime() >= cut).slice(-200);
   return d;
 }
 
@@ -52,14 +53,16 @@ module.exports = async (req, res) => {
   try {
     const host = req.headers.host;
     if (req.method === "GET") {
-      let posts = [];
+      let posts = [], chat = [];
       try {
         const r = await fetch("https://" + host + "/" + FILE, { headers: { "Cache-Control": "no-cache" } });
-        if (r.ok) posts = (await r.json()).posts || [];
+        if (r.ok) { const j = await r.json(); posts = j.posts || []; chat = j.chat || []; }
       } catch (e) {}
       posts = posts.filter(p => (p.reports || 0) < 3).sort((a, b) => new Date(b.created) - new Date(a.created)).slice(0, 100);
+      posts.forEach(p => { p.c = (p.c || []).filter(c => (c.reports || 0) < 3); });
+      chat = chat.filter(m => (m.reports || 0) < 3).sort((a, b) => new Date(b.created) - new Date(a.created)).slice(0, 100);
       res.setHeader("Cache-Control", "no-store");
-      return res.status(200).json({ posts });
+      return res.status(200).json({ posts, chat });
     }
     if (req.method !== "POST") return res.status(405).json({ error: "Use GET or POST" });
     if (!process.env.GITHUB_TOKEN) return res.status(503).json({ error: "The community board is not set up yet." });
@@ -79,11 +82,48 @@ module.exports = async (req, res) => {
       return await save(res, cur, d, "Report a community slip");
     }
 
+    if (action === "comment") {
+      const me = await who(b.token, host);
+      if (!me) return res.status(401).json({ error: "Sign in to comment." });
+      const id = String(b.id || "").replace(/[^a-zA-Z0-9]/g, "");
+      const text = String(b.text || "").replace(/\s+/g, " ").trim().slice(0, 280);
+      if (!id) return res.status(400).json({ error: "id required" });
+      if (!text) return res.status(400).json({ error: "Write something first." });
+      if (BANNED.test(text)) return res.status(400).json({ error: "Keep it honest: nothing here is guaranteed. Rephrase without the sure-win claim." });
+      const cur = await current();
+      const d = prune(cur.data && typeof cur.data === "object" ? cur.data : { posts: [] });
+      const p = d.posts.find(x => x.id === id);
+      if (!p) return res.status(404).json({ error: "Slip not found." });
+      p.c = p.c || [];
+      const today = new Date().toISOString().slice(0, 10);
+      const mine = d.posts.reduce((n, q) => n + (q.c || []).filter(c => c.uid === me.id && String(c.created).slice(0, 10) === today).length, 0);
+      if (mine >= 30) return res.status(429).json({ error: "That is 30 comments today. Come back tomorrow." });
+      if (p.c.length >= 50) p.c = p.c.slice(-49);
+      p.c.push({ id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36), uid: me.id, name: String(me.email).split("@")[0].slice(0, 20), text, created: new Date().toISOString(), reports: 0 });
+      return await save(res, cur, d, "Comment on a community slip");
+    }
+
+    if (action === "chat") {
+      const me = await who(b.token, host);
+      if (!me) return res.status(401).json({ error: "Sign in to join the room." });
+      const text = String(b.text || "").replace(/\s+/g, " ").trim().slice(0, 280);
+      if (!text) return res.status(400).json({ error: "Write something first." });
+      if (BANNED.test(text)) return res.status(400).json({ error: "Keep it honest: nothing here is guaranteed. Rephrase without the sure-win claim." });
+      const cur = await current();
+      const d = prune(cur.data && typeof cur.data === "object" ? cur.data : { posts: [] });
+      d.chat = d.chat || [];
+      const today = new Date().toISOString().slice(0, 10);
+      const mine = d.chat.filter(m => m.uid === me.id && String(m.created).slice(0, 10) === today).length;
+      if (mine >= 30) return res.status(429).json({ error: "That is 30 messages today. Come back tomorrow." });
+      if (d.chat.length >= 200) d.chat = d.chat.slice(-199);
+      d.chat.push({ id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36), uid: me.id, name: String(me.email).split("@")[0].slice(0, 20), text, created: new Date().toISOString(), reports: 0 });
+      return await save(res, cur, d, "Community room message");
+    }
+
     // delete needs either the poster's own session or the admin token
     if (action === "delete") {
       const id = String(b.id || "").replace(/[^a-zA-Z0-9]/g, "");
       if (!id) return res.status(400).json({ error: "id required" });
-      const isAdmin = req.headers["x-admin-token"] && process.env.ADMIN_TOKEN && req.headers["x-admin-token"] === process.env.ADMIN_TOKEN;
       const me = isAdmin ? null : await who(b.token, host);
       if (!isAdmin && !me) return res.status(401).json({ error: "Sign in to delete your own slips." });
       const cur = await current();
@@ -93,6 +133,51 @@ module.exports = async (req, res) => {
       if (!isAdmin && p.uid !== me.id) return res.status(403).json({ error: "You can only delete your own slips." });
       d.posts = d.posts.filter(x => x.id !== id);
       return await save(res, cur, d, "Delete a community slip");
+    }
+
+    const isAdmin = req.headers["x-admin-token"] && process.env.ADMIN_TOKEN && req.headers["x-admin-token"] === process.env.ADMIN_TOKEN;
+    if (action === "delchat" || action === "delcomment") {
+      const me = await who(b.token, host);
+      if (!isAdmin && !me) return res.status(401).json({ error: "Sign in first." });
+      const cur = await current();
+      const d = prune(cur.data && typeof cur.data === "object" ? cur.data : { posts: [] });
+      if (action === "delchat") {
+        const mid = String(b.mid || "").replace(/[^a-zA-Z0-9]/g, "");
+        const m = (d.chat || []).find(x => x.id === mid);
+        if (!m) return res.status(404).json({ error: "Message not found." });
+        if (!isAdmin && m.uid !== me.id) return res.status(403).json({ error: "You can only delete your own messages." });
+        d.chat = d.chat.filter(x => x.id !== mid);
+        return await save(res, cur, d, "Delete a room message");
+      }
+      const id = String(b.id || "").replace(/[^a-zA-Z0-9]/g, "");
+      const cid = String(b.cid || "").replace(/[^a-zA-Z0-9]/g, "");
+      const p = d.posts.find(x => x.id === id);
+      const c = p && (p.c || []).find(x => x.id === cid);
+      if (!c) return res.status(404).json({ error: "Comment not found." });
+      if (!isAdmin && c.uid !== me.id) return res.status(403).json({ error: "You can only delete your own comments." });
+      p.c = p.c.filter(x => x.id !== cid);
+      return await save(res, cur, d, "Delete a community comment");
+    }
+
+    if (action === "reportm" || action === "reportc") {
+      const me = await who(b.token, host);
+      if (!me) return res.status(401).json({ error: "Sign in to report." });
+      const cur = await current();
+      const d = prune(cur.data && typeof cur.data === "object" ? cur.data : { posts: [] });
+      if (action === "reportm") {
+        const mid = String(b.mid || "").replace(/[^a-zA-Z0-9]/g, "");
+        const m = (d.chat || []).find(x => x.id === mid);
+        if (!m) return res.status(404).json({ error: "Message not found." });
+        m.reports = (m.reports || 0) + 1;
+        return await save(res, cur, d, "Report a room message");
+      }
+      const id = String(b.id || "").replace(/[^a-zA-Z0-9]/g, "");
+      const cid = String(b.cid || "").replace(/[^a-zA-Z0-9]/g, "");
+      const p = d.posts.find(x => x.id === id);
+      const c = p && (p.c || []).find(x => x.id === cid);
+      if (!c) return res.status(404).json({ error: "Comment not found." });
+      c.reports = (c.reports || 0) + 1;
+      return await save(res, cur, d, "Report a community comment");
     }
 
     if (action !== "post") return res.status(400).json({ error: "Unknown action." });
