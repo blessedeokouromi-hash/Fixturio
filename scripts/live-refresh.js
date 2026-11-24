@@ -3,13 +3,21 @@
 // refreshes can never push the account into suspension.
 const fs = require("fs");
 const KEY = process.env.API_FOOTBALL_KEY;
-const FLOOR = 12;
+const FLOOR = 4;
 
 (async () => {
   fs.mkdirSync("data", { recursive: true });
   let q = {};
   try { q = JSON.parse(fs.readFileSync("data/quota.json", "utf8")); } catch (e) {}
   const date = new Date().toISOString().slice(0, 10);
+  // Live refreshes run in the evening (17:00-22:59 UTC), when the big games
+  // play and the budget is tight. Dispatches can force a run with
+  // LIVE_REFRESH_FORCE=1.
+  const hr = new Date().getUTCHours();
+  if (hr < 17 && process.env.LIVE_REFRESH_FORCE !== "1") {
+    console.log("Skipped: outside the evening refresh window");
+    return;
+  }
   if (q.date === date && typeof q.remaining === "number" && q.remaining < FLOOR) {
     console.log("Skipped: only " + q.remaining + " API calls left today (floor " + FLOOR + ")");
     return;
