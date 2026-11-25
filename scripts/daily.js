@@ -19,7 +19,7 @@ function dcCells(lh, la, RHO){
   return cells;
 }
 function fitScore(ph, pd, pa){
-  const RHO = -0.10;
+  const RHO = 0;
   let best = null;
   for (let hi = 3; hi <= 72; hi++){
     const lh = hi / 20;

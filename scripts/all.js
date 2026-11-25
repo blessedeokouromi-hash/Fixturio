@@ -4,14 +4,14 @@ const WINDOW = 45;        // days of stored results the model looks back on
 const MIN_GAMES = 3;      // a team with fewer weighted games is flagged thin
 const K_TEAM = 8;         // team shrinkage: about 8 games of evidence before a
                           // team's own record carries half the weight
-const K_LEAGUE = 10;      // league scoring averages shrink toward the global
+const K_LEAGUE = 50;      // league scoring averages shrink toward the global
                           // average with this much counterweight
 const K_FORM = 4;         // recent-form shrinkage: about 4 games before form
                           // carries its full weight
 const W_FORM = 0.30;      // the most weight recent form can take from
                           // season-long strength (tuned in calibration)
-const DECAY = 0.85;       // a result one day older weighs 85% of a fresher one
-const RHO = -0.10;        // Dixon-Coles low-score correction
+const DECAY = 0.80;       // a result one day older weighs 80% of a fresher one
+const RHO = 0;            // Dixon-Coles low-score correction (backtest: 0 beats -0.10 so far; refit when history deepens)
 const THIN_GAMES = 6;     // combined sample below this marks a match thin
 const VERYTHIN_GAMES = 3; // combined sample below this marks it very thin
 const CUP_RE = /cup|copa|coppa|pokal|trophy|shield|super\s?cup|friendly|play-?offs?|qualif/i;
