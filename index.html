@@ -335,8 +335,8 @@ function row(m){
   }
   if(dm&&dm.markets){
     let o={};
-    dm.markets.forEach(function(mk){if(mk.kind!=="single")return;const n=String(mk.market||"").toLowerCase();if(n.indexOf("home win")===0)o.h=mk.odd;else if(n.indexOf("draw")===0)o.d=mk.odd;else if(n.indexOf("away win")===0)o.a=mk.odd;});
-    if(o.h!==undefined&&o.d!==undefined&&o.a!==undefined)od='<small style="display:block;font-size:11px;font-weight:600;color:var(--mu);margin-top:1px">1 '+o.h+' · X '+o.d+' · 2 '+o.a+'</small>';
+    dm.markets.forEach(function(mk){if(!mk||mk.kind!=="single"||!mk.odd)return;const n=String(mk.market||"").toLowerCase();if(n.indexOf("no bet")>=0)return;if(n.indexOf("home win")===0)o.h=mk.odd;else if(n.indexOf("draw")===0)o.d=mk.odd;else if(n.indexOf("away win")===0)o.a=mk.odd;});
+    if(o.h!=null&&o.d!=null&&o.a!=null)od='<small style="display:block;font-size:11px;font-weight:600;color:var(--mu);margin-top:1px">1 '+o.h+' · X '+o.d+' · 2 '+o.a+'</small>';
   }
   const star='<button class="fav'+(savedHas(id)?" on":"")+'" data-fav="'+id+'" aria-label="'+(savedHas(id)?"Remove from saved":"Save match")+'" onclick="event.stopPropagation();fav('+id+')">'+(savedHas(id)?"★":"☆")+"</button>";
   return '<div class="mw"><div class="m" role="button" tabindex="0" onclick="tap('+id+')"><div class="st'+(live?" live":"")+'">'+esc(stat(m))+(ana(id)?'<i class="dot"></i>':"")+'</div><div class="tn"><div class="'+hc+'">'+img(m.teams.home.logo)+"<span>"+esc(m.teams.home.name)+'</span>'+(fbh?'<span class="fbs">'+fbh+"</span>":"")+'</div><div class="'+ac+'">'+img(m.teams.away.logo)+"<span>"+esc(m.teams.away.name)+"</span>"+(fba?'<span class="fbs">'+fba+"</span>":"")+"</div></div>"+(npCol?"":predCell(m))+'<div class="sc'+(live?" live":"")+'">'+sc+od+"</div>"+star+'</div><div class="pn" id="p'+id+'"'+(open.has(id)?' style="display:block"':"")+">"+(panels[id]||"")+"</div></div>";
