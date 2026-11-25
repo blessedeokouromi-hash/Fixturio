@@ -165,10 +165,23 @@
     var fin = DONE.indexOf(m.fixture.status.short) >= 0 && m.goals.home !== null && m.goals.away !== null;
     if (fin) {
       var hg = m.goals.home, ag = m.goals.away, won = cls === " ok";
-      var word;
-      if (mkMode === "main" || mkMode === "1x2") word = hg > ag ? "Home win" : hg < ag ? "Away win" : "Draw";
-      else word = won ? "Hit" : "Miss";
-      res = '<span class="rs' + cls + '">' + word + "</span>";
+      var word, mark = "";
+      if (mkMode === "main" || mkMode === "1x2") {
+        word = hg > ag ? "Home win" : hg < ag ? "Away win" : "Draw";
+        // The tick or cross grades the pick the site recommends (the best
+        // market, blended with the odds where they exist), so a user can see
+        // whether what they booked won without opening their bookmaker.
+        var bmk = window.bestMkt ? window.bestMkt(m.fixture.id) : null;
+        if (bmk && window.mkWon) {
+          var w = window.mkWon(bmk.market, m.goals);
+          if (w === true) mark = '<span class="rmark" role="img" aria-label="Our best pick won">\u2705</span>';
+          else if (w === false) mark = '<span class="rmark" role="img" aria-label="Our best pick missed">\u274c</span>';
+        }
+      } else {
+        word = won ? "Hit" : "Miss";
+        if (cls) mark = won ? '<span class="rmark" role="img" aria-label="Our pick won">\u2705</span>' : '<span class="rmark" role="img" aria-label="Our pick missed">\u274c</span>';
+      }
+      res = '<span class="rs' + cls + '">' + word + "</span>" + mark;
     }
     var pill = t.l ? '<span class="pill' + cls + '">' + esc(t.lab || t.l) + "</span>" : "";
     return '<div class="pr" title="' + esc(tip) + '">' + pill + res + sub + "</div>";
