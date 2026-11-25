@@ -36,7 +36,10 @@
   function pull(){
     return ready().then(function(){
       if(!sb)return null;
-      return sessUser().then(function(u){return u&&u.user_metadata&&u.user_metadata.fx_saves?u.user_metadata.fx_saves:null;});
+      return sb.auth.getUser().then(function(r){
+        var u=r&&r.data&&r.data.user;
+        return u&&u.user_metadata&&u.user_metadata.fx_saves?u.user_metadata.fx_saves:null;
+      }).catch(function(){return null;});
     });
   }
   window.fxAuth={
