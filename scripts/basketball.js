@@ -87,6 +87,41 @@ function implProb(oh, oa) {
 }
 
 (async () => {
+  if (!KEY) { console.log("Basketball key missing; skipping the build."); process.exit(0); }
+  // Refresh mode: when today's data is already built, one games call patches
+  // statuses, scores and team logos instead of rebuilding (a rebuild would
+  // drop finished games and re-roll the picks and acca). Triggered by
+  // dispatching the Basketball picks workflow in the evening.
+  if (process.env.MOCK !== "1") {
+    try {
+      const cur = JSON.parse(fs.readFileSync(OUT, "utf8"));
+      if (cur.date === today) {
+        const r = await fetch(HOST + "/games?date=" + today, { headers: { "x-apisports-key": KEY } });
+        const d = await r.json();
+        if (d.errors && Object.keys(d.errors).length) throw new Error("api error " + JSON.stringify(d.errors).slice(0, 200));
+        const byId = {}; (d.response || []).forEach(g => { byId[g.id] = g; });
+        let patched = 0;
+        (cur.m || []).forEach(row => {
+          const g = byId[row.game_id];
+          if (!g) return;
+          patched++;
+          if (g.status && g.status.short) row.status = g.status.short;
+          if (g.scores) {
+            if (g.scores.home && g.scores.home.total != null) row.sc_h = g.scores.home.total;
+            if (g.scores.away && g.scores.away.total != null) row.sc_a = g.scores.away.total;
+          }
+          if (g.teams && g.teams.home && g.teams.home.logo) row.lh = row.lh || g.teams.home.logo;
+          if (g.teams && g.teams.away && g.teams.away.logo) row.la = row.la || g.teams.away.logo;
+        });
+        cur.generated = new Date().toISOString();
+        fs.writeFileSync(OUT, JSON.stringify(cur));
+        console.log("basketball refresh: patched " + patched + "/" + (cur.m || []).length + " rows with 1 api call");
+        return;
+      }
+    } catch (e) {
+      if (!(e && e.code === "ENOENT")) throw e;
+    }
+  }
   const gs = await games();
   console.log("basketball debug: games returned " + gs.length);
   const kept = gs.filter(g => g && g.teams && g.teams.home && g.teams.away && KEEP.test(g.league && g.league.name || ""));
