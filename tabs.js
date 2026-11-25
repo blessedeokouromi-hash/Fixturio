@@ -42,10 +42,11 @@
       if (inf && inf.markets) {
         var o = {};
         inf.markets.forEach(function (x) {
-          if (x.skip || !x.odd) return;
+          if (!x || x.kind !== "single" || x.skip || !x.odd) return;
           var n = String(x.market || "").toLowerCase();
-          if (n === "home win") o.h = +x.odd; else if (n === "draw") o.d = +x.odd; else if (n === "away win") o.a = +x.odd;
-          else if (n === "over 2.5 goals") o.o = +x.odd; else if (n === "under 2.5 goals") o.u = +x.odd;
+          if (n.indexOf("no bet") >= 0) return;
+          if (n.indexOf("home win") === 0) o.h = +x.odd; else if (n.indexOf("draw") === 0) o.d = +x.odd; else if (n.indexOf("away win") === 0) o.a = +x.odd;
+          else if (n.indexOf("over 2.5") === 0) o.o = +x.odd; else if (n.indexOf("under 2.5") === 0) o.u = +x.odd;
         });
         if (o.h > 1 && o.d > 1 && o.a > 1) {
           var ih = 1 / o.h, idd = 1 / o.d, ia = 1 / o.a, s2 = ih + idd + ia;
