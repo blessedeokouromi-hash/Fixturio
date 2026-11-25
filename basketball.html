@@ -67,7 +67,14 @@ body .top>a.authlnk{margin-left:auto;flex:none;align-self:center;padding:8px 14p
 .dot{display:block;width:6px;height:6px;margin:5px auto 0;border-radius:50%;background:#5BD18B}
 .tn{min-width:0}
 .tn>div{display:flex;align-items:center;gap:8px;height:24px;font-size:15px;font-weight:600;min-width:0}
+.tn img{width:18px;height:18px;object-fit:contain;flex:none}
 .tn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rmark{font-size:13px;margin-left:4px}
+.pn{border-top:1px solid var(--line);background:var(--s2);padding:8px 16px}
+.prow{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:5px 0;font-size:14px}
+.prow>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc.live div{color:var(--live)}
+.m{cursor:pointer}
 .tn .w{font-weight:800}
 .tn .l{color:var(--mu);font-weight:500}
 .pr{display:grid;justify-items:center;gap:5px;min-width:66px}
@@ -135,7 +142,7 @@ body .top>a.authlnk{margin-left:auto;flex:none;align-self:center;padding:8px 14p
 <div style="margin:12px 16px 0" id="sharerow"><button class="add" onclick="shareImageBB()">Share as image</button></div>
 <div id="lgcs"></div>
 <div class="bet-cta" data-banner="1"></div>
-<p class="fine">Predictions are estimates based on bookmaker odds, not guarantees. 18+ only. Basketball is one day at a time: the build runs once every morning.</p>
+<p class="fine">Predictions are estimates based on bookmaker odds, not guarantees. 18+ only. Basketball is one day at a time: the build runs once every morning. A \u2705 or \u274c on a finished game shows whether our pick won.</p>
 </main>
 </div>
 <div class="morelist" id="morelist"><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a><a href="/info.html">About</a><a href="/auth.html">Sign in</a></div>
@@ -144,7 +151,7 @@ body .top>a.authlnk{margin-left:auto;flex:none;align-self:center;padding:8px 14p
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const LIVE=["Q1","Q2","Q3","Q4","OT","BT","HT","LIVE"],DONE=["FT","AOT","POST"];
-let BB=null,mode="all",q="",lgsNow=[],lgClosed=new Set(),pickSet=new Set();
+let BB=null,mode="all",q="",lgsNow=[],lgClosed=new Set(),pickSet=new Set(),open=new Set(),panels={};
 function setQ(v){q=(v||"").toLowerCase().trim();draw();}
 function setMode(m){mode=m;draw();}
 function saved(){let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){}return s;}
@@ -190,15 +197,36 @@ function draw(){
   }).join("");
 }
 function tgLg(i){const l=lgsNow[i];if(lgClosed.has(l))lgClosed.delete(l);else lgClosed.add(l);draw();}
+function winnerOf(g){const dn=DONE.includes(g.status),hasScore=g.sc_h!=null&&g.sc_a!=null;return dn&&hasScore?(g.sc_h>g.sc_a?"1":"2"):null;}
 function gameRow(g){
   const best=g.ph>=g.pa?{lab:"1",p:g.ph,odd:g.oh}:{lab:"2",p:g.pa,odd:g.oa};
   const lv=LIVE.includes(g.status),dn=DONE.includes(g.status);
-  const stc=lv?'<div class="st live">'+esc(g.status==="BT"?"Break":g.status)+'<i class="dot"></i></div>':'<div class="st">'+esc(g.time||"")+"</div>";
+  const hasScore=g.sc_h!=null&&g.sc_a!=null;
+  const stc=lv?'<div class="st live">'+esc(g.status==="BT"?"Break":g.status)+'<i class="dot"></i></div>':(dn?'<div class="st">'+esc(g.status)+"</div>":'<div class="st">'+esc(g.time||"")+"</div>");
   const sig="sig "+(best.p>=70?"s3":best.p>=50?"s2":"s1");
-  const pill=dn?'<div class="pill">'+esc(best.lab)+" "+Math.round(best.p)+"%</div>":'<div class="pill">'+esc(best.lab)+" "+Math.round(best.p)+"%</div>";
+  const win=winnerOf(g);
+  const mark=win?(best.lab===win?"\u2705":"\u274c"):"";
+  const pill='<div class="pill">'+esc(best.lab)+" "+Math.round(best.p)+"%"+(mark?'<span class="rmark">'+mark+"</span>":"")+"</div>";
   const sgc=dn?"":'<span class="'+sig+'"><i></i><i></i><i></i></span>';
-  const odd=best.odd?"<div>"+best.odd+"</div><small>odd</small>":"";
-  return '<div class="mw"><div class="m">'+stc+'<div class="tn"><div><span class="'+(best.lab==="1"?"w":"l")+'">'+esc(g.h)+'</span></div><div><span class="'+(best.lab==="2"?"w":"l")+'">'+esc(g.a)+'</span></div></div><div class="pr">'+pill+sgc+'</div><div class="sc">'+odd+'</div><button class="fav'+(saved().indexOf(g.game_id)>=0?" on":"")+'" onclick="fav(\''+g.game_id+'\')" aria-label="Save match">&#9733;</button></div></div>';
+  const logo=t=>t?'<img src="'+esc(t)+'" alt="" loading="lazy">':"";
+  const scCell=hasScore?'<div class="sc'+(lv?" live":"")+'"><div>'+g.sc_h+'</div><div>'+g.sc_a+"</div></div>":(best.odd?"<div>"+best.odd+"</div><small>odd</small>":"");
+  return '<div class="mw"><div class="m" onclick="tog('+g.game_id+')">'+stc+'<div class="tn"><div>'+logo(g.lh)+'<span class="'+(best.lab==="1"?"w":"l")+'">'+esc(g.h)+'</span></div><div>'+logo(g.la)+'<span class="'+(best.lab==="2"?"w":"l")+'">'+esc(g.a)+'</span></div></div><div class="pr">'+pill+sgc+'</div><div class="sc">'+scCell+'</div><button class="fav'+(saved().indexOf(g.game_id)>=0?" on":"")+'" onclick="fav(\''+g.game_id+'\');event.stopPropagation()" aria-label="Save match">&#9733;</button></div><div class="pn" id="p'+g.game_id+'"'+(open.has(g.game_id)?' style="display:block"':"")+'>'+(panels[g.game_id]||"")+"</div></div>";
+}
+function panel(g){
+  const win=winnerOf(g);
+  const rows=[{lab:"Home team to win",k:"1",p:g.ph,odd:g.oh},{lab:"Away team to win",k:"2",p:g.pa,odd:g.oa}];
+  return rows.map(r=>{
+    const mark=win?(r.k===win?"\u2705":"\u274c"):"";
+    const sig="sig "+(r.p>=70?"s3":r.p>=50?"s2":"s1");
+    return '<div class="prow"><span>'+esc(r.lab)+(mark?'<span class="rmark">'+mark+"</span>":"")+'</span><span class="'+sig+'"><i></i><i></i><i></i></span><span><b>'+Math.round(r.p)+"%</b>"+(r.odd?" · @"+r.odd:"")+"</span></div>";
+  }).join("");
+}
+function tog(id){
+  const g=games().find(x=>x.game_id===id);
+  if(!g)return;
+  if(open.has(id))open.delete(id);
+  else{open.add(id);panels[id]=panel(g);}
+  draw();
 }
 function paint(d){
   BB=d;window.bbData=d;

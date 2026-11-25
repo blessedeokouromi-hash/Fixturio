@@ -109,9 +109,12 @@ function implProb(oh, oa) {
     if (!ml || !ml.home || !ml.away) continue;
     const p = implProb(ml.home, ml.away);
     const when = (g.date || "").slice(11, 16) || g.time || "";
+    const tot = side => g.scores && g.scores[side] && g.scores[side].total != null ? g.scores[side].total : null;
     const base = {
       game_id: g.id, league: g.league.name, country: (g.country && g.country.name) || "",
-      time: when, status: (g.status && g.status.short) || "", home: g.teams.home.name, away: g.teams.away.name
+      time: when, status: (g.status && g.status.short) || "", home: g.teams.home.name, away: g.teams.away.name,
+      lh: g.teams.home.logo || "", la: g.teams.away.logo || "",
+      sc_h: tot("home"), sc_a: tot("away")
     };
     priced.push(Object.assign({}, base, {
       market: "Home team to win", odd: Math.round(ml.home * 100) / 100,
@@ -189,7 +192,7 @@ function implProb(oh, oa) {
   const out = {
     date: today, generated: new Date().toISOString(),
     picks, acca,
-    m: priced.map(p => ({ h: p.home, a: p.away, market: p.market, odd: p.odd, probability: p.probability, league: p.league, country: p.country, time: p.time, status: p.status || "", game_id: p.game_id }))
+    m: priced.map(p => ({ h: p.home, a: p.away, market: p.market, odd: p.odd, probability: p.probability, league: p.league, country: p.country, time: p.time, status: p.status || "", game_id: p.game_id, lh: p.lh || "", la: p.la || "", sc_h: p.sc_h, sc_a: p.sc_a }))
   };
   fs.writeFileSync(OUT, JSON.stringify(out));
   console.log("basketball: " + priced.length / 2 + " priced games, " + picks.length + " picks, acca " + (acca ? acca.total + " (" + acca.legs.length + " legs, " + acca.joint + "%)" : "none") + ", " + nCalls + " api calls");
