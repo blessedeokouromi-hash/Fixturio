@@ -291,7 +291,7 @@
   }
   window.shareImageBB = shareImageBB;
 
-  function drawSlip(items, dateLine, logoImg, title) {
+  function drawSlip(items, dateLine, logoImg, title, name) {
     var W = 1080, H = 1920, P = 56;
     var list = (items || []).slice(0, 20);
     var c = document.createElement("canvas"); c.width = W; c.height = H;
@@ -315,6 +315,10 @@
     x.fillText(dateLine || "", P + 142, 126);
     x.fillStyle = AMB; x.font = "700 28px Manrope, system-ui, sans-serif";
     x.fillText(title || ("My slip \u00B7 " + list.length + (list.length === 1 ? " game" : " games")), P + 142, 168);
+    if (name) {
+      x.fillStyle = TX; x.font = "600 26px Manrope, system-ui, sans-serif";
+      x.fillText("Slip by " + name, P + 142, 202);
+    }
     var top = 288, bottom = 1688;
     if (list.length) {
       var RH = Math.max(66, Math.min(96, Math.floor((bottom - top) / list.length)));
@@ -369,6 +373,8 @@
 
   function shareSlip(items, text, title) {
     if (!items || !items.length) { toast("Nothing to share yet. Add a pick first."); return; }
+    var name = "";
+    try { name = (localStorage.getItem("fx_name") || "").replace(/[\r\n\t]+/g, " ").trim().slice(0, 24); } catch (e) {}
     var ready = document.fonts && document.fonts.load
       ? document.fonts.load("800 40px Manrope").catch(function () {})
       : Promise.resolve();
@@ -378,7 +384,7 @@
       logo.src = "/logo.png?v=2";
       load.then(function () {
         var dateLine = new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
-        var c = drawSlip(items, dateLine, logo, title);
+        var c = drawSlip(items, dateLine, logo, title, name);
         saveOrShare(c, "fixturio-slip.png", text || "My football picks", "Slip image ready. Nice one.");
       });
     });
