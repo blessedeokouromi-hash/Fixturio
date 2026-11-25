@@ -158,7 +158,7 @@ function saved(){let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved"
 function fav(id){const s=saved();const i=s.indexOf(id);if(i>=0)s.splice(i,1);else s.unshift(id);localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));draw();}
 function utcNow(){const n=new Date();return String(n.getUTCHours()).padStart(2,"0")+":"+String(n.getUTCMinutes()).padStart(2,"0");}
 function games(){
-  const by={};(BB.m||[]).forEach(p=>{const g=by[p.game_id]||(by[p.game_id]={game_id:p.game_id,league:p.league,country:p.country,time:p.time,status:p.status||"",h:p.h,a:p.a,ph:0,pa:0,oh:null,oa:null});if(/^home/i.test(p.market)){g.ph=p.probability;g.oh=p.odd;}else{g.pa=p.probability;g.oa=p.odd;}});
+  const by={};(BB.m||[]).forEach(p=>{const g=by[p.game_id]||(by[p.game_id]={game_id:p.game_id,league:p.league,country:p.country,time:p.time,status:p.status||"",h:p.h,a:p.a,ph:0,pa:0,oh:null,oa:null,sc_h:p.sc_h,sc_a:p.sc_a,lh:p.lh,la:p.la});if(/^home/i.test(p.market)){g.ph=p.probability;g.oh=p.odd;}else{g.pa=p.probability;g.oa=p.odd;}});
   return Object.values(by);
 }
 function keep(g){
