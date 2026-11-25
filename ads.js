@@ -15,6 +15,17 @@
     s.async = true;
     host.appendChild(s);
     track(zone);
+    // If the banner never renders (ad server down, script blocked), collapse
+    // the slot instead of leaving an empty box on the page.
+    var started = Date.now(), seenAt = 0;
+    var t = setInterval(function () {
+      if (!host.isConnected) { clearInterval(t); return; }
+      var f = host.querySelector("iframe");
+      if (f && !seenAt) { seenAt = Date.now(); f.addEventListener("load", function () { clearInterval(t); }); }
+      var now = Date.now();
+      if (!seenAt && now - started > 10000) { clearInterval(t); host.innerHTML = ""; return; }
+      if (seenAt && now - seenAt > 9000) { clearInterval(t); host.innerHTML = ""; return; }
+    }, 500);
   }
   function run(src, host, zone) {
     if (!src || !host) return;
