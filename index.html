@@ -608,7 +608,7 @@ load();
 setTimeout(function(){if(!loaded){var a=$("app");if(a)a.innerHTML='<p class="msg pad">Still loading slowly or the connection dropped. <button class="more" onclick="location.reload()">Tap to reload</button></p>';}},20000);
 setInterval(()=>{if(day===0)load(true);},60000);
 fetch("/daily.json?v="+Date.now()).then(r=>r.ok?r.json():null).then(d=>{
-  if(d&&d.matches){d.matches.forEach(m=>{info[m.id]=m;});render();}
+  if(d&&d.matches){d.matches.forEach(m=>{info[m.id]=m;});if(d.px&&d.px.length)d.px.forEach(e=>{if(!info[e.id]||!info[e.id].markets||!info[e.id].markets.length)info[e.id]={markets:e.markets,form5:null};});render();}
 }).catch(()=>{});
 fetch("/all.json").then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.m){pred=d.m;cov=d;render();}

@@ -85,6 +85,24 @@ function pickBets(od) {
   return bm ? (bm.bets || []) : [];
 }
 
+// Lean odds-only market entries for the wider priced pool: the three 1X2
+// prices and the over/under 2.5 line, read straight out of the league-level
+// response we already fetched. The site uses these for its odds-based score
+// chips; no probabilities travel with them because all.json carries those.
+function pxMarkets(bets) {
+  const w = bets.find(b => b.id === 1), v1 = {};
+  if (w) (w.values || []).forEach(v => { v1[v.value] = parseFloat(v.odd); });
+  const ou = bets.find(b => b.id === 5), v5 = {};
+  if (ou) (ou.values || []).forEach(v => { v5[v.value] = parseFloat(v.odd); });
+  const out = [];
+  if (v1.Home > 1) out.push({ market: "Home win", odd: v1.Home, kind: "single" });
+  if (v1.Draw > 1) out.push({ market: "Draw", odd: v1.Draw, kind: "single" });
+  if (v1.Away > 1) out.push({ market: "Away win", odd: v1.Away, kind: "single" });
+  if (v5["Over 2.5"] > 1) out.push({ market: "Over 2.5 goals", odd: v5["Over 2.5"], kind: "single" });
+  if (v5["Under 2.5"] > 1) out.push({ market: "Under 2.5 goals", odd: v5["Under 2.5"], kind: "single" });
+  return out;
+}
+
 // Market probabilities for one match. The model (q, from all.json) and the
 // bookmakers (bets) are blended where both have a view: 60% model, 40% market,
 // each market's odds margin removed before blending. Matches with no odds at
@@ -357,6 +375,29 @@ function reason(m) {
     console.log("Wide pool: added " + wideMatches.length + " matches beyond the featured slate (" + wideMatches.filter(m => m.modelOnly).length + " model-only).");
   } catch (e) { console.log("Wide acca pool skipped: " + (e && e.message ? e.message : e)); }
 
+  // Priced extras: every fixture today in a league whose odds we already
+  // fetched gets its bookmaker prices stored, so the site can show an
+  // odds-based score chip for it too. Zero extra API calls: these are the
+  // same league-level responses the featured slate and the wide pool used.
+  // Only fixtures the nightly model already covers make the list, since the
+  // card needs its confidence bars from there anyway.
+  let px = [];
+  try {
+    const featIds = new Set(matches.map(m => m.id));
+    for (const oddsByFixture of leagueOdds.values()) {
+      if (!oddsByFixture) continue;
+      for (const fid of Object.keys(oddsByFixture)) {
+        if (featIds.has(Number(fid))) continue;
+        if (!pred || !pred[fid]) continue;
+        const mk = pxMarkets(oddsByFixture[fid] || []);
+        if (mk.length) px.push({ id: Number(fid), markets: mk });
+        if (px.length >= 800) break;
+      }
+      if (px.length >= 800) break;
+    }
+    console.log("Priced extras: " + px.length + " more fixtures carry bookmaker prices from leagues already fetched.");
+  } catch (e) { console.log("Priced extras skipped: " + (e && e.message ? e.message : e)); }
+
   // The full candidate pool: featured matches plus every other fixture,
   // so the Top 15 and the acca both shop the whole day, lower leagues included.
   const poolMatches = matches.concat(wideMatches);
@@ -497,6 +538,7 @@ function reason(m) {
     date,
     generated: new Date().toISOString(),
     matches,
+    px,
     picks: picks.slice(0, 15),
     acca,
     summary: "Ranked by the best chance per unit of odds, from every league we follow. Safer picks with bigger prices lead the list, so always check the market before you decide."
