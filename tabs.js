@@ -31,6 +31,61 @@
     }
     return best;
   }
+  var _ofit = {};
+  function poisArr(l) { var a = [], p = Math.exp(-l); for (var i = 0; i <= 8; i++) { a.push(p); p *= l / (i + 1); } return a; }
+  // Scoreline implied by the bookmaker odds when we have them; null when we
+  // don't, so cards without real data show no score chip at all.
+  function oddsFit(id) {
+    if (id in _ofit) return _ofit[id];
+    var inf = info[id], r = null;
+    try {
+      if (inf && inf.markets) {
+        var o = {};
+        inf.markets.forEach(function (x) {
+          if (x.skip || !x.odd) return;
+          var n = String(x.market || "").toLowerCase();
+          if (n === "home win") o.h = +x.odd; else if (n === "draw") o.d = +x.odd; else if (n === "away win") o.a = +x.odd;
+          else if (n === "over 2.5 goals") o.o = +x.odd; else if (n === "under 2.5 goals") o.u = +x.odd;
+        });
+        if (o.h > 1 && o.d > 1 && o.a > 1) {
+          var ih = 1 / o.h, idd = 1 / o.d, ia = 1 / o.a, s2 = ih + idd + ia;
+          var ph = ih / s2, pa = ia / s2;
+          var mu = 2.55;
+          if (o.o > 1) {
+            var io = 1 / o.o, iu = o.u > 1 ? 1 / o.u : 1 - io;
+            var po = io / (io + iu), lo = 0.5, hi = 6;
+            for (var k = 0; k < 40; k++) {
+              var mid = (lo + hi) / 2;
+              var under = Math.exp(-mid) * (1 + mid + mid * mid / 2);
+              if (1 - under < po) lo = mid; else hi = mid;
+            }
+            mu = (lo + hi) / 2;
+          }
+          var target = ph - pa, slo = -2.4, shi = 2.4, sup = 0;
+          for (var k2 = 0; k2 < 40; k2++) {
+            sup = (slo + shi) / 2;
+            var lh = Math.max(0.05, (mu + sup) / 2), la = Math.max(0.05, (mu - sup) / 2);
+            var ah = poisArr(lh), aa = poisArr(la), ph2 = 0, pa2 = 0;
+            for (var i = 0; i <= 8; i++) for (var j = 0; j <= 8; j++) {
+              var q = ah[i] * aa[j];
+              if (i > j) ph2 += q; else if (i < j) pa2 += q;
+            }
+            if (ph2 - pa2 < target) slo = sup; else shi = sup;
+          }
+          sup = (slo + shi) / 2;
+          var lh = Math.max(0.05, (mu + sup) / 2), la = Math.max(0.05, (mu - sup) / 2);
+          var ah = poisArr(lh), aa = poisArr(la), bi = 1, bj = 1, bp = -1;
+          for (var i2 = 0; i2 <= 8; i2++) for (var j2 = 0; j2 <= 8; j2++) {
+            var q = ah[i2] * aa[j2];
+            if (q > bp) { bp = q; bi = i2; bj = j2; }
+          }
+          r = { s: bi + "-" + bj, x: lh, y: la, p: bp };
+        }
+      }
+    } catch (e) { r = null; }
+    _ofit[id] = r;
+    return r;
+  }
   function tipOf(p, mode) {
     var mx = Math.max(p.h, p.d, p.a);
     if (mode === "1x2") {
@@ -69,6 +124,7 @@
   }
   function hit(m, mode, t) {
     if (DONE.indexOf(m.fixture.status.short) < 0 || m.goals.home === null) return "";
+    if (!t || !t.l) return "";
     var h = m.goals.home, a = m.goals.away, ok;
     if (mode === "main") {
       var sp = t.l.split("-"), po = +sp[0] > +sp[1] ? "H" : +sp[0] < +sp[1] ? "A" : "D";
@@ -88,9 +144,16 @@
     var p = pred[m.fixture.id];
     if (!p) return '<div class="pr"></div>';
     var t = tipOf(p, mkMode), thin = p.n != null && p.n < 3;
+    var of = oddsFit(m.fixture.id);
+    if (mkMode === "main") {
+      t = of ? { l: of.s, c: t.c, odds: 1 } : { l: "", c: t.c };
+    } else if (mkMode === "cs") {
+      if (of) t = { l: of.s, c: Math.round(of.p * 100), cs: 1, odds: 1 };
+      else if (thin) t = { l: "", c: null, cs: 1 };
+    }
     var cls = hit(m, mkMode, t);
     var lv = t.c == null || t.cs ? 0 : (thin ? 1 : (t.c >= 60 ? 3 : t.c >= 45 ? 2 : 1));
-    var tip = thin ? "Limited data, so low confidence" : (t.c != null ? "Model chance " + t.c + "%" : "Most likely score");
+    var tip = t.odds ? "Most likely score, based on the bookmaker odds. Estimates, not guarantees." : (thin ? "Limited data, so low confidence" : (t.c != null ? "Model chance " + t.c + "%" : "Most likely score"));
     var sub;
     if (mkMode === "main") {
       sub = '<span class="sig s' + lv + '" role="img" aria-label="Confidence ' + (lv === 3 ? "high" : lv === 2 ? "medium" : "low") + '"><i></i><i></i><i></i></span>';
@@ -106,7 +169,8 @@
       else word = won ? "Hit" : "Miss";
       res = '<span class="rs' + cls + '">' + word + "</span>";
     }
-    return '<div class="pr" title="' + esc(tip) + '"><span class="pill' + cls + '">' + esc(t.lab || t.l) + "</span>" + res + sub + "</div>";
+    var pill = t.l ? '<span class="pill' + cls + '">' + esc(t.lab || t.l) + "</span>" : "";
+    return '<div class="pr" title="' + esc(tip) + '">' + pill + res + sub + "</div>";
   };
 
   var _render = window.render;
