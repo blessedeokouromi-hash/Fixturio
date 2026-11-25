@@ -79,7 +79,7 @@
     return r;
   };
 
-  window.panel = function (rows, notes) {
+  window.panel = function (rows, notes, pid) {
     if (!rows.length) return '<p class="note">' + esc(notes) + "</p>";
     var cand = rows.filter(function (r) { return r.p <= 92 && r.g !== "More goal lines"; });
     if (!cand.length) cand = rows;
@@ -96,7 +96,7 @@
     function block(k) {
       var s = '<div class="sec"><h4>' + esc(k) + "</h4>";
       grp[k].forEach(function (r) {
-        s += '<div class="mrow' + (r === b1 ? " best" : "") + '"><span class="nm">' + esc(r.label) + '</span><span class="pv">' + r.p + '%</span><div class="tr"><i style="width:' + r.p + '%"></i></div></div>';
+        s += '<div class="mrow' + (r === b1 ? " best" : "") + '"><span class="nm">' + esc(r.label) + '</span><span class="pv">' + r.p + '%</span><div class="tr"><i style="width:' + r.p + '%"></i></div>' + (pid != null && window.slipCtx && slipCtx[pid] ? '<button class="mkadd" data-id="' + pid + '" data-i="' + rows.indexOf(r) + '" aria-label="Add ' + esc(r.label) + ' to slip" onclick="event.stopPropagation();slipAdd(' + pid + ',' + rows.indexOf(r) + ')">+</button>' : '') + '</div>';
       });
       return s + "</div>";
     }
