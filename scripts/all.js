@@ -1,13 +1,21 @@
 const fs = require("fs");
 const KEY = process.env.API_FOOTBALL_KEY;
-const WINDOW = 45;
-const MIN_GAMES = 3;
-// Lighter smoothing than before, so real team differences show through as
-// results accumulate instead of every team being pulled to the league average.
-const K = 1.5;
-// Dixon-Coles style low-score correction: tight, low-scoring results are more
-// common in real football than a plain Poisson matrix admits.
-const RHO = -0.10;
+const WINDOW = 45;        // days of stored results the model looks back on
+const MIN_GAMES = 3;      // a team with fewer weighted games is flagged thin
+const K_TEAM = 8;         // team shrinkage: about 8 games of evidence before a
+                          // team's own record carries half the weight
+const K_LEAGUE = 10;      // league scoring averages shrink toward the global
+                          // average with this much counterweight
+const K_FORM = 4;         // recent-form shrinkage: about 4 games before form
+                          // carries its full weight
+const W_FORM = 0.30;      // the most weight recent form can take from
+                          // season-long strength (tuned in calibration)
+const DECAY = 0.85;       // a result one day older weighs 85% of a fresher one
+const RHO = -0.10;        // Dixon-Coles low-score correction
+const THIN_GAMES = 6;     // combined sample below this marks a match thin
+const VERYTHIN_GAMES = 3; // combined sample below this marks it very thin
+const CUP_RE = /cup|copa|coppa|pokal|trophy|shield|super\s?cup|friendly|play-?offs?|qualif/i;
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const hasErr = d => d.errors && Object.keys(d.errors).length > 0;
 const iso = t => new Date(t).toISOString().slice(0, 10);
@@ -34,53 +42,36 @@ function pois(l, k) {
   return p;
 }
 
-function mulberry32(a) {
-  return function () {
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-
-function model(lh, la, seed) {
+// One Dixon-Coles score matrix per match. Every market (1X2, over/under 2.5,
+// BTTS, correct score) is read off this single matrix, so the markets on a
+// match can never disagree with each other.
+function model(lh, la) {
   const cells = [];
-  for (let i = 0; i <= 8; i++) {
-    for (let j = 0; j <= 8; j++) {
+  for (let i = 0; i <= 9; i++) {
+    for (let j = 0; j <= 9; j++) {
       let p = pois(lh, i) * pois(la, j);
       if (i === 0 && j === 0) p *= 1 - lh * la * RHO;
       else if ((i === 0 && j === 1) || (i === 1 && j === 0)) p *= 1 + RHO;
       else if (i === 1 && j === 1) p *= 1 - RHO;
-      cells.push({ i, j, p });
+      if (p < 0) p = 0;
+      cells.push({ i: i, j: j, p: p });
     }
   }
   const tot = cells.reduce((s, c) => s + c.p, 0);
+  cells.forEach(c => { c.p /= tot; });
   let ph = 0, pd = 0, pa = 0, over = 0, btts = 0;
   cells.forEach(c => {
-    const k = c.i > c.j ? "H" : c.i === c.j ? "D" : "A";
-    if (k === "H") ph += c.p; else if (k === "D") pd += c.p; else pa += c.p;
+    if (c.i > c.j) ph += c.p; else if (c.i === c.j) pd += c.p; else pa += c.p;
     if (c.i + c.j >= 3) over += c.p;
     if (c.i > 0 && c.j > 0) btts += c.p;
   });
-  ph /= tot; pd /= tot; pa /= tot; over /= tot; btts /= tot;
-  const top = ph >= pd && ph >= pa ? "H" : pa >= pd ? "A" : "D";
-  const ranked = cells.slice().sort((a, b) => b.p - a.p).slice(0, 5);
-  // For a clear favourite the displayed score should match the likely result;
-  // in tight games any of the top cells is a fair answer.
-  const clear = Math.max(ph, pd, pa) >= 0.5;
-  const pool = clear ? ranked.filter(c => (c.i > c.j ? "H" : c.i === c.j ? "D" : "A") === top) : ranked;
-  const use = pool.length ? pool : ranked;
-  // Deterministic weighted pick among the likeliest cells, seeded by fixture
-  // id: scorelines vary between matches instead of repeating one number.
-  const rnd = mulberry32(seed || 1);
-  const w = use.map(c => Math.pow(c.p / tot, 1.5));
-  const sum = w.reduce((a, b) => a + b, 0);
-  let x = rnd() * sum, idx = 0;
-  for (let i = 0; i < w.length; i++) { x -= w[i]; if (x <= 0) { idx = i; break; } }
-  const pick = use[idx];
+  const ranked = cells.slice().sort((a, b) => b.p - a.p);
+  const top = ranked[0];
   return {
-    s: pick.i + "-" + pick.j,
+    s: top.i + "-" + top.j,
     st: ranked.slice(0, 3).map(c => c.i + "-" + c.j).join(", "),
+    csP: Math.round(top.p * 100),
+    csList: ranked.slice(0, 5).map(c => ({ s: c.i + "-" + c.j, p: Math.round(c.p * 1000) / 10 })),
     h: Math.round(ph * 100), d: Math.round(pd * 100), a: Math.round(pa * 100),
     o: Math.round(over * 100), b: Math.round(btts * 100)
   };
@@ -121,16 +112,17 @@ function model(lh, la, seed) {
   Object.keys(db.days).forEach(d => { if (d < iso(now - WINDOW * 864e5)) delete db.days[d]; });
   fs.writeFileSync("teamdata.json", JSON.stringify(db));
 
-  // Each stored result carries a recency weight: last week counts about 85%
-  // of this week, so a team's rating tracks what it is doing now, not what it
-  // did five weeks ago.
+  // Every stored result carries a recency weight.
   const all = [];
   Object.keys(db.days).forEach(d => {
     const ago = Math.round((now - new Date(d + "T00:00:00Z").getTime()) / 864e5);
-    db.days[d].forEach(r => all.push([r[0], r[1], r[2], r[3], r[4], Math.pow(0.85, Math.max(0, ago))]));
+    db.days[d].forEach(r => all.push([r[0], r[1], r[2], r[3], r[4], Math.pow(DECAY, Math.max(0, ago))]));
   });
   console.log("Finished matches in history: " + all.length);
 
+  // League scoring averages, home and away separate. A league with few games
+  // shrinks toward the global average instead of switching to it wholesale,
+  // so a 4-game league keeps a little of its own flavour without wild swings.
   const L = {};
   let gn = 0, ghg = 0, gag = 0;
   all.forEach(r => {
@@ -140,28 +132,69 @@ function model(lh, la, seed) {
     gn += w; ghg += w * r[3]; gag += w * r[4];
   });
   const G = { h: ghg / gn || 1.4, a: gag / gn || 1.1 };
-  const avgFor = id => {
-    const l = L[id];
-    return l && l.n >= 10 ? { h: l.h / l.n || G.h, a: l.a / l.n || G.a } : G;
-  };
+  function lgAv(lid) {
+    const l = L[lid];
+    if (!l || l.n <= 0) return G;
+    return {
+      h: (l.h + G.h * K_LEAGUE) / (l.n + K_LEAGUE) || G.h,
+      a: (l.a + G.a * K_LEAGUE) / (l.n + K_LEAGUE) || G.a
+    };
+  }
 
+  // Per-team attack and defence, kept separate for home and away. Each is the
+  // team's weighted goals scored or conceded in that venue, shrunk toward the
+  // league average for that venue, expressed as a ratio (1 = average).
   const T = {};
-  const team = id => T[id] || (T[id] = { n: 0, sc: 0, co: 0 });
+  const mkT = () => ({ nh: 0, gh: 0, cgH: 0, na: 0, ga: 0, cgA: 0 });
   all.forEach(r => {
-    const av = avgFor(r[0]);
-    const H = team(r[1]), A = team(r[2]);
-    H.n += r[5]; H.sc += r[5] * r[3] / av.h; H.co += r[5] * r[4] / av.a;
-    A.n += r[5]; A.sc += r[5] * r[4] / av.a; A.co += r[5] * r[3] / av.h;
+    const H = T[r[1]] || (T[r[1]] = mkT());
+    const A = T[r[2]] || (T[r[2]] = mkT());
+    H.nh += r[5]; H.gh += r[5] * r[3]; H.cgH += r[5] * r[4];
+    A.na += r[5]; A.ga += r[5] * r[4]; A.cgA += r[5] * r[3];
   });
+  const attH = (t, av) => t && t.nh > 0 ? (t.gh + K_TEAM * av.h) / (t.nh + K_TEAM) / av.h : 1;
+  const defH = (t, av) => t && t.nh > 0 ? (t.cgH + K_TEAM * av.a) / (t.nh + K_TEAM) / av.a : 1;
+  const attA = (t, av) => t && t.na > 0 ? (t.ga + K_TEAM * av.a) / (t.na + K_TEAM) / av.a : 1;
+  const defA = (t, av) => t && t.na > 0 ? (t.cgA + K_TEAM * av.h) / (t.na + K_TEAM) / av.h : 1;
 
-  // Recent form per team, oldest to newest, straight from the stored results.
+  // Recent form per team: last six matches, recency-weighted, venue-aware
+  // (goals are compared to the average for the venue they were played at).
   const formOf = {};
-  Object.keys(db.days).sort().forEach(d => db.days[d].forEach(r => {
-    const hw = r[3] > r[4], dr = r[3] === r[4];
-    (formOf[r[1]] = formOf[r[1]] || []).push(hw ? "W" : dr ? "D" : "L");
-    (formOf[r[2]] = formOf[r[2]] || []).push(hw ? "L" : dr ? "D" : "W");
-  }));
-  const last5 = id => (formOf[id] || []).slice(-5);
+  Object.keys(db.days).forEach(d => {
+    const ago = Math.round((now - new Date(d + "T00:00:00Z").getTime()) / 864e5);
+    db.days[d].forEach(r => {
+      (formOf[r[1]] = formOf[r[1]] || []).push({ gf: r[3], ga: r[4], home: true, lg: r[0], ago: ago });
+      (formOf[r[2]] = formOf[r[2]] || []).push({ gf: r[4], ga: r[3], home: false, lg: r[0], ago: ago });
+    });
+  });
+  const last5 = id => (formOf[id] || [])
+    .slice().sort((a, b) => a.ago - b.ago).slice(-5)
+    .map(m => m.gf > m.ga ? "W" : m.gf === m.ga ? "D" : "L").join("");
+  function formRatios(id) {
+    const list = (formOf[id] || []).slice().sort((a, b) => a.ago - b.ago).slice(-6);
+    if (!list.length) return null;
+    let sw = 0, att = 0, def = 0;
+    list.forEach(m => {
+      const av = lgAv(m.lg);
+      const w = Math.pow(DECAY, Math.max(0, m.ago));
+      const gfN = m.home ? m.gf / av.h : m.gf / av.a;
+      const gaN = m.home ? m.ga / av.a : m.ga / av.h;
+      att += w * gfN; def += w * gaN; sw += w;
+    });
+    if (sw <= 0) return null;
+    return {
+      att: (att + K_FORM) / (sw + K_FORM),
+      def: (def + K_FORM) / (sw + K_FORM),
+      w: sw
+    };
+  }
+  // Blend: season-long strength leads, recent form takes up to W_FORM of the
+  // say, and less when the form sample is short.
+  function blend(form, base, key) {
+    if (!form) return base;
+    const wF = W_FORM * Math.min(1, form.w / 6);
+    return (1 - wF) * base + wF * form[key];
+  }
 
   // Head to head from the stored results, most recent last.
   function h2hFor(hid, aid) {
@@ -179,8 +212,7 @@ function model(lh, la, seed) {
 
   function formWords(name, s) {
     if (!s || !s.length) return name + ": not enough recent results stored yet";
-    const w = s.filter(x => x === "W").length, d = s.filter(x => x === "D").length;
-    const l = s.filter(x => x === "L").length;
+    const w = s.split("W").length - 1, d = s.split("D").length - 1, l = s.split("L").length - 1;
     const head = w >= 3 ? "in strong form" : w === 0 && l >= 3 ? "struggling" : "mixed form";
     return name + " " + head + " (" + w + "W " + d + "D " + l + "L in their last " + s.length + ")";
   }
@@ -193,31 +225,36 @@ function model(lh, la, seed) {
   const tomorrowList = hasErr(fxt) ? [] : (fxt.response || []);
   console.log("Fixtures tomorrow: " + tomorrowList.length);
 
-  // Teams with little or no history fall back to neutral strength instead of
-  // being dropped, so every match gets a prediction.
-  const att = t => t ? (t.sc + K) / (t.n + K) : 1;
-  const def = t => t ? (t.co + K) / (t.n + K) : 1;
-
   const out = {};
   const lg = {};
   let thin = 0;
   function predict(m) {
     if (["PST", "CANC", "ABD", "AWD", "WO"].indexOf(m.fixture.status.short) >= 0) return;
-    const av = avgFor(m.league.id);
+    const av = lgAv(m.league.id);
     const H = T[m.teams.home.id], A = T[m.teams.away.id];
-    if (!H || !A || H.n < MIN_GAMES || A.n < MIN_GAMES) thin++;
-    let lh = av.h * att(H) * def(A);
-    let la = av.a * att(A) * def(H);
+    const fH = formRatios(m.teams.home.id), fA = formRatios(m.teams.away.id);
+    const bAttH = blend(fH, attH(H, av), "att");
+    const bDefA = blend(fA, defA(A, av), "def");
+    const bAttA = blend(fA, attA(A, av), "att");
+    const bDefH = blend(fH, defH(H, av), "def");
+    let lh = av.h * bAttH * bDefA;
+    let la = av.a * bAttA * bDefH;
     lh = Math.min(3.5, Math.max(0.2, lh));
     la = Math.min(3.5, Math.max(0.2, la));
-    const mod = model(lh, la, m.fixture.id);
-    const fh = last5(m.teams.home.id), fa = last5(m.teams.away.id);
+    const mod = model(lh, la);
     mod.x = +lh.toFixed(2);
     mod.y = +la.toFixed(2);
-    mod.form = { h: fh.join(" "), a: fa.join(" ") };
+    mod.form = { h: last5(m.teams.home.id), a: last5(m.teams.away.id) };
     mod.h2h = h2hFor(m.teams.home.id, m.teams.away.id);
-    mod.why = formWords(m.teams.home.name, fh) + ". " + formWords(m.teams.away.name, fa) +
+    mod.why = formWords(m.teams.home.name, mod.form.h) + ". " + formWords(m.teams.away.name, mod.form.a) +
       ". The model expects about " + (lh + la).toFixed(1) + " goals.";
+    // How much data stands behind this match: each side's weighted games.
+    const nh = H ? H.nh + H.na : 0, na = A ? A.na + A.nh : 0;
+    mod.n = { h: +nh.toFixed(1), a: +na.toFixed(1) };
+    const minN = Math.min(nh, na);
+    mod.q = minN < VERYTHIN_GAMES ? "very-thin" : minN < THIN_GAMES ? "thin" : "ok";
+    mod.cupish = CUP_RE.test(m.league.name || "");
+    if (minN < MIN_GAMES) thin++;
     out[m.fixture.id] = mod;
     lg[m.league.id] = 1;
   }

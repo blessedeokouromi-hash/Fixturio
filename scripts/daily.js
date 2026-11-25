@@ -1,9 +1,9 @@
 const fs = require("fs");
 
-// Scoreline consistency: the predicted score must agree with the same H/D/A
-// probabilities the picks use, not drift off a cold model. Fit a Dixon-Coles
-// Poisson (same correction as all.js) to the blended probabilities, then pick
-// the modal scoreline for the top outcome.
+// Scoreline fallback: used only when all.json has no entry for a match. It fits
+// a Dixon-Coles Poisson to the blended 1X2 probabilities and picks the modal
+// scoreline for the top outcome. The nightly model in all.js already produces a
+// deterministic scoreline from its own matrix, so this path rarely runs.
 function fact(n){ let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; }
 function dcCells(lh, la, RHO){
   const N = 6, ph = [], pa = [];
@@ -61,7 +61,6 @@ function pickScore(id, ph, pd, pa){
 const KEY = process.env.API_FOOTBALL_KEY;
 const TOP = [1,2,4,5,6,3,848,39,140,135,78,61,88,94,144,203,40,253,71,128,179,29,32,10,12];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const num = v => parseFloat(String(v == null ? "" : v).replace("%", "")) || 0;
 
 async function api(path) {
   const r = await fetch("https://v3.football.api-sports.io" + path,
@@ -86,11 +85,14 @@ function pickBets(od) {
   return bm ? (bm.bets || []) : [];
 }
 
-function analyze(p, bets, q) {
-  const pc = p.predictions.percent || {};
-  let ph = num(pc.home), pd = num(pc.draw), pa = num(pc.away);
-  const s = ph + pd + pa;
-  if (s > 0) { ph /= s; pd /= s; pa /= s; } else { ph = pd = pa = 1 / 3; }
+// Market probabilities for one match. The model (q, from all.json) and the
+// bookmakers (bets) are blended where both have a view: 60% model, 40% market,
+// each market's odds margin removed before blending. Matches with no odds at
+// all are priced model-only, flagged by modelOnly.
+function analyze(q, bets) {
+  const mh = q ? q.h / 100 : null, md = q ? q.d / 100 : null, ma = q ? q.a / 100 : null;
+  const mo = q ? q.o / 100 : null; // over 2.5 from the model
+  const mb = q ? q.b / 100 : null; // both teams to score, yes
 
   const w = bets.find(b => b.id === 1);
   const o1 = {};
@@ -101,16 +103,13 @@ function analyze(p, bets, q) {
     ih = 1 / o1.Home; ix = 1 / o1.Draw; ia = 1 / o1.Away;
     const t = ih + ix + ia; ih /= t; ix /= t; ia /= t;
   }
+  const ou = twoWay(bets.find(b => b.id === 5), "Over 2.5", "Under 2.5");
+  const bt = twoWay(bets.find(b => b.id === 8), "Yes", "No");
+  const anyOdds = has1 || ou || bt;
 
-  // Our own nightly score simulation (all.json): the model's view of this
-  // match, independent of what the bookmakers price.
-  const mh = q ? q.h / 100 : null, md = q ? q.d / 100 : null, ma = q ? q.a / 100 : null;
-  const mo = q ? q.o / 100 : null; // over 2.5 from the model
-  const mb = q ? q.b / 100 : null; // both teams to score, yes
-
-  let src;
-  if (mh != null && has1) src = "our score model blended with bookmaker odds";
-  else if (mh != null) src = "our score model, built from recent results";
+  let src, modelOnly = false;
+  if (mh != null && anyOdds) src = "our score model blended with bookmaker odds";
+  else if (mh != null) { src = "our score model, built from recent results"; modelOnly = true; }
   else if (has1) src = "bookmaker odds blended with form data";
   else src = "form and statistics data";
 
@@ -154,8 +153,6 @@ function analyze(p, bets, q) {
     add("First half under 1.5", sm(hg, (i, j) => i + j < 1.5));
     return out;
   })();
-  const ou = twoWay(bets.find(b => b.id === 5), "Over 2.5", "Under 2.5");
-  const bt = twoWay(bets.find(b => b.id === 8), "Yes", "No");
   const list = [
     entry("Home win", "single", mh, has1 ? ih : null),
     entry("Draw", "single", md, has1 ? ix : null),
@@ -190,7 +187,7 @@ function analyze(p, bets, q) {
     if (x.skip || !(x.odd > 1)) return;
     if (Math.abs(x.prob - 1 / x.odd) > 0.25) x.skip = true;
   });
-  return { src, list };
+  return { src, list, modelOnly };
 }
 
 function reason(m) {
@@ -233,7 +230,8 @@ function reason(m) {
   // the per-fixture endpoint returns), shared by the featured slate and the
   // wider acca pool below. A full day of pricing therefore costs a handful of
   // calls, and per-fixture odds are only a small fallback for leagues outside
-  // the cap.
+  // the cap. The old per-fixture /predictions calls are gone: the nightly model
+  // in all.json covers every fixture, so those ~16 calls a day are freed.
   const yy0 = Number(date.slice(0, 4));
   const season0 = Number(date.slice(5, 7)) >= 7 ? yy0 : yy0 - 1;
   const leagueOdds = new Map();
@@ -256,17 +254,9 @@ function reason(m) {
 
   const matches = [];
   for (const c of cands) {
-    const pr = await api("/predictions?fixture=" + c.fixture.id);
-    if (pr.errors && Object.keys(pr.errors).length) {
-      console.log("API quota reached mid-run, keeping the existing picks.");
-      break;
-    }
-    const p = pr.response && pr.response[0];
-    if (!p) continue;
     const lm = await leagueBets(c.league.id);
     let bets = lm && lm[c.fixture.id];
-    if (!bets) {
-      if (fixOddsLeft <= 0) continue;
+    if (!bets && fixOddsLeft > 0) {
       const od = await api("/odds?fixture=" + c.fixture.id);
       if (od.errors && Object.keys(od.errors).length) {
         console.log("API quota reached mid-run, keeping the existing picks.");
@@ -275,15 +265,30 @@ function reason(m) {
       fixOddsLeft--;
       bets = pickBets(od);
     }
-    const a = analyze(p, bets);
     const q = pred && pred[c.fixture.id];
-    const okForm = f => /^[WDL ]{1,9}$/.test(String(f || "")) ? String(f).replace(/ /g, "") : null;
-    const hf = okForm(p.teams && p.teams.home && p.teams.home.league ? p.teams.home.league.form : "");
-    const af = okForm(p.teams && p.teams.away && p.teams.away.league ? p.teams.away.league.form : "");
-    const f5h = hf || (q && q.form && q.form.h ? String(q.form.h).replace(/ /g, "").slice(-5) : null);
-    const f5a = af || (q && q.form && q.form.a ? String(q.form.a).replace(/ /g, "").slice(-5) : null);
+    if (!q && !bets) {
+      // No model entry and no odds: keep a stub so the slate stays whole.
+      matches.push({
+        id: c.fixture.id, league: c.league.name, country: c.league.country,
+        kickoff: c.fixture.date, home: c.teams.home.name, away: c.teams.away.name,
+        src: "form and statistics data", form: null, form5: null,
+        cs: null, sTop: null, why: null, markets: [],
+        n: null, dataQ: "unknown", cupish: false, modelOnly: true, csProb: null, csList: null
+      });
+      continue;
+    }
+    const a = analyze(q, bets || []);
+    const fh = q && q.form ? String(q.form.h || "").replace(/ /g, "") : null;
+    const fa = q && q.form ? String(q.form.a || "").replace(/ /g, "") : null;
+    // Form as a share of points from the stored last five (3 for a win, 1 for
+    // a draw), shown the same way the old comparison figure was.
+    const pct = s => {
+      if (!s || !s.length) return null;
+      const w = s.split("W").length - 1, d = s.split("D").length - 1;
+      return Math.round((3 * w + d) / (3 * s.length) * 100) + "%";
+    };
     const pv = get12(a.list);
-    const os = pv ? pickScore(c.fixture.id, pv[0], pv[1], pv[2]) : null;
+    const os = q ? null : (pv ? pickScore(c.fixture.id, pv[0], pv[1], pv[2]) : null);
     matches.push({
       id: c.fixture.id,
       league: c.league.name,
@@ -292,11 +297,17 @@ function reason(m) {
       home: c.teams.home.name,
       away: c.teams.away.name,
       src: a.src,
-      form: p.comparison && p.comparison.form ? p.comparison.form : null,
-      form5: { h: f5h, a: f5a },
-      cs: os ? os.s : (q ? q.s : null),
-      sTop: os ? os.st : (q ? q.st : null),
+      form: fh || fa ? { home: pct(fh), away: pct(fa) } : null,
+      form5: { h: fh, a: fa },
+      cs: q ? q.s : (os ? os.s : null),
+      sTop: q ? q.st : (os ? os.st : null),
+      csProb: q ? q.csP : null,
+      csList: q ? q.csList : null,
       why: q ? q.why : null,
+      n: q ? q.n : null,
+      dataQ: q ? (q.q || "unknown") : "unknown",
+      cupish: q ? !!q.cupish : false,
+      modelOnly: !!a.modelOnly,
       markets: a.list.map(x => ({
         market: x.market,
         prob: Math.round(x.prob * 1000) / 1000,
@@ -308,62 +319,66 @@ function reason(m) {
   }
   if (matches.length < 2) { console.error("Not enough matches"); process.exit(1); }
 
-  // Wider pool: the featured slate carries per-fixture odds, but the day has
-  // hundreds of other fixtures in the leagues we already follow. One
-  // league-level odds request per league (the same endpoint, one call instead
-  // of one per match) prices the whole slate without new per-fixture API
-  // calls: the nightly model in all.json already holds every fixture's chances.
+  // Wider pool: every other fixture today in the leagues we follow. One
+  // league-level odds request per league prices the whole slate; matches whose
+  // league has no odds available are kept as model-only entries so the picks
+  // list never loses them, they just carry no prices.
   let wideMatches = [];
-  // Wider acca pool: the featured matches above carry per-fixture odds, but the
-  // day has hundreds of other fixtures in the leagues we already follow. One
-  // league-level odds request per league (the same endpoint, one call instead
-  // of one per match) unlocks safe legs from the whole slate without new
-  // per-fixture API calls: the nightly model in all.json already holds every
-  // fixture's chances, so all we need is the prices.
   try {
     const d0 = JSON.parse(fs.readFileSync("data/d0.json", "utf8"));
     const todayFixtures = (d0.response || []).filter(f => f.league && TOP.includes(f.league.id));
     const featuredIds = new Set(matches.map(m => m.id));
     const byLeague = {};
     todayFixtures.forEach(f => { (byLeague[f.league.id] = byLeague[f.league.id] || []).push(f); });
-    const yy = Number(date.slice(0, 4));
-    const season = Number(date.slice(5, 7)) >= 7 ? yy : yy - 1;
     wideMatches = [];
-    let wideLeagues = 0;
     for (const lid of Object.keys(byLeague)) {
       const oddsByFixture = (await leagueBets(lid)) || {};
-      wideLeagues++;
-      if (!Object.keys(oddsByFixture).length) { console.log("Wide pool: odds unavailable for league " + lid + ", skipping."); continue; }
       for (const f of byLeague[lid]) {
         if (featuredIds.has(f.fixture.id)) continue;
         if (f.fixture.status && f.fixture.status.short !== "NS") continue;
         const q = pred && pred[f.fixture.id];
         if (!q) continue;
         const bets = oddsByFixture[f.fixture.id];
-        if (!bets) continue;
-        const p = { predictions: { percent: { home: q.h + "%", draw: q.d + "%", away: q.a + "%" } }, comparison: { form: null } };
-        const a = analyze(p, bets, q);
+        const a = analyze(q, bets || []);
         wideMatches.push({
           id: f.fixture.id, league: f.league.name, country: f.league.country,
           kickoff: f.fixture.date, home: f.teams.home.name, away: f.teams.away.name,
-          src: a.src, form: null, form5: q.form || null, cs: q.s || null, sTop: q.st || null, why: q.why || null,
+          src: a.src, form: null,
+          form5: q.form || null,
+          cs: q.s || null, sTop: q.st || null, csProb: q.csP || null, csList: q.csList || null,
+          why: q.why || null,
+          n: q.n || null, dataQ: q.q || "unknown", cupish: !!q.cupish,
+          modelOnly: !!a.modelOnly,
           markets: a.list.map(x => ({ market: x.market, prob: Math.round(x.prob * 1000) / 1000, kind: x.kind, odd: x.odd || null, skip: !!x.skip })),
           wide: true
         });
       }
     }
-    console.log("Wide pool: added " + wideMatches.length + " priced matches beyond the featured slate.");
+    console.log("Wide pool: added " + wideMatches.length + " matches beyond the featured slate (" + wideMatches.filter(m => m.modelOnly).length + " model-only).");
   } catch (e) { console.log("Wide acca pool skipped: " + (e && e.message ? e.message : e)); }
 
-  // The full candidate pool: featured matches plus every other priced fixture,
+  // The full candidate pool: featured matches plus every other fixture,
   // so the Top 15 and the acca both shop the whole day, lower leagues included.
   const poolMatches = matches.concat(wideMatches);
+
+  // Confidence cap by how much data stands behind the match. A match built on
+  // very little history, or a cup or friendly where form means less, cannot
+  // claim the same certainty as a well-sampled league game. These caps are
+  // provisional until the calibration stage tunes them against real results.
+  const capFor = m => {
+    let cap = 90;
+    if (m.dataQ === "thin") cap = 82;
+    if (m.dataQ === "very-thin") cap = 70;
+    if (m.cupish) cap = Math.min(cap, 82);
+    return cap;
+  };
 
   const picks = [];
   poolMatches.forEach(m => {
     // Best market first: rank every market by blended probability, ignore the
     // ones the model and the odds disagree on, and hold picks to a 55%
     // confidence floor so coin-flip markets never become recommendations.
+    if (!(m.markets || []).length) return;
     const ranked = m.markets.filter(x => !x.skip).sort((x, y) => y.prob - x.prob);
     const usable = ranked.filter(x => x.prob >= 0.55);
     const best = usable[0] || ranked[0];
@@ -374,14 +389,17 @@ function reason(m) {
       fixture: m.id,
       match: m.home + " vs " + m.away,
       market: c.market,
-      probability: Math.round(Math.min(90, c.prob * 100)),
+      probability: Math.round(Math.min(capFor(m), c.prob * 100)),
       reason: m.why || reason(m),
       cs: m.cs,
       odd: c.odd || null,
       value: !!(c.odd && c.prob * c.odd >= 1.08),
       kickoff: m.kickoff,
       league: m.league,
-      country: m.country
+      country: m.country,
+      dataQ: m.dataQ,
+      cupish: !!m.cupish,
+      modelOnly: !!m.modelOnly
     }));
   });
   // Rank by the best chance per unit of odds, so safe picks with real prices
@@ -390,8 +408,9 @@ function reason(m) {
   const valScore = p => (p.odd > 1 ? Math.log(p.probability / 100) / Math.log(p.odd) : p.probability / 100);
   picks.sort((a, b) => valScore(b) - valScore(a));
   // The banker: the day's most confident pick, tagged only when it is a real
-  // banker (75% or better). Otherwise no banker is shown that day.
-  const bankerPick = picks.filter(p => p.probability >= 75).sort((a, b) => b.probability - a.probability)[0];
+  // banker (75% or better) AND the match has enough stored data behind it.
+  // Otherwise no banker is shown that day.
+  const bankerPick = picks.filter(p => p.probability >= 75 && p.dataQ === "ok" && !p.cupish).sort((a, b) => b.probability - a.probability)[0];
   if (bankerPick) bankerPick.banker = true;
 
 
@@ -403,14 +422,18 @@ function reason(m) {
   // not stacked on a single competition, refuses near-dead prices below 1.12,
   // and keeps the slip whose legs are jointly most likely to land with total
   // odds between 20 and 50. A shorter slip falls back to the same independent
-  // pool, never the picks list.
+  // pool, never the picks list. Every leg needs odds, so the market checks
+  // every leg; the thin-data confidence cap keeps weak-data legs modest.
   const candAcca = [];
   poolMatches.forEach(m => {
     (m.markets || []).forEach(x => {
       if (x.skip || !(x.odd >= 1.12)) return;
-      const prob = Math.round(x.prob * 100);
+      // Legs carry the same thin-data cap as the picks: a leg built on very
+      // little history shows its capped confidence, and the slip's joint
+      // chance is computed from those capped numbers.
+      const prob = Math.min(capFor(m), Math.round(x.prob * 100));
       if (prob < 55) return;
-      candAcca.push({ fixture: m.id, match: m.home + " vs " + m.away, market: x.market, odd: x.odd, probability: prob, kickoff: m.kickoff, league: m.league, country: m.country });
+      candAcca.push({ fixture: m.id, match: m.home + " vs " + m.away, market: x.market, odd: x.odd, probability: prob, kickoff: m.kickoff, league: m.league, country: m.country, dataQ: m.dataQ });
     });
   });
   const valS = p => Math.log(p.probability / 100) / Math.log(p.odd);
@@ -465,7 +488,7 @@ function reason(m) {
         for (let k = j + 1; k < uniqShort.length; k++) consider([uniqShort[i], uniqShort[j], uniqShort[k]]);
       }
   }
-  const mkLeg = p => ({ fixture: p.fixture, match: p.match, market: p.market, odd: p.odd, probability: p.probability, kickoff: p.kickoff, league: p.league, country: p.country });
+  const mkLeg = p => ({ fixture: p.fixture, match: p.match, market: p.market, odd: p.odd, probability: p.probability, kickoff: p.kickoff, league: p.league, country: p.country, dataQ: p.dataQ });
   const acca = accaBest
     ? { legs: accaBest.legs.map(mkLeg), total: Math.round(accaBest.total * 100) / 100, chance: Math.round(accaBest.hit * 1000) / 10 }
     : null;
