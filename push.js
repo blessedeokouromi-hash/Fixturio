@@ -1,6 +1,6 @@
 // Fixturio push notifications: one soft opt-in on the homepage, then silent.
 (function () {
-  var PUBKEY = "BPk7rMe5Lm9CpW1UbtMrWzvJb55OQb9pWmxh2ZnDJkDS-lMgSwROSPH5GSkKQ4uXOtftoTX-zAFGVGpwV4IQAL0";
+  var PUBKEY = "BAO0iCFzZnpnxahZ4FoeW6toT8WX8kh-H4Gj43bg6r9hvZcBshhEItZLCirvEvqev7sBBXkJ7HiOstSLK1OQwRA";
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
   var KEY = "fx-push", state = null;
   try { state = localStorage.getItem(KEY); } catch (e) {}

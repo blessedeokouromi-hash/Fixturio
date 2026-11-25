@@ -72,7 +72,7 @@ let sent = 0, failed = 0, dead = 0;
 if (send.length && process.env.VAPID_PRIVATE_KEY) {
   const webpush = require("web-push");
   webpush.setVapidDetails("mailto:blessed.e.okouromi@gmail.com",
-    process.env.VAPID_PUBLIC_KEY || "BPk7rMe5Lm9CpW1UbtMrWzvJb55OQb9pWmxh2ZnDJkDS-lMgSwROSPH5GSkKQ4uXOtftoTX-zAFGVGpwV4IQAL0",
+    process.env.VAPID_PUBLIC_KEY || "BAO0iCFzZnpnxahZ4FoeW6toT8WX8kh-H4Gj43bg6r9hvZcBshhEItZLCirvEvqev7sBBXkJ7HiOstSLK1OQwRA",
     process.env.VAPID_PRIVATE_KEY);
   const subs = (load("data/push-subs.json", { subs: [] }).subs) || [];
   const payload = JSON.stringify({ url: "/" });

@@ -8,7 +8,7 @@ const REPO = process.env.ADMIN_REPO || "blessedeokouromi-hash/Fixturio";
 const FILE = "data/push-subs.json";
 const dry = process.argv.includes("--dry");
 const PUB = process.env.VAPID_PUBLIC_KEY ||
-  "BPk7rMe5Lm9CpW1UbtMrWzvJb55OQb9pWmxh2ZnDJkDS-lMgSwROSPH5GSkKQ4uXOtftoTX-zAFGVGpwV4IQAL0";
+  "BAO0iCFzZnpnxahZ4FoeW6toT8WX8kh-H4Gj43bg6r9hvZcBshhEItZLCirvEvqev7sBBXkJ7HiOstSLK1OQwRA";
 const PRIV = process.env.VAPID_PRIVATE_KEY;
 
 function payloadFor() {
