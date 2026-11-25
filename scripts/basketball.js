@@ -10,6 +10,8 @@ const fs = require("fs");
 const KEY = process.env.BASKETBALL_KEY;
 const HOST = "https://v1.basketball.api-sports.io";
 const OUT = process.env.MOCK === "1" ? "/tmp/basketball.json" : "data/basketball.json";
+// Also keeps a per-day copy so the page can browse previous days (visitors pay zero API calls).
+const dated = (o) => { const p = process.env.MOCK === "1" ? "/tmp/bb-" + o.date + ".json" : "data/bb-" + o.date + ".json"; try { fs.writeFileSync(p, JSON.stringify(o)); } catch (e) {} };
 const today = new Date().toISOString().slice(0, 10);
 
 // Major leagues by name so one games call covers the whole day worldwide.
@@ -115,6 +117,7 @@ function implProb(oh, oa) {
         });
         cur.generated = new Date().toISOString();
         fs.writeFileSync(OUT, JSON.stringify(cur));
+        dated(cur);
         console.log("basketball refresh: patched " + patched + "/" + (cur.m || []).length + " rows with 1 api call");
         return;
       }
@@ -230,5 +233,6 @@ function implProb(oh, oa) {
     m: priced.map(p => ({ h: p.home, a: p.away, market: p.market, odd: p.odd, probability: p.probability, league: p.league, country: p.country, time: p.time, status: p.status || "", game_id: p.game_id, lh: p.lh || "", la: p.la || "", sc_h: p.sc_h, sc_a: p.sc_a }))
   };
   fs.writeFileSync(OUT, JSON.stringify(out));
+  dated(out);
   console.log("basketball: " + priced.length / 2 + " priced games, " + picks.length + " picks, acca " + (acca ? acca.total + " (" + acca.legs.length + " legs, " + acca.joint + "%)" : "none") + ", " + nCalls + " api calls");
 })().catch(e => { console.error("Basketball build failed: " + (e && e.message ? e.message : e)); process.exit(1); });

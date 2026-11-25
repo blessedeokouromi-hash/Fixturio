@@ -62,6 +62,7 @@ body .top>a.authlnk{margin-left:auto;flex:none;align-self:center;padding:8px 14p
 .mw:first-child{border-top:0}
 .fav{width:30px;height:30px;border:0;background:transparent;font-size:18px;line-height:1;color:var(--mu);padding:0;justify-self:center}
 .fav.on{color:var(--amb)}
+.pacts{display:flex;justify-content:center;padding:10px 0 2px}.star2{border:1px solid var(--line);background:transparent;color:var(--tx);font-weight:700;padding:8px 14px;border-radius:999px;font-size:13px}.star2.on{color:var(--amb);border-color:var(--amb)}
 .st{text-align:center;font-size:13px;font-weight:700;color:var(--mu);line-height:1.2}
 .st.live{color:var(--live)}
 .dot{display:block;width:6px;height:6px;margin:5px auto 0;border-radius:50%;background:#5BD18B}
@@ -128,7 +129,7 @@ body .top>a.authlnk{margin-left:auto;flex:none;align-self:center;padding:8px 14p
 </header>
 <nav class="tabs tabsx"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/basketball.html" class="on">Basketball</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a></nav>
 <div class="adslot" id="ad-banner"></div>
-<div id="days" class="days" hidden><button class="darr" disabled aria-label="Previous day">&#8249;</button><div class="dlab"><b>Today</b><small id="dshort"></small></div><button class="darr" disabled aria-label="Next day">&#8250;</button></div>
+<div id="days" class="days" hidden><button class="darr" disabled aria-label="Previous day" onclick="step(-1)">&#8249;</button><div class="dlab"><b id="dlab">Today</b><small id="dshort"></small></div><button class="darr" disabled aria-label="Next day" onclick="step(1)">&#8250;</button></div>
 <div class="sr" id="srrow"><input id="q" type="search" placeholder="Search team, league or country" oninput="setQ(this.value)" aria-label="Search basketball games" autocomplete="off"></div>
 <div id="chips" class="chips"></div>
 <p id="cov" class="cov"></p>
@@ -155,7 +156,8 @@ let BB=null,mode="all",q="",lgsNow=[],lgClosed=new Set(),pickSet=new Set(),open=
 function setQ(v){q=(v||"").toLowerCase().trim();draw();}
 function setMode(m){mode=m;draw();}
 function saved(){let s=[];try{s=JSON.parse(localStorage.getItem("fixturio:saved")||"[]")}catch(e){}return s;}
-function fav(id){const s=saved();const i=s.indexOf(id);if(i>=0)s.splice(i,1);else s.unshift(id);localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));draw();}
+function fav(id){let s=saved();const k="bb:"+id;const i=s.indexOf(k);if(i>=0)s.splice(i,1);else s.unshift(k);s=s.slice(0,60);localStorage.setItem("fixturio:saved",JSON.stringify(s));if(window.fxAuth){try{fxAuth.push(s);}catch(e){}}draw();}
+function pSave(id){fav(id);const on=saved().indexOf("bb:"+id)>=0;const b=document.querySelector("#p"+id+" .star2");if(b){b.classList.toggle("on",on);b.textContent=on?"\u2605 Saved":"\u2606 Save match";}}
 function utcNow(){const n=new Date();return String(n.getUTCHours()).padStart(2,"0")+":"+String(n.getUTCMinutes()).padStart(2,"0");}
 function games(){
   const by={};(BB.m||[]).forEach(p=>{const g=by[p.game_id]||(by[p.game_id]={game_id:p.game_id,league:p.league,country:p.country,time:p.time,status:p.status||"",h:p.h,a:p.a,ph:0,pa:0,oh:null,oa:null,sc_h:p.sc_h,sc_a:p.sc_a,lh:p.lh,la:p.la});if(/^home/i.test(p.market)){g.ph=p.probability;g.oh=p.odd;}else{g.pa=p.probability;g.oa=p.odd;}});
@@ -210,7 +212,7 @@ function gameRow(g){
   const sgc=dn?"":'<span class="'+sig+'"><i></i><i></i><i></i></span>';
   const logo=t=>t?'<img src="'+esc(t)+'" alt="" loading="lazy">':"";
   const scCell=hasScore?'<div class="sc'+(lv?" live":"")+'"><div>'+g.sc_h+'</div><div>'+g.sc_a+"</div></div>":(best.odd?"<div>"+best.odd+"</div><small>odd</small>":"");
-  return '<div class="mw"><div class="m" onclick="tog('+g.game_id+')">'+stc+'<div class="tn"><div>'+logo(g.lh)+'<span class="'+(best.lab==="1"?"w":"l")+'">'+esc(g.h)+'</span></div><div>'+logo(g.la)+'<span class="'+(best.lab==="2"?"w":"l")+'">'+esc(g.a)+'</span></div></div><div class="pr">'+pill+sgc+'</div><div class="sc">'+scCell+'</div><button class="fav'+(saved().indexOf(g.game_id)>=0?" on":"")+'" onclick="fav(\''+g.game_id+'\');event.stopPropagation()" aria-label="Save match">&#9733;</button></div><div class="pn" id="p'+g.game_id+'"'+(open.has(g.game_id)?' style="display:block"':"")+'>'+(panels[g.game_id]||"")+"</div></div>";
+  return '<div class="mw"><div class="m" onclick="tog('+g.game_id+')">'+stc+'<div class="tn"><div>'+logo(g.lh)+'<span class="'+(best.lab==="1"?"w":"l")+'">'+esc(g.h)+'</span></div><div>'+logo(g.la)+'<span class="'+(best.lab==="2"?"w":"l")+'">'+esc(g.a)+'</span></div></div><div class="pr">'+pill+sgc+'</div><div class="sc">'+scCell+'</div><button class="fav'+(saved().indexOf("bb:"+g.game_id)>=0?" on":"")+'" onclick="fav(\''+g.game_id+'\');event.stopPropagation()" aria-label="Save match">&#9733;</button></div><div class="pn" id="p'+g.game_id+'"'+(open.has(g.game_id)?' style="display:block"':"")+'>'+(panels[g.game_id]||"")+"</div></div>";
 }
 function panel(g){
   const win=winnerOf(g);
@@ -219,7 +221,7 @@ function panel(g){
     const mark=win?(r.k===win?"\u2705":"\u274c"):"";
     const sig="sig "+(r.p>=70?"s3":r.p>=50?"s2":"s1");
     return '<div class="prow"><span>'+esc(r.lab)+(mark?'<span class="rmark">'+mark+"</span>":"")+'</span><span class="'+sig+'"><i></i><i></i><i></i></span><span><b>'+Math.round(r.p)+"%</b>"+(r.odd?" · @"+r.odd:"")+"</span></div>";
-  }).join("");
+  }).join("")+'<div class="pacts"><button class="star2'+(saved().indexOf("bb:"+g.game_id)>=0?" on":"")+'" onclick="pSave('+g.game_id+')">'+(saved().indexOf("bb:"+g.game_id)>=0?"\u2605 Saved":"\u2606 Save match")+"</button></div>";
 }
 function tog(id){
   const g=games().find(x=>x.game_id===id);
@@ -232,8 +234,12 @@ function paint(d){
   BB=d;window.bbData=d;
   pickSet=new Set((d.picks||[]).map(p=>p.game_id));
   $("days").hidden=false;
-  $("dshort").textContent=new Date(d.date+"T12:00:00Z").toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"});
-  $("date").textContent=new Date().toLocaleDateString([],{weekday:"long",month:"long",day:"numeric"});
+  curOff=0;
+  const todayD=dstr(0),lbl=new Date(d.date+"T12:00:00Z");
+  $("dlab").textContent=d.date===todayD?"Today":lbl.toLocaleDateString([],{weekday:"long"});
+  $("dshort").textContent=lbl.toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"});
+  $("date").textContent=lbl.toLocaleDateString([],{weekday:"long",month:"long",day:"numeric"});
+  const arrs=document.querySelectorAll(".darr");arrs[0].disabled=false;arrs[1].disabled=true;
   if(d.acca&&d.acca.legs&&d.acca.legs.length){
     $("acca-card").hidden=false;
     $("acca-total").textContent="Total odds "+d.acca.total;
@@ -247,6 +253,27 @@ function paint(d){
   if(!pool&&!d.picks){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">No basketball data yet. The daily build fills this page once the basketball data connection is live.</p>';return;}
   if(!pool&&d.picks){$("lgcs").innerHTML="";return;}
   draw();
+}
+let curOff=0;
+function dstr(off){const d=new Date();d.setDate(d.getDate()+off);return d.toISOString().slice(0,10);}
+function step(n){loadDay(curOff+n);}
+function loadDay(off){
+  if(off>0)off=0;if(off<-7)off=-7;curOff=off;
+  const ds=dstr(off),lbl=new Date(ds+"T12:00:00Z");
+  $("dlab").textContent=off===0?"Today":lbl.toLocaleDateString([],{weekday:"long"});
+  $("dshort").textContent=lbl.toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"});
+  $("date").textContent=lbl.toLocaleDateString([],{weekday:"long",month:"long",day:"numeric"});
+  const arrs=document.querySelectorAll(".darr");arrs[0].disabled=off<=-7;arrs[1].disabled=off>=0;
+  open.clear();
+  try{const c=JSON.parse(localStorage.getItem("fx_bb_"+ds)||"null");if(c&&c.date===ds){paint(c);return;}}catch(e){}
+  $("acca-card").hidden=true;
+  $("srrow").style.display="none";$("chips").style.display="none";$("cov").style.display="none";
+  $("lgcs").innerHTML='<p class="note" style="margin:14px 16px">Loading…</p>';
+  fetch("/api/basketball?date="+ds,{cache:"no-store"}).then(r=>r.json()).then(d=>{
+    if(!d||d.empty||!d.picks||!d.picks.length){BB=null;$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">No basketball picks saved for this day.</p>';return;}
+    try{localStorage.setItem("fx_bb_"+ds,JSON.stringify(d))}catch(e){}
+    paint(d);
+  }).catch(function(){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">Could not load this day.</p>';});
 }
 try{const c=JSON.parse(localStorage.getItem("fx_bb")||"null");if(c&&c.date===new Date().toISOString().slice(0,10))paint(c);}catch(e){}
 fetch("/api/basketball",{cache:"no-store"}).then(r=>r.json()).then(d=>{

@@ -56,14 +56,21 @@ button{font:inherit;color:inherit;cursor:pointer}
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const LIVE=["1H","2H","HT","ET","BT","P","LIVE"];
-let saved=[],byId={},done=0;
+let saved=[],byId={},byBB={},done=0;
 const tm=t=>new Date(t).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
 function stTxt(m){const s=m.fixture.status.short;if(s==="HT")return "HT";if(LIVE.includes(s))return (m.fixture.status.elapsed||"")+"′";if(s==="NS")return tm(m.fixture.date);return s;}
-function rm(ev,id){ev.preventDefault();ev.stopPropagation();saved=saved.filter(x=>x!==id);localStorage.setItem("fixturio:saved",JSON.stringify(saved));if(window.fxAuth){try{fxAuth.push(saved);}catch(e){}}render();}
+function rm(ev,id){ev.preventDefault();ev.stopPropagation();if(/^\d+$/.test(id))id=+id;saved=saved.filter(x=>x!==id);localStorage.setItem("fixturio:saved",JSON.stringify(saved));if(window.fxAuth){try{fxAuth.push(saved);}catch(e){}}render();}
 function render(){
   if(!saved.length){$("app").innerHTML='<p class="msg">No saved matches yet. Open any match and tap “Save match”.</p>';return;}
   let h='<div class="rows">';
   saved.forEach(id=>{
+    const sid=String(id);
+    if(sid.indexOf("bb:")===0){
+      const g=byBB[sid.slice(3)];
+      if(g){const lv=LIVE.indexOf(g.status)>=0;
+        h+='<a class="row" href="/basketball.html"><div class="st'+(lv?" live":"")+'">'+esc(g.status||"")+'</div><div class="n"><div>'+esc(g.h)+" – "+esc(g.a)+'</div><small>'+esc(g.league)+" · "+esc(g.country||"Basketball")+'</small></div><div class="sc">'+(g.sc_h!=null?g.sc_h+" – "+g.sc_a:"")+'</div><button class="x2" onclick="rm(event,\''+sid+'\')" aria-label="Remove">✕</button></a>';}
+      else{h+='<a class="row" href="/basketball.html"><div class="st">–</div><div class="n"><div>Basketball match</div><small>No longer in the day list</small></div><div class="sc"></div><button class="x2" onclick="rm(event,\''+sid+'\')" aria-label="Remove">✕</button></a>';}
+      return;}
     const m=byId[id];
     if(!m){h+='<a class="row" href="/match.html?id='+id+'"><div class="st">–</div><div class="n"><div>Match #'+id+'</div><small>No longer in the 3-day window</small></div><div class="sc"></div><button class="x2" onclick="rm(event,'+id+')">✕</button></a>';return;}
     const live=LIVE.includes(m.fixture.status.short);
@@ -100,6 +107,7 @@ function start(){
     }).catch(function(){});
   });
 })();
+fetch("/api/basketball",{cache:"no-store"}).then(r=>r.json()).then(d=>{const by={};(d.m||[]).forEach(p=>{by[p.game_id]=by[p.game_id]||{game_id:p.game_id,league:p.league,country:p.country,time:p.time,status:p.status||"",h:p.h,a:p.a,sc_h:p.sc_h,sc_a:p.sc_a};});byBB=by;render();}).catch(function(){});
 start();
 </script>
 
