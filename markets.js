@@ -14,6 +14,22 @@
   function sum(g, f) { var s = 0, i, j; for (i = 0; i <= N; i++) for (j = 0; j <= N; j++) if (f(i, j)) s += g[i][j]; return s; }
   function pc(v) { return Math.max(0, Math.min(100, Math.round(v * 100))); }
 
+  function mkline(s) { var m = String(s).match(/(\d+(?:\.\d+)?)/); return m ? parseFloat(m[1]) : null; }
+  window.markFor = function (r, home, away, gh, ga) {
+    var t = gh + ga, g = r.g, l = r.label, res = null;
+    if (g === "Match result") res = l === "Draw" ? gh === ga : (l === home + " win" ? gh > ga : ga > gh);
+    else if (g === "Double chance") res = l === home + " or draw" ? gh >= ga : (l === away + " or draw" ? ga >= gh : gh !== ga);
+    else if (g === "Total goals" || g === "More goal lines") { var ln = mkline(l); if (ln == null) return ""; res = /^Over/.test(l) ? t > ln : t < ln; }
+    else if (g === "Both teams to score") res = l === "Yes" ? (gh > 0 && ga > 0) : !(gh > 0 && ga > 0);
+    else if (g === "Team goals") { var isH = l.indexOf(home) === 0, ln2 = mkline(l); if (ln2 == null) return ""; var v = isH ? gh : ga; res = /over/.test(l) ? v > ln2 : v < ln2; }
+    else if (g === "Draw no bet") res = l === home ? (gh > ga ? true : ga > gh ? false : null) : (ga > gh ? true : gh > ga ? false : null);
+    else if (g === "Clean sheet and win to nil") { if (l === home + " win to nil") res = gh > 0 && ga === 0; else if (l === away + " win to nil") res = ga > 0 && gh === 0; else if (l === home + " clean sheet") res = ga === 0; else if (l === away + " clean sheet") res = gh === 0; }
+    else if (g === "Handicap") { var hs = l.indexOf(home) === 0, m2 = hs ? gh - ga : ga - gh; res = l.indexOf("-1.5") >= 0 ? m2 >= 2 : m2 >= -1; }
+    else if (g === "Odd or even goals") res = l === "Odd" ? t % 2 === 1 : t % 2 === 0;
+    else if (g === "Most likely scores") { var mm = l.match(/^(\d+)-(\d+)$/); res = mm ? gh === +mm[1] && ga === +mm[2] : null; }
+    return res === true ? "ok" : res === false ? "bad" : "";
+  };
+
   window.modelRows = function (p, home, away) {
     var r = [];
     function add(g, label, v) { r.push({ g: g, label: label, p: pc(v) }); }
@@ -95,8 +111,10 @@
     var main = ["Match result", "Double chance", "Total goals", "Both teams to score", "First half"];
     function block(k) {
       var s = '<div class="sec"><h4>' + esc(k) + "</h4>";
+      var cx = pid != null && slipCtx[pid] && slipCtx[pid].fin && slipCtx[pid].home ? slipCtx[pid] : null;
       grp[k].forEach(function (r) {
-        s += '<div class="mrow' + (r === b1 ? " best" : "") + '"><span class="nm">' + esc(r.label) + '</span><span class="pv">' + r.p + '%</span><div class="tr"><i style="width:' + r.p + '%"></i></div>' + (pid != null && typeof slipAdd === "function" && slipCtx[pid] ? '<button class="mkadd" data-id="' + pid + '" data-i="' + rows.indexOf(r) + '" aria-label="Add ' + esc(r.label) + ' to slip" onclick="event.stopPropagation();slipAdd(' + pid + ',' + rows.indexOf(r) + ')">+</button>' : '') + '</div>';
+        var mk = cx ? window.markFor(r, cx.home, cx.away, cx.gh, cx.ga) : "";
+        s += '<div class="mrow' + (r === b1 ? " best" : "") + '"><span class="nm">' + esc(r.label) + '</span><span class="pv">' + r.p + '%</span><div class="tr"><i style="width:' + r.p + '%"></i></div>' + (mk ? '<span class="rmark ' + mk + '">' + (mk === "ok" ? "\u2705" : "\u274c") + '</span>' : '') + (pid != null && typeof slipAdd === "function" && slipCtx[pid] ? '<button class="mkadd" data-id="' + pid + '" data-i="' + rows.indexOf(r) + '" aria-label="Add ' + esc(r.label) + ' to slip" onclick="event.stopPropagation();slipAdd(' + pid + ',' + rows.indexOf(r) + ')">+</button>' : '') + '</div>';
       });
       return s + "</div>";
     }

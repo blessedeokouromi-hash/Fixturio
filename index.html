@@ -29,6 +29,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--amb);outline-offset:2px}
 .wrap{max-width:560px;margin:0 auto}
 body.tm .wrap{padding-bottom:180px}
+body.slipshow .wrap{padding-bottom:200px}
 .top{position:sticky;top:0;z-index:4;background:var(--ink);border-bottom:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .logo{display:flex;align-items:center;gap:10px}
 .logo svg{width:32px;height:32px;flex:none}
@@ -465,7 +466,7 @@ const SLIPMAX=20;let slipItems=[],slipCtx={};
 function msg(t){const e=document.createElement("div");e.className="fxmsg";e.textContent=t;document.body.appendChild(e);setTimeout(function(){e.remove();},2400);}
 function slipLoad(){slipItems=[];try{const s=JSON.parse(localStorage.getItem("fx_slip")||"null");if(s&&s.date===dateStr(d0)&&Array.isArray(s.items))slipItems=s.items;}catch(e){}if(slipItems.length>SLIPMAX)slipItems=slipItems.slice(0,SLIPMAX);slipDock();}
 function slipSave(){try{localStorage.setItem("fx_slip",JSON.stringify({date:dateStr(d0),items:slipItems}));}catch(e){}}
-function slipDock(){const d=$("slipdock");if(!d)return;d.classList.toggle("show",slipItems.length>0);if(slipItems.length){$("slipcnt").textContent="My slip \u00B7 "+slipItems.length+"/"+SLIPMAX;$("sliphint").textContent="pick up to 20 games";}}
+function slipDock(){const d=$("slipdock");if(!d)return;d.classList.toggle("show",slipItems.length>0);document.body.classList.toggle("slipshow",slipItems.length>0);if(slipItems.length){$("slipcnt").textContent="My slip \u00B7 "+slipItems.length+"/"+SLIPMAX;$("sliphint").textContent="pick up to 20 games";}}
 function slipRepaint(){document.querySelectorAll(".mkadd").forEach(function(b){const id=+b.getAttribute("data-id"),i=+b.getAttribute("data-i");const c=slipCtx[id];const on=!!(c&&c.rows&&c.rows[i]&&slipItems.some(x=>x.key===id+"|"+c.rows[i].label));b.classList.toggle("on",on);b.textContent=on?"\u2713":"+";});}
 function slipAdd(id,i){const c=slipCtx[id];if(!c||!c.rows||!c.rows[i])return;const r=c.rows[i];const key=id+"|"+r.label;const ex=slipItems.findIndex(x=>x.key===key);
   if(ex>=0){slipItems.splice(ex,1);}
@@ -562,6 +563,8 @@ function tog(id){
   const mm=data.find(x=>x.fixture.id===id);
   if(!mm)return;
   slipCtx[id]={home:mm.teams.home.name,away:mm.teams.away.name,lg:mm.league?mm.league.name:"",cty:mm.league&&mm.league.country?mm.league.country:"",ko:mm.fixture&&mm.fixture.date?mm.fixture.date:"",rows:null};
+  const _fd=DONE.includes(mm.fixture.status.short)&&mm.goals&&mm.goals.home!=null&&mm.goals.away!=null;
+  slipCtx[id].fin=_fd;if(_fd){slipCtx[id].gh=mm.goals.home;slipCtx[id].ga=mm.goals.away;}
   const home=mm.teams.home.name,away=mm.teams.away.name;
   _ctx={id:id,home:home,away:away};
   if(info[id]){_rows=dailyRows(info[id],home,away);slipCtx[id].rows=_rows;panels[id]=panel(_rows,dailyNote(info[id],home,away),id);el.innerHTML=panels[id];return;}
