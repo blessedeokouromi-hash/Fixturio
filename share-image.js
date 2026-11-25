@@ -291,4 +291,97 @@
   }
   window.shareImageBB = shareImageBB;
 
+  function drawSlip(items, dateLine, logoImg, title) {
+    var W = 1080, H = 1920, P = 56;
+    var list = (items || []).slice(0, 20);
+    var c = document.createElement("canvas"); c.width = W; c.height = H;
+    var x = c.getContext("2d");
+    x.textBaseline = "top"; x.textAlign = "left";
+    x.fillStyle = INK; x.fillRect(0, 0, W, H);
+    x.fillStyle = GREEN; x.fillRect(0, 0, W, 240);
+    x.fillStyle = AMB; x.fillRect(0, 240, W, 6);
+    if (logoImg && logoImg.complete && logoImg.naturalWidth) {
+      clip(x, P, 52, 110, 110, 26, function () { x.drawImage(logoImg, P, 52, 110, 110); });
+      x.strokeStyle = "rgba(255,255,255,0.25)"; x.lineWidth = 3;
+      rr(x, P, 52, 110, 110, 26); x.stroke();
+    } else {
+      x.fillStyle = AMB; rr(x, P, 52, 110, 110, 26); x.fill();
+      x.fillStyle = GREEN; x.font = "800 70px Manrope, system-ui, sans-serif";
+      x.fillText("f", P + 37, 76);
+    }
+    x.fillStyle = TX; x.font = "800 56px Manrope, system-ui, sans-serif";
+    x.fillText("Fixturio", P + 140, 60);
+    x.fillStyle = "rgba(232,237,247,0.75)"; x.font = "600 27px Manrope, system-ui, sans-serif";
+    x.fillText(dateLine || "", P + 142, 126);
+    x.fillStyle = AMB; x.font = "700 28px Manrope, system-ui, sans-serif";
+    x.fillText(title || ("My slip \u00B7 " + list.length + (list.length === 1 ? " game" : " games")), P + 142, 168);
+    var top = 288, bottom = 1688;
+    if (list.length) {
+      var RH = Math.max(66, Math.min(96, Math.floor((bottom - top) / list.length)));
+      var y = top;
+      list.forEach(function (it, i) {
+        var bh = RH - 6;
+        var dy = Math.floor(Math.max(0, bh - 62) / 2);
+        x.fillStyle = CARD; rr(x, P, y, W - P * 2, bh, 14); x.fill();
+        x.fillStyle = AMB; x.beginPath(); x.arc(P + 36, y + bh / 2, 20, 0, Math.PI * 2); x.fill();
+        x.fillStyle = INK; x.font = "800 23px Manrope, system-ui, sans-serif";
+        x.textAlign = "center"; x.textBaseline = "middle";
+        x.fillText(String(i + 1), P + 36, y + bh / 2 + 1);
+        x.textAlign = "left"; x.textBaseline = "top";
+        var lx = P + 74, maxW = W - P * 2 - lx - 150;
+        x.fillStyle = TX; x.font = "800 28px Manrope, system-ui, sans-serif";
+        fit(x, it.match, "800", 28, maxW); x.fillText(it.match, lx, y + 6 + dy);
+        var mktW = Math.floor(maxW * 0.55);
+        x.fillStyle = AMB; x.font = "700 22px Manrope, system-ui, sans-serif";
+        fit(x, it.mkt, "700", 22, mktW); x.fillText(it.mkt, lx, y + 40 + dy);
+        var x2 = lx + x.measureText(it.mkt).width + 16;
+        var avail = W - P - 150 - x2;
+        if (avail > 70) {
+          var lg = flag(it.country) + " " + (it.league || "") + " \u00B7 " + hhmm(it.ko);
+          x.fillStyle = MU; x.font = "600 20px Manrope, system-ui, sans-serif";
+          fit(x, lg, "600", 20, avail); x.fillText(lg, x2, y + 42 + dy);
+        }
+        x.fillStyle = TX; x.font = "800 34px Manrope, system-ui, sans-serif";
+        x.textAlign = "right"; x.textBaseline = "top";
+        x.fillText(it.p + "%", W - P - 10, y + 4 + dy);
+        var bw = 110, bx = W - P - 10 - bw, by = y + 42 + dy;
+        x.fillStyle = "rgba(139,152,180,0.35)"; rr(x, bx, by, bw, 8, 4); x.fill();
+        x.fillStyle = it.p >= 70 ? AMB : "#4CAF7D";
+        rr(x, bx, by, Math.max(10, bw * it.p / 100), 8, 4); x.fill();
+        x.textAlign = "left"; x.textBaseline = "top";
+        y += RH;
+      });
+    }
+    var chance = 1, oddKnown = list.length > 0, cum = 1;
+    list.forEach(function (it) {
+      chance *= (it.p || 0) / 100;
+      var o = parseFloat(it.odd);
+      if (!o || isNaN(o)) oddKnown = false; else cum *= o;
+    });
+    x.fillStyle = AMB; x.font = "800 36px Manrope, system-ui, sans-serif";
+    x.fillText("Combined chance ~" + (list.length ? (chance >= 0.01 ? Math.round(chance * 100) + "%" : "<1%") : "\u2014") + (oddKnown ? "  \u00B7  odds " + cum.toFixed(2) : ""), P, 1726);
+    x.fillStyle = MU; x.font = "500 21px Manrope, system-ui, sans-serif";
+    x.fillText("18+ only. Estimates, not guarantees.", P, 1782);
+    x.fillStyle = AMB; x.font = "800 40px Manrope, system-ui, sans-serif";
+    x.fillText("fixturio.vercel.app", P, 1830);
+    return c;
+  }
+
+  function shareSlip(items, text, title) {
+    if (!items || !items.length) { toast("Nothing to share yet. Add a pick first."); return; }
+    var ready = document.fonts && document.fonts.load
+      ? document.fonts.load("800 40px Manrope").catch(function () {})
+      : Promise.resolve();
+    ready.then(function () {
+      var logo = new Image();
+      var load = new Promise(function (res) { logo.onload = logo.onerror = res; });
+      logo.src = "/logo.png?v=2";
+      load.then(function () {
+        var dateLine = new Date().toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
+        var c = drawSlip(items, dateLine, logo, title);
+        saveOrShare(c, "fixturio-slip.png", text || "My football picks", "Slip image ready. Nice one.");
+      });
+    });
+  }
+  window.shareSlip = shareSlip;
 })();

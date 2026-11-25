@@ -81,6 +81,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .f5m .fvs{color:var(--mu)}
 .fb{font-style:normal;display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;font-size:10px;font-weight:800;color:#fff}
 .fb.w{background:#2E7D32}.fb.d{background:#A87B00}.fb.l{background:#C0392B}
+.fxmsg{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#0B1220;color:#E8EDF7;font:700 14px Manrope,system-ui,sans-serif;padding:12px 18px;border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:99999;max-width:88vw;text-align:center}
 </style><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-192.png"><link rel="stylesheet" href="/fix.css">
 </head><body>
 <div class="wrap">
@@ -104,6 +105,17 @@ function star(){
   localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));
   if(window.fxAuth){try{fxAuth.push(s.slice(0,60));}catch(e){}}
   const b=$("sv");if(b){b.classList.toggle("on",i<0);b.textContent=i<0?"★ Saved":"☆ Save match";}
+}
+const NICE={"Home win":"Home win","Away win":"Away win","Double chance 1X (home or draw)":"Home or draw","Double chance X2 (away or draw)":"Away or draw","Double chance 12 (no draw)":"Home or away","Over 2.5 goals":"Over 2.5 goals","Under 2.5 goals":"Under 2.5 goals","Both teams to score":"BTTS: yes","Both teams not to score":"BTTS: no"};
+function msg(t){const e=document.createElement("div");e.className="fxmsg";e.textContent=t;document.body.appendChild(e);setTimeout(function(){e.remove();},2400);}
+function shareM(){
+  if(!m){msg("Match is still loading. Try again.");return;}
+  let mkt=null,pp=null,odd=null;
+  if(info&&info.markets){const bb=info.markets.filter(x=>x.prob>0.01&&x.prob<0.999).sort((a,b2)=>b2.prob-a.prob)[0];if(bb){mkt=NICE[bb.market]||bb.market;pp=Math.round(bb.prob*100);odd=bb.odd||null;}}
+  if(!mkt&&p&&p[mid]){const q=p[mid];const arr=[["Home win",q.h],["Away win",q.a],["Draw",q.d],["Over 2.5 goals",q.o],["Both teams to score",q.b]].filter(x=>x[1]!=null&&!isNaN(+x[1]));arr.sort((a,b2)=>b2[1]-a[1]);if(arr.length){mkt=arr[0][0];pp=Math.round(+arr[0][1]);}}
+  if(!mkt){msg("No prediction for this match yet.");return;}
+  if(!window.shareSlip){msg("Share image is still loading. Tap again.");return;}
+  window.shareSlip([{match:m.teams.home.name+" vs "+m.teams.away.name,mkt:mkt,p:pp,odd:odd,league:m.league?m.league.name:"",country:m.league&&m.league.country?m.league.country:"",ko:m.fixture?m.fixture.date:""}],"Match preview from Fixturio","Match preview \u00B7 Fixturio");
 }
 function hl(){
   const q=encodeURIComponent(m.teams.home.name+" vs "+m.teams.away.name+" "+m.league.name+" highlights");
@@ -149,7 +161,7 @@ function render(){
     const fch=v=>String(v||"").split(" ").filter(Boolean).slice(-5).map(c=>'<i class="fb '+c.toLowerCase()+'">'+c+'</i>').join("");
     html+='<div class="f5m"><span class="lb">'+esc(h.name.split(" ")[0])+'</span>'+fch(pred.form.h)+'<span class="fvs">·</span>'+fch(pred.form.a)+'<span class="lb">'+esc(a.name.split(" ")[0])+'</span></div>';
   }
-  html+='<div class="acts"><button id="sv" onclick="star()">☆ Save match</button><button onclick="share()">Share</button>' +'<button onclick="hl()">▶ Highlights</button>'+ '</div></div>';
+  html+='<div class="acts"><button id="sv" onclick="star()">☆ Save match</button><button onclick="share()">Share</button><button onclick="shareM()">Share as image</button>' +'<button onclick="hl()">▶ Highlights</button>'+ '</div></div>';
   if(pred){
     const mx=Math.max(pred.h,pred.d,pred.a);
     html+='<div class="card"><h3>Model prediction</h3><small style="color:var(--mu)">Top chance '+mx+'% · Expected goals '+pred.x+" – "+pred.y+"</small></div></div>";
@@ -269,6 +281,7 @@ function loadOdds(){
     if(!d||!d.matches)return;
     const dm=d.matches.find(x=>x.id===+mid);
     if(!dm||!dm.markets)return;
+    info=dm;
     const o={};
     dm.markets.forEach(mk=>{
       if(mk.kind!=="single")return;
@@ -334,5 +347,5 @@ function findIt(){
 findIt();
 fetch("/all.json").then(r=>r.ok?r.json():null).then(d=>{if(d&&d.m){p=d.m;render();}}).catch(function(){});
 </script>
-<script src="/markets.js" defer></script><script src="/affiliate.js" defer></script>
+<script src="/markets.js" defer></script><script src="/share-image.js" defer></script><script src="/affiliate.js" defer></script>
 <script src="/auth.js"></script><script src="/ads.js" defer></script></body></html>

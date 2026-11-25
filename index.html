@@ -163,7 +163,31 @@ body.tm .dock{display:block}
 .tot span{font-weight:700}
 .tot b{font-size:38px;font-weight:800;letter-spacing:-.02em}
 .slip .fine{color:#5B563F}
-.ad-infeed{display:block;margin:10px auto 2px;max-width:760px;text-align:center}</style><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-192.png"><meta name="fx-build" content="20261124-01">
+.ad-infeed{display:block;margin:10px auto 2px;max-width:760px;text-align:center}.mrow{grid-template-columns:1fr auto 30px}
+.mkadd{width:30px;height:30px;border:1px solid var(--line);border-radius:9px;background:var(--s2);color:var(--tx);font-size:17px;font-weight:800;line-height:1;padding:0}
+.mkadd.on{background:var(--bar,#4ADE9C);border-color:var(--bar,#4ADE9C);color:#08130D}
+#slipdock{position:fixed;left:16px;right:16px;bottom:calc(132px + env(safe-area-inset-bottom));z-index:60;max-width:528px;margin:0 auto;background:var(--slip);color:var(--sink);border-radius:14px;padding:10px 12px 10px 16px;display:none;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+#slipdock.show{display:flex}
+#slipdock b{font-size:15px;font-weight:800}
+#slipdock small{font-size:12px;font-weight:600;opacity:.75}
+#slipdock button{border:0;background:var(--sink);color:var(--slip);font-weight:800;font-size:14px;padding:9px 16px;border-radius:10px;margin-left:auto;flex:none}
+@media(min-width:768px){#slipdock{bottom:16px}}
+#slipsheet{position:fixed;inset:0;z-index:70;display:none}
+#slipsheet.open{display:block}
+#slipsheet .bw{position:absolute;inset:0;background:rgba(2,8,14,.6)}
+#slipsheet .bc{position:absolute;left:0;right:0;bottom:0;background:var(--ink);border-top:1px solid var(--line);border-radius:18px 18px 0 0;max-height:76vh;overflow-y:auto;padding:16px 16px calc(20px + env(safe-area-inset-bottom))}
+#slipsheet h3{margin:0 0 10px;font-size:17px;font-weight:800}
+.sli{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.sli:first-of-type{border-top:0}
+.sli .si1{flex:1;min-width:0}
+.sli .si1 b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sli .si1 small{color:var(--mu);font-size:12px}
+.sli .sx{border:1px solid var(--line);background:var(--s2);color:var(--mu);border-radius:8px;width:30px;height:30px;font-size:14px;font-weight:800;padding:0;flex:none}
+.slact{display:flex;gap:10px;margin-top:14px}
+.slact .go{flex:1;border:0;border-radius:12px;padding:12px;font-weight:800;font-size:15px;background:var(--slip);color:var(--sink)}
+.slact .clr{flex:none;border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-weight:800;font-size:15px;background:var(--s2);color:var(--mu)}
+.fxmsg{position:fixed;left:50%;bottom:calc(190px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#0B1220;color:#E8EDF7;font:700 14px Manrope,system-ui,sans-serif;padding:12px 18px;border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:99999;max-width:88vw;text-align:center}
+</style><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-192.png"><meta name="fx-build" content="20261124-01">
   <link rel="stylesheet" href="/fix.css">
 </head><body>
 <div class="wrap" id="wrap">
@@ -395,9 +419,10 @@ function render(){
     h+='<button class="more" onclick="toggleMore()">Hide other leagues</button>';
   }
   $("app").innerHTML=h;
+  slipRepaint();
 }
 
-function panel(rows,notes){
+function panel(rows,notes,pid){
   if(!rows.length)return '<p class="note">'+esc(notes)+'</p>';
   const top=(a,b)=>b.p>a.p?b:a;
   const b1=rows.reduce(top);
@@ -413,7 +438,7 @@ function panel(rows,notes){
     h+='<div class="sec"><h4>'+esc(k)+'</h4>';
     g[k].forEach(r=>{
       const idx=_rows.indexOf(r);
-      h+='<div class="mrow'+(r===b1?" best":"")+'"><span class="nm">'+esc(r.label)+'</span><span class="pv">'+r.p+'%</span><div class="tr"><i style="width:'+r.p+'%"></i></div>'+'</div>';
+      h+='<div class="mrow'+(r===b1?" best":"")+'"><span class="nm">'+esc(r.label)+'</span><span class="pv">'+r.p+'%</span><div class="tr"><i style="width:'+r.p+'%"></i></div>'+(pid!=null?'<button class="mkadd" data-id="'+pid+'" data-i="'+idx+'" aria-label="Add '+esc(r.label)+' to slip" onclick="event.stopPropagation();slipAdd('+pid+','+idx+')">+</button>':'')+'</div>';
     });
     h+='</div>';
   });
@@ -428,6 +453,22 @@ function starMatch(){
   localStorage.setItem("fixturio:saved",JSON.stringify(s.slice(0,60)));
   const b=$("starbtn");if(b){b.classList.toggle("on",i2<0);b.textContent=i2<0?"★ Saved":"☆ Save match";}
 }
+const SLIPMAX=20;let slipItems=[],slipCtx={};
+function msg(t){const e=document.createElement("div");e.className="fxmsg";e.textContent=t;document.body.appendChild(e);setTimeout(function(){e.remove();},2400);}
+function slipLoad(){slipItems=[];try{const s=JSON.parse(localStorage.getItem("fx_slip")||"null");if(s&&s.date===dateStr(d0)&&Array.isArray(s.items))slipItems=s.items;}catch(e){}if(slipItems.length>SLIPMAX)slipItems=slipItems.slice(0,SLIPMAX);slipDock();}
+function slipSave(){try{localStorage.setItem("fx_slip",JSON.stringify({date:dateStr(d0),items:slipItems}));}catch(e){}}
+function slipDock(){const d=$("slipdock");if(!d)return;d.classList.toggle("show",slipItems.length>0);if(slipItems.length){$("slipcnt").textContent="My slip \u00B7 "+slipItems.length+"/"+SLIPMAX;$("sliphint").textContent="pick up to 20 games";}}
+function slipRepaint(){document.querySelectorAll(".mkadd").forEach(function(b){const id=+b.getAttribute("data-id"),i=+b.getAttribute("data-i");const c=slipCtx[id];const on=!!(c&&c.rows&&c.rows[i]&&slipItems.some(x=>x.key===id+"|"+c.rows[i].label));b.classList.toggle("on",on);b.textContent=on?"\u2713":"+";});}
+function slipAdd(id,i){const c=slipCtx[id];if(!c||!c.rows||!c.rows[i])return;const r=c.rows[i];const key=id+"|"+r.label;const ex=slipItems.findIndex(x=>x.key===key);
+  if(ex>=0){slipItems.splice(ex,1);}
+  else{if(slipItems.length>=SLIPMAX){msg("Slip is full. 20 games max.");return;}slipItems.push({key:key,id:id,match:c.home+" vs "+c.away,mkt:r.label,p:r.p,odd:(r.odd==null?null:r.odd),league:c.lg,country:c.cty,ko:c.ko});}
+  slipSave();slipDock();slipRepaint();msg(ex>=0?"Removed from your slip":"Added to slip ("+slipItems.length+"/"+SLIPMAX+")");if($("slipsheet").classList.contains("open"))slipList();}
+function slipList(){const h=slipItems.length?slipItems.map((x,i)=>'<div class="sli"><div class="si1"><b>'+esc(x.match)+'</b><small>'+esc(x.mkt)+' \u00B7 '+x.p+'%'+(x.odd?" \u00B7 odd "+x.odd:"")+'</small></div><button class="sx" aria-label="Remove from slip" onclick="slipDel('+i+')">\u2715</button></div>').join(""):'<p class="note">Your slip is empty. Tap a match, then tap + next to a market to add it.</p>';$("sliprows").innerHTML=h;}
+function slipDel(i){slipItems.splice(i,1);slipSave();slipDock();slipRepaint();slipList();}
+function slipClear(){slipItems=[];slipSave();slipDock();slipRepaint();slipList();}
+function slipOpen(){slipList();$("slipsheet").classList.add("open");}
+function slipClose(){$("slipsheet").classList.remove("open");}
+function slipMake(){slipClose();if(!slipItems.length){msg("Your slip is empty. Tap a match, then tap + next to a market.");return;}if(!window.shareSlip){msg("Share image is still loading. Tap again.");return;}window.shareSlip(slipItems.slice(),"My picks on Fixturio");slipClose();}
 function att(v){return String(v).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/'/g,"&#39;");}
 function tgLg(el){const k=el.getAttribute("data-k");if(!k)return;if(lgClosed.has(k))lgClosed.delete(k);else lgClosed.add(k);render();}
 function moreTgl(){const m=document.getElementById("morelist");if(m)m.classList.toggle("open");}
@@ -440,21 +481,22 @@ function fav(id){
 }
 function dailyRows(dm,home,away){
   const mk={};dm.markets.forEach(x=>{mk[x.market]=Math.round(x.prob*100);});
+  const od={};dm.markets.forEach(x=>{od[x.market]=x.odd||null;});
   const h=mk["Home win"],a=mk["Away win"],x1=mk["Double chance 1X (home or draw)"],x2=mk["Double chance X2 (away or draw)"],x12=mk["Double chance 12 (no draw)"];
   const r=[];
-  if(h!=null)r.push({g:"Match result",label:home+" win",p:h});
+  if(h!=null)r.push({g:"Match result",label:home+" win",p:h,odd:od["Home win"]});
   if(x1!=null&&x2!=null)r.push({g:"Match result",label:"Draw",p:Math.max(0,x1+x2-100)});
-  if(a!=null)r.push({g:"Match result",label:away+" win",p:a});
-  if(x1!=null)r.push({g:"Double chance",label:home+" or draw",p:x1});
-  if(x2!=null)r.push({g:"Double chance",label:away+" or draw",p:x2});
-  if(x12!=null)r.push({g:"Double chance",label:home+" or "+away,p:x12});
+  if(a!=null)r.push({g:"Match result",label:away+" win",p:a,odd:od["Away win"]});
+  if(x1!=null)r.push({g:"Double chance",label:home+" or draw",p:x1,odd:od["Double chance 1X (home or draw)"]});
+  if(x2!=null)r.push({g:"Double chance",label:away+" or draw",p:x2,odd:od["Double chance X2 (away or draw)"]});
+  if(x12!=null)r.push({g:"Double chance",label:home+" or "+away,p:x12,odd:od["Double chance 12 (no draw)"]});
   if(mk["Over 2.5 goals"]!=null){
-    r.push({g:"Total goals",label:"Over 2.5 goals",p:mk["Over 2.5 goals"]});
-    r.push({g:"Total goals",label:"Under 2.5 goals",p:mk["Under 2.5 goals"]||0});
+    r.push({g:"Total goals",label:"Over 2.5 goals",p:mk["Over 2.5 goals"],odd:od["Over 2.5 goals"]});
+    r.push({g:"Total goals",label:"Under 2.5 goals",p:mk["Under 2.5 goals"]||0,odd:od["Under 2.5 goals"]});
   }
   if(mk["Both teams to score"]!=null){
-    r.push({g:"Both teams to score",label:"Yes",p:mk["Both teams to score"]});
-    r.push({g:"Both teams to score",label:"No",p:mk["Both teams not to score"]||0});
+    r.push({g:"Both teams to score",label:"Yes",p:mk["Both teams to score"],odd:od["Both teams to score"]});
+    r.push({g:"Both teams to score",label:"No",p:mk["Both teams not to score"]||0,odd:od["Both teams not to score"]});
   }
   return r;
 }
@@ -479,9 +521,9 @@ function modelRows(p,home,away){
   ];
 }
 
-function predPanel(d,home,away){
+function predPanel(d,home,away,pid){
   const p=(d.response||[])[0];
-  if(!p)return panel([],"No prediction is available for this match. Predictions cover the main leagues each morning.");
+  if(!p){if(pid!=null&&slipCtx[pid])slipCtx[pid].rows=[];return panel([],"No prediction is available for this match. Predictions cover the main leagues each morning.",pid);}
   const pr=p.predictions,pc=pr.percent||{};
   const n=v=>parseInt(v)||0;
   let h=n(pc.home),x=n(pc.draw),a=n(pc.away);
@@ -500,7 +542,8 @@ function predPanel(d,home,away){
   let note=pr.advice?pr.advice+". ":"";
   const uo=pr.under_over?String(pr.under_over):"";
   if(uo)note+="Goals lean "+(uo.charAt(0)==="-"?"under ":"over ")+uo.replace(/^[+-]/,"")+". ";
-  return panel(rows,note+"Estimates, not guarantees.");
+  if(pid!=null&&slipCtx[pid])slipCtx[pid].rows=rows;
+  return panel(rows,note+"Estimates, not guarantees.",pid);
 }
 
 function tog(id){
@@ -510,13 +553,14 @@ function tog(id){
   if(panels[id])return;
   const mm=data.find(x=>x.fixture.id===id);
   if(!mm)return;
+  slipCtx[id]={home:mm.teams.home.name,away:mm.teams.away.name,lg:mm.league?mm.league.name:"",cty:mm.league&&mm.league.country?mm.league.country:"",ko:mm.fixture&&mm.fixture.date?mm.fixture.date:"",rows:null};
   const home=mm.teams.home.name,away=mm.teams.away.name;
   _ctx={id:id,home:home,away:away};
-  if(info[id]){_rows=dailyRows(info[id],home,away);panels[id]=panel(_rows,dailyNote(info[id],home,away));el.innerHTML=panels[id];return;}
-  if(pred[id]){_rows=modelRows(pred[id],home,away);panels[id]=panel(_rows,"Estimated from both teams’ results over the last 30 days. Estimates, not guarantees.");el.innerHTML=panels[id];return;}
+  if(info[id]){_rows=dailyRows(info[id],home,away);slipCtx[id].rows=_rows;panels[id]=panel(_rows,dailyNote(info[id],home,away),id);el.innerHTML=panels[id];return;}
+  if(pred[id]){_rows=modelRows(pred[id],home,away);slipCtx[id].rows=_rows;panels[id]=panel(_rows,"Estimated from both teams’ results over the last 30 days. Estimates, not guarantees.",id);el.innerHTML=panels[id];return;}
   el.innerHTML='<p class="note">Loading predictions…</p>';
   fetch("/api/predictions?fixture="+id).then(r=>r.json()).then(d=>{
-    panels[id]=predPanel(d,home,away);
+    panels[id]=predPanel(d,home,away,id);
     const e=$("p"+id);if(e)e.innerHTML=panels[id];
   }).catch(()=>{const e=$("p"+id);if(e)e.innerHTML='<p class="note">Predictions could not be loaded. Try again later.</p>';});
 }
@@ -548,6 +592,7 @@ function load(auto){feedSkip=!!auto;fetchMatches(day,1);}
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.classList&&e.target.classList.contains("m"))e.target.click();});
 $("date").textContent=new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long"});
 days();
+slipLoad();
 load();
 setTimeout(function(){if(!loaded){var a=$("app");if(a)a.innerHTML='<p class="msg pad">Still loading slowly or the connection dropped. <button class="more" onclick="location.reload()">Tap to reload</button></p>';}},20000);
 setInterval(()=>{if(day===0)load(true);},60000);
@@ -557,7 +602,9 @@ fetch("/daily.json?v="+Date.now()).then(r=>r.ok?r.json():null).then(d=>{
 fetch("/all.json").then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.m){pred=d.m;cov=d;render();}
 }).catch(()=>{});
-</script><script src="/markets.js"></script><script src="/share.js"></script><script src="/affiliate.js" defer></script><script src="/ads.js" defer></script><script src="/push.js" defer></script>
+</script><script src="/markets.js"></script><script src="/share.js"></script><script src="/share-image.js" defer></script><script src="/affiliate.js" defer></script><script src="/ads.js" defer></script><script src="/push.js" defer></script>
+<div id="slipdock" role="button" tabindex="0" onclick="slipOpen()"><b id="slipcnt"></b><small id="sliphint"></small><button type="button" onclick="event.stopPropagation();slipMake()">Make image</button></div>
+<div id="slipsheet"><div class="bw" onclick="slipClose()"></div><div class="bc"><h3>My slip</h3><div id="sliprows"></div><div class="slact"><button class="clr" type="button" onclick="slipClear()">Clear all</button><button class="go" type="button" onclick="slipMake()">Make my image</button></div></div></div>
 <div class="morelist" id="morelist"><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a><a href="/info.html">About</a><a href="/auth.html">Sign in</a></div>
 <nav class="tabbar" aria-label="Main"><a class="tbi on" href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.6l4.2 3-1.6 4.9H9.4l-1.6-4.9z"/></svg>Matches</a><a class="tbi" href="/picks.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4.6a5 5 0 0 1-10 0z"/><path d="M7 5H4.4a2.9 2.9 0 0 0 3 3.8M17 5h2.6a2.9 2.9 0 0 1-3 3.8"/><path d="M12 13.6V18M9.5 20.5h5"/></svg>Top 15</a><a class="tbi" href="/basketball.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3.4 2.4 3.4 14.6 0 17M12 3.5c-3.4 2.4-3.4 14.6 0 17"/></svg>Basketball</a><a class="tbi" href="/saved.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.8 3.8h10.4v16l-5.2-3.6-5.2 3.6z"/></svg>Saved</a><button class="tbi" type="button" onclick="moreTgl()"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.7" fill="currentColor" stroke="none"/></svg>More</button></nav>
 </body></html>
