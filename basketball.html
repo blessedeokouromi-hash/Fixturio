@@ -3,27 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0B5A3C">
+<meta name="theme-color" content="#0B1220">
 <title>Basketball picks | Fixturio</title>
+<meta name="description" content="Free basketball predictions today: Top 15 moneyline picks, the daily acca and live win chances for Euroleague, NBA, NCAA and more. Based on bookmaker odds.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/theme.css">
+<script src="/theme.js" defer></script>
+<script src="/auth.js" defer></script>
+<script>document.addEventListener("DOMContentLoaded",function(){if(window.fxAuth)fxAuth.on(function(u){var a=document.getElementById("authlnk");if(a)a.textContent=u?"Account":"Sign in";});});</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
+:root{--ink:#0B1220;--s1:#121B2E;--s2:#18233A;--line:#243049;--tx:#E8EDF7;--mu:#93A0BA;--amb:#F5B544;--live:#FF5B5B;--slip:#F4E6B0;--sink:#1D1B12;--f:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif}
 *{box-sizing:border-box}
-body{margin:0;background:var(--ink);color:var(--tx);font:500 15px/1.4 var(--f);-webkit-text-size-adjust:100%}
+html{color-scheme:dark}
+body{margin:0;background:var(--ink);color:var(--tx);font:500 15px/1.4 var(--f);-webkit-text-size-adjust:100%;font-variant-numeric:tabular-nums}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:2px solid var(--amb);outline-offset:2px}
-.wrap{max-width:560px;margin:0 auto;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
-.top{position:sticky;top:0;z-index:4;background:var(--pitch);border-bottom:0;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;justify-content:space-between;align-items:center}
+.wrap{max-width:560px;margin:0 auto}
+.top{position:sticky;top:0;z-index:4;background:var(--ink);border-bottom:1px solid var(--line);padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .logo img{width:32px;height:32px;flex:none;border-radius:8px}
-.logo b{font-size:21px;font-weight:800;color:#fff;letter-spacing:-.02em}
-.top>a{color:var(--hmu);text-decoration:none;font-weight:700}
-.tabs{display:flex;align-items:center;gap:22px;padding:0 16px;background:var(--pitch);border-bottom:0;overflow-x:auto;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tabs a{padding:11px 0;color:var(--hmu);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
-.tabs a.on{color:#fff;border-color:var(--amb)}
-.sr{padding:12px 16px 0}
-.sr input{width:100%;border:1px solid var(--line);background:var(--s1);color:var(--tx);border-radius:12px;padding:11px 14px;font:inherit}
-.chips{display:flex;gap:8px;padding:12px 16px 8px;overflow-x:auto}
+.logo b{display:block;font-size:21px;font-weight:800;letter-spacing:-.02em;line-height:1.1;color:#fff}
+.logo small{display:block;font-size:12px;color:var(--mu)}
+body .top>a.authlnk{margin-left:auto;flex:none;align-self:center;padding:8px 14px;border-radius:999px;background:#FFD54A;color:#123F33;font-weight:800;font-size:13px;text-decoration:none;border:0}
+.tabs{display:flex;align-items:center;gap:22px;padding:0 16px;border-bottom:1px solid var(--line)}
+.tabs a{padding:11px 0;color:var(--mu);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs a.on{color:var(--tx);border-color:var(--amb)}
+.days{display:flex;align-items:stretch;gap:8px;padding:12px 16px 0}
+.darr{width:42px;border:1px solid var(--line);background:var(--s1);border-radius:10px;font-size:22px;font-weight:800;color:var(--tx);flex:none}
+.darr:disabled{opacity:.3}
+.dlab{flex:1;border:1px solid var(--line);background:var(--s1);border-radius:10px;padding:7px 6px;text-align:center}
+.dlab b{display:block;font-size:15px;font-weight:800;line-height:1.2}
+.dlab small{display:block;font-weight:600;font-size:11px;color:var(--mu)}
+.sr{padding:10px 16px 0}
+.sr input{width:100%;padding:11px 14px;background:var(--s1);border:1px solid var(--line);border-radius:10px;color:var(--tx);font:inherit;font-size:16px}
+.sr input::placeholder{color:var(--mu)}
+.chips{display:flex;gap:8px;padding:12px 16px 8px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
 .chip{flex:none;border:1px solid var(--line);background:transparent;padding:7px 14px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap}
 .chip.on{background:var(--tx);color:var(--ink);border-color:var(--tx)}
 .chip.lc{color:var(--live);border-color:rgba(255,91,91,.45)}
@@ -38,30 +56,36 @@ button{font:inherit;color:inherit;cursor:pointer}
 .cnt{flex:none;min-width:24px;height:24px;padding:0 7px;border-radius:999px;background:var(--s1);border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:800;color:var(--mu)}
 .chev{flex:none;width:0;height:0;border-left:6px solid var(--mu);border-top:5px solid transparent;border-bottom:5px solid transparent;transform:rotate(90deg);transition:transform .15s}
 .chev.rot{transform:rotate(0)}
-.game{display:flex;align-items:center;gap:10px;padding:11px 14px;border-top:1px solid var(--line)}
-.game .star{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:transparent;border:0;font-size:17px;color:var(--mu)}
-.game .star.on{color:var(--amb)}
-.gm{min-width:0;flex:1}
-.gm b{display:block;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gm small{display:block;font-size:12px;color:var(--mu)}
-.gm .live{color:var(--live);font-weight:800}
-.pr{display:grid;justify-items:center;gap:5px;min-width:66px;flex:none}
+.grp{background:var(--s1)}
+.m{display:grid;grid-template-columns:46px 1fr auto auto 30px;column-gap:10px;align-items:center;padding:11px 12px 11px 16px}
+.mw{border-top:1px solid var(--line)}
+.mw:first-child{border-top:0}
+.fav{width:30px;height:30px;border:0;background:transparent;font-size:18px;line-height:1;color:var(--mu);padding:0;justify-self:center}
+.fav.on{color:var(--amb)}
+.st{text-align:center;font-size:13px;font-weight:700;color:var(--mu);line-height:1.2}
+.st.live{color:var(--live)}
+.dot{display:block;width:6px;height:6px;margin:5px auto 0;border-radius:50%;background:#5BD18B}
+.tn{min-width:0}
+.tn>div{display:flex;align-items:center;gap:8px;height:24px;font-size:15px;font-weight:600;min-width:0}
+.tn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tn .w{font-weight:800}
+.tn .l{color:var(--mu);font-weight:500}
+.pr{display:grid;justify-items:center;gap:5px;min-width:66px}
 .pill{font-weight:800;font-size:14px;padding:3px 9px;border-radius:7px;background:var(--s2);border:1px solid var(--line)}
+.sig{display:flex;gap:2px;align-items:flex-end;height:10px}
+.sig i{display:block;width:4px;border-radius:1px;background:var(--line)}
+.sig i:nth-child(1){height:4px}
+.sig i:nth-child(2){height:7px}
+.sig i:nth-child(3){height:10px}
+.sig.s1 i:nth-child(1){background:#FF7A7A}
+.sig.s2 i:nth-child(-n+2){background:var(--amb)}
+.sig.s3 i{background:#5BD18B}
+.sc{text-align:right;font-weight:800;font-size:15px;min-width:26px}
+.sc small{display:block;font-weight:600;font-size:10px;color:var(--mu)}
 .card{margin:12px 16px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--s1)}
 .card h3{margin:0 0 10px;font-size:16px;font-weight:800}
 .note{font-size:13px;color:var(--mu);margin:8px 0 0}
-.pick{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
-.pick:first-of-type{border-top:0}
-.rk{font-weight:800;color:var(--mu)}
-.tm{min-width:0}
-.tm b{display:block;font-size:15px;font-weight:800}
-.tm small{color:var(--mu);font-size:12px}
-.od{text-align:right}
-.od b{display:block;font-size:15px;font-weight:800;color:var(--amb)}
-.od small{color:var(--mu);font-size:12px}
-.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:5px}
-.bar i{display:block;height:100%;background:var(--amb)}
-.acca{border:1px solid var(--amb);background:var(--s1)}
+.acca{border:1px solid var(--amb)}
 .acca .tot{font-size:26px;font-weight:800;color:var(--amb)}
 .acca .joint{font-size:13px;color:var(--mu)}
 .leg{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
@@ -69,42 +93,57 @@ button{font:inherit;color:inherit;cursor:pointer}
 .leg small{color:var(--mu);display:block;font-size:12px}
 .leg b{white-space:nowrap;color:var(--amb)}
 .add{border:1px solid var(--line);background:var(--s2);border-radius:10px;padding:9px 14px;font-weight:700}
-.adslot{min-height:60px;margin:12px 16px;display:flex;justify-content:center;align-items:center}
+.adslot{min-height:50px;margin:10px 16px;display:flex;justify-content:center;align-items:center}
 .adslot:empty{display:none}
 .fine{margin:16px 16px 0;font-size:12px;color:var(--mu)}
-</style><link rel="manifest" href="/manifest.json">
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:80;display:none;background:var(--s1);border-top:1px solid var(--line);padding:4px 6px calc(6px + env(safe-area-inset-bottom))}
+.tbi{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 5px;font-size:11px;font-weight:800;color:var(--mu);text-decoration:none;border:0;appearance:none;-webkit-appearance:none;background:var(--s1);font-family:inherit}
+.tbi svg{width:22px;height:22px;display:block;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tbi.on{color:var(--amb)}
+.morelist{position:fixed;left:0;right:0;bottom:58px;z-index:79;display:none;background:var(--s1);border-top:1px solid var(--line);padding:10px 14px;grid-template-columns:repeat(3,1fr);gap:8px}
+.morelist.open{display:grid}
+.morelist a{padding:10px;border:1px solid var(--line);border-radius:10px;font-weight:700;font-size:13px;color:var(--tx);text-decoration:none;text-align:center}
+@media (max-width:767px){nav.tabs{display:none}.tabbar{display:flex}body{padding-bottom:72px}}
+@media (prefers-reduced-motion:reduce){.lg img,header img[src="/logo.png"]{animation:none}}
+</style>
+<link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <link rel="stylesheet" href="/fix.css">
-</head><body>
+</head>
+<body>
 <div class="wrap">
-<header class="top"><a class="logo" href="/"><img src="/logo.png" alt="Fixturio logo"><b>Fixturio</b></a><a href="/">All matches</a></header>
-<nav class="tabs"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/basketball.html" class="on">Basketball</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a></nav>
+<header class="top">
+  <a class="logo" href="/">
+    <img src="/logo.png" alt="Fixturio logo" style="width:32px;height:32px;flex:none;border-radius:8px">
+    <div><b>Fixturio</b><small id="date"></small></div>
+  </a>
+  <a class="authlnk" id="authlnk" href="/auth.html">Sign in</a>
+</header>
+<nav class="tabs tabsx"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/basketball.html" class="on">Basketball</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a></nav>
 <div class="adslot" id="ad-banner"></div>
-<main id="app">
-<div class="sr"><input id="q" type="search" placeholder="Search team or league" oninput="setQ(this.value)" aria-label="Search basketball games" autocomplete="off"></div>
+<div id="days" class="days" hidden><button class="darr" disabled aria-label="Previous day">&#8249;</button><div class="dlab"><b>Today</b><small id="dshort"></small></div><button class="darr" disabled aria-label="Next day">&#8250;</button></div>
+<div class="sr" id="srrow"><input id="q" type="search" placeholder="Search team, league or country" oninput="setQ(this.value)" aria-label="Search basketball games" autocomplete="off"></div>
 <div id="chips" class="chips"></div>
 <p id="cov" class="cov"></p>
-<div class="card acca" id="acca-card" style="display:none">
+<main id="app">
+<div class="card acca" id="acca-card" hidden>
 <h3>Acca of the day</h3>
 <div class="tot" id="acca-total"></div>
 <div class="joint" id="acca-joint"></div>
 <div id="acca-legs"></div>
 </div>
-<div class="card" id="picks-card">
-<h3>Top 15</h3>
-<p class="note" style="margin-top:0">The day's safest basketball calls, ranked by win chance.</p>
-<div id="picks"></div>
-<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="add" onclick="shareImageBB()">Share as image</button></div>
-</div>
+<div style="margin:12px 16px 0" id="sharerow"><button class="add" onclick="shareImageBB()">Share as image</button></div>
 <div id="lgcs"></div>
 <div class="bet-cta" data-banner="1"></div>
-<p class="fine">Predictions are estimates based on bookmaker odds, not guarantees. 18+ only.</p>
+<p class="fine">Predictions are estimates based on bookmaker odds, not guarantees. 18+ only. Basketball is one day at a time: the build runs once every morning.</p>
 </main>
 </div>
+<div class="morelist" id="morelist"><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a><a href="/info.html">About</a><a href="/auth.html">Sign in</a></div>
+<nav class="tabbar" aria-label="Main"><a class="tbi" href="/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.6l4.2 3-1.6 4.9H9.4l-1.6-4.9z"/></svg>Matches</a><a class="tbi" href="/picks.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4.6a5 5 0 0 1-10 0z"/><path d="M7 5H4.4a2.9 2.9 0 0 0 3 3.8M17 5h2.6a2.9 2.9 0 0 1-3 3.8"/><path d="M12 13.6V18M9.5 20.5h5"/></svg>Top 15</a><a class="tbi on" href="/basketball.html"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3.4 2.4 3.4 14.6 0 17M12 3.5c-3.4 2.4-3.4 14.6 0 17"/></svg>Basketball</a><a class="tbi" href="/saved.html"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.8 3.8h10.4v16l-5.2-3.6-5.2 3.6z"/></svg>Saved</a><button class="tbi" type="button" onclick="moreTgl()"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="18.5" cy="12" r="1.7" fill="currentColor" stroke="none"/></svg>More</button></nav>
 <script>
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const LIVE=["Q1","Q2","Q3","Q4","OT","BT","HT","LIVE"],DONE=["FT","AOT"];
+const LIVE=["Q1","Q2","Q3","Q4","OT","BT","HT","LIVE"],DONE=["FT","AOT","POST"];
 let BB=null,mode="all",q="",lgsNow=[],lgClosed=new Set(),pickSet=new Set();
 function setQ(v){q=(v||"").toLowerCase().trim();draw();}
 function setMode(m){mode=m;draw();}
@@ -120,67 +159,76 @@ function keep(g){
   if(mode==="live")return LIVE.includes(g.status);
   if(mode==="finished")return DONE.includes(g.status);
   if(mode==="upcoming"){if(g.status)return !LIVE.includes(g.status)&&!DONE.includes(g.status);return !g.time||g.time>utcNow();}
-  if(mode==="top")return pickSet.has(g.game_id)||pickSet.has(g.h+" vs "+g.a);
+  if(mode==="top")return pickSet.has(g.game_id);
   return true;
 }
 function chipRow(){
-  const gs=games(),n=gs.length;
-  const lv=gs.filter(g=>LIVE.includes(g.status)).length,fn=gs.filter(g=>DONE.includes(g.status)).length,up=gs.filter(g=>keep({status:g.status,time:g.time,modeless:1})||true).length;
-  const hasStatus=gs.some(g=>g.status);
-  let h=chip("all","All",n);
-  if(hasStatus&&lv)h+=chip("live","Live",lv,"lc");
-  if(hasStatus&&fn)h+=chip("finished","Finished",fn);
-  h+=chip("upcoming","Upcoming",gs.filter(g=>(!g.status&&!LIVE.includes(g.status)&&!DONE.includes(g.status))&&( !g.time||g.time>utcNow())).length);
-  h+=chip("top","Top picks",15);
+  const gs=games();
+  const lv=gs.filter(g=>LIVE.includes(g.status)).length,fn=gs.filter(g=>DONE.includes(g.status)).length;
+  const up=gs.filter(g=>!LIVE.includes(g.status)&&!DONE.includes(g.status)).length;
+  const top=gs.filter(g=>pickSet.has(g.game_id)).length;
+  let h=chip("all","All",gs.length);
+  if(lv)h+=chip("live","Live",lv,"lc");
+  if(fn)h+=chip("finished","Finished",fn);
+  h+=chip("upcoming","Upcoming",up);
+  h+=chip("top","Top picks",top);
   return h;
 }
+function chip(k,lab,n,cls){return '<button class="chip'+(cls||"")+(mode===k?" on":"")+'" onclick="setMode(\''+k+'\')">'+lab+' ('+n+')</button>';}
 function draw(){
   if(!BB)return;
   const gs=games().filter(keep);
   $("chips").innerHTML=chipRow();
-  $("cov").textContent="";
+  const cov=$("cov");
+  cov.textContent=gs.length?("Best moneyline pick and confidence bars for "+gs.length+" games. More green bars means more confident."):"";
   const byLg={};gs.forEach(g=>{(byLg[g.league]=byLg[g.league]||[]).push(g);});
   lgsNow=Object.keys(byLg).sort((x,y)=>byLg[y].length-byLg[x].length||x.localeCompare(y));
   if(!gs.length){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">No games here.</p>';return;}
   $("lgcs").innerHTML=lgsNow.map((lg,i)=>{
     const items=byLg[lg],closed=lgClosed.has(lg);
-    return '<div class="lgc"><div class="lg" onclick="tgLg('+i+')"><div class="lgt"><b>'+esc(lg)+'</b><small>'+esc(items[0].country||"Basketball")+'</small></div><span class="cnt">'+items.length+'</span><span class="chev'+(closed?"":" rot")+'"></span></div><div'+(closed?' style="display:none"':'')+'>'+items.map(gameRow).join("")+"</div></div>";
+    return '<div class="lgc"><div class="lg" onclick="tgLg('+i+')"><div class="lgt"><b>'+esc(lg)+'</b><small>'+esc(items[0].country||"Basketball")+'</small></div><span class="cnt">'+items.length+'</span><span class="chev'+(closed?" rot":"")+'"></span></div><div class="grp"'+(closed?' style="display:none"':'')+'>'+items.map(gameRow).join("")+"</div></div>";
   }).join("");
 }
 function tgLg(i){const l=lgsNow[i];if(lgClosed.has(l))lgClosed.delete(l);else lgClosed.add(l);draw();}
 function gameRow(g){
   const best=g.ph>=g.pa?{lab:"1",p:g.ph,odd:g.oh}:{lab:"2",p:g.pa,odd:g.oa};
   const lv=LIVE.includes(g.status),dn=DONE.includes(g.status);
-  const stTxt=lv?'<span class="live">'+esc(g.status==="BT"?"Break":g.status)+"</span> · ":"";
-  const pill=dn?"":'<span class="pill">'+best.lab+" "+Math.round(best.p)+"%</span>";
-  const odds=g.oh&&g.oa?" · 1 "+g.oh+" · 2 "+g.oa:"";
-  return '<div class="game"><button class="star'+(saved().indexOf(g.game_id)>=0?" on":"")+'" onclick="fav(\''+g.game_id+'\')" aria-label="Save match">&#9733;</button><div class="gm"><b>'+esc(g.h)+" v "+esc(g.a)+'</b><small>'+stTxt+esc(g.time)+odds+"</small></div>"+'<div class="pr">'+pill+"</div></div>";
+  const stc=lv?'<div class="st live">'+esc(g.status==="BT"?"Break":g.status)+'<i class="dot"></i></div>':'<div class="st">'+esc(g.time||"")+"</div>";
+  const sig="sig "+(best.p>=70?"s3":best.p>=50?"s2":"s1");
+  const pill=dn?'<div class="pill">'+esc(best.lab)+" "+Math.round(best.p)+"%</div>":'<div class="pill">'+esc(best.lab)+" "+Math.round(best.p)+"%</div>";
+  const sgc=dn?"":'<span class="'+sig+'"><i></i><i></i><i></i></span>';
+  const odd=best.odd?"<div>"+best.odd+"</div><small>odd</small>":"";
+  return '<div class="mw"><div class="m">'+stc+'<div class="tn"><div><span class="'+(best.lab==="1"?"w":"l")+'">'+esc(g.h)+'</span></div><div><span class="'+(best.lab==="2"?"w":"l")+'">'+esc(g.a)+'</span></div></div><div class="pr">'+pill+sgc+'</div><div class="sc">'+odd+'</div><button class="fav'+(saved().indexOf(g.game_id)>=0?" on":"")+'" onclick="fav(\''+g.game_id+'\')" aria-label="Save match">&#9733;</button></div></div>';
 }
-function row(p,i){
-  return '<div class="pick"><div class="rk">'+(i+1)+'</div><div class="tm"><b>'+esc(p.match)+'</b><small>'+esc(p.league)+(p.time?" · "+esc(p.time):"")+'</small><div class="bar"><i style="width:'+p.probability+'%"></i></div></div><div class="od"><b>@'+p.odd+'</b><small>'+p.probability+'%</small></div></div>';
-}
-fetch("/api/basketball",{cache:"no-store"}).then(r=>r.json()).then(d=>{
-  if(!d||!d.picks||!d.picks.length){
-    $("chips").style.display="none";$("q").parentNode.style.display="none";
-    $("picks-card").innerHTML='<h3>Top 15</h3><p class="note" style="margin-top:0">No basketball data yet. The daily build fills this page once the basketball data connection is live.</p>';
-    return;
-  }
+function paint(d){
   BB=d;window.bbData=d;
-  pickSet=new Set((d.picks||[]).map(p=>p.match));
+  pickSet=new Set((d.picks||[]).map(p=>p.game_id));
+  $("days").hidden=false;
+  $("dshort").textContent=new Date(d.date+"T12:00:00Z").toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"});
+  $("date").textContent=new Date().toLocaleDateString([],{weekday:"long",month:"long",day:"numeric"});
   if(d.acca&&d.acca.legs&&d.acca.legs.length){
-    $("acca-card").style.display="";
+    $("acca-card").hidden=false;
     $("acca-total").textContent="Total odds "+d.acca.total;
     $("acca-joint").textContent=d.acca.joint+"% chance every leg lands";
     $("acca-legs").innerHTML=d.acca.legs.map(l=>'<div class="leg"><div><b style="color:var(--tx);font-size:14px">'+esc(l.match)+'</b><small>'+esc(l.market)+" · "+esc(l.league)+(l.time?" · "+esc(l.time):"")+'</small></div><b>@'+l.odd+'</b></div>').join("");
   }
-  $("picks").innerHTML=d.picks.map(row).join("");
-  if(!(d.m||[]).length){$("chips").style.display="none";$("q").parentNode.style.display="none";}
-  else draw();
-}).catch(()=>{
-  $("chips").style.display="none";$("q").parentNode.style.display="none";
-  $("picks-card").innerHTML='<h3>Top 15</h3><p class="note" style="margin-top:0">Could not load basketball picks. Try again shortly.</p>';
-});
+  const pool=(d.m||[]).length;
+  $("srrow").style.display=pool?"":"none";
+  $("chips").style.display=pool?"":"none";
+  $("cov").style.display=pool?"":"none";
+  if(!pool&&!d.picks){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">No basketball data yet. The daily build fills this page once the basketball data connection is live.</p>';return;}
+  if(!pool&&d.picks){$("lgcs").innerHTML="";return;}
+  draw();
+}
+try{const c=JSON.parse(localStorage.getItem("fx_bb")||"null");if(c&&c.date===new Date().toISOString().slice(0,10))paint(c);}catch(e){}
+fetch("/api/basketball",{cache:"no-store"}).then(r=>r.json()).then(d=>{
+  if(!d||!d.picks||!d.picks.length){if(!BB){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">No basketball data yet. The daily build fills this page once the basketball data connection is live.</p>';}return;}
+  try{localStorage.setItem("fx_bb",JSON.stringify(d))}catch(e){}
+  paint(d);
+}).catch(()=>{if(!BB){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">Could not load basketball picks. Try again shortly.</p>';}});
+function moreTgl(){const m=document.getElementById("morelist");if(m)m.classList.toggle("open");}
 </script>
 <script src="/share-image.js"></script><script src="/affiliate.js" defer></script>
-<script src="/auth.js"></script><script src="/ads.js" defer></script>
-</body></html>
+<script src="/ads.js" defer></script>
+</body>
+</html>
