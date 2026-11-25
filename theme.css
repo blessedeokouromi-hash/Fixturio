@@ -116,3 +116,14 @@ html[data-theme="dark"] body .days button.on,
 html[data-theme="dark"] body .seg button.on{background:var(--bar);border-color:var(--bar);color:#08130D}
 /* Keep the floating theme toggle clear of the bottom tab bar on phones */
 @media (max-width:767px){#themeBtn{bottom:calc(78px + env(safe-area-inset-bottom))}}
+
+/* Header logo: gentle ball bounce every few seconds */
+@keyframes fxlogo{
+  0%{transform:translateY(0) scale(1)}
+  12%{transform:translateY(-5px) scale(1.06)}
+  24%{transform:translateY(0) scale(.97)}
+  32%{transform:translateY(-2px) scale(1.02)}
+  40%,100%{transform:translateY(0) scale(1)}
+}
+.logo img,header img[src="/logo.png"]{animation:fxlogo 4s ease-in-out infinite;animation-delay:.6s;will-change:transform}
+@media (prefers-reduced-motion:reduce){.logo img,header img[src="/logo.png"]{animation:none}}
