@@ -12,7 +12,8 @@
             try{sb=window.supabase.createClient(c.url,c.key);}catch(e){res(null);return;}
             enabled=true;
             sb.auth.getSession().then(function(g){emit(g&&g.data&&g.data.session?g.data.session.user:null);});
-            try{sb.auth.onAuthStateChange(function(ev,sess){emit(sess&&sess.user?sess.user:null);});}catch(e){}
+            try{sb.auth.onAuthStateChange(function(ev,sess){emit(sess&&sess.user?sess.user:(ev==="SIGNED_OUT"?null:user));});}catch(e){}
+            setTimeout(function(){sessUser().then(function(u){emit(u);});},1500);
             res(sb);
           };
           s.onerror=function(){res(null);};
@@ -22,19 +23,20 @@
     }
     return readyProm;
   }
+  function sessUser(){return sb?sb.auth.getSession().then(function(g){return g&&g.data&&g.data.session?g.data.session.user:null;}).catch(function(){return null;}):Promise.resolve(null);}
   function push(list){
     return ready().then(function(){
-      if(!sb||!user)return undefined;
-      return sb.auth.updateUser({data:{fx_saves:list}}).then(function(r){return r&&r.error?Promise.reject(r.error):undefined;});
+      if(!sb)return undefined;
+      return sessUser().then(function(u){
+        if(!u)return undefined;
+        return sb.auth.updateUser({data:{fx_saves:list}}).then(function(r){return r&&r.error?Promise.reject(r.error):undefined;});
+      });
     }).catch(function(e){try{console.warn('fxAuth.push failed',e);}catch(_){}});
   }
   function pull(){
     return ready().then(function(){
-      if(!sb||!user)return null;
-      return sb.auth.getSession().then(function(g){
-        var u=g&&g.data&&g.data.session&&g.data.session.user;
-        return u&&u.user_metadata&&u.user_metadata.fx_saves?u.user_metadata.fx_saves:null;
-      });
+      if(!sb)return null;
+      return sessUser().then(function(u){return u&&u.user_metadata&&u.user_metadata.fx_saves?u.user_metadata.fx_saves:null;});
     });
   }
   window.fxAuth={
