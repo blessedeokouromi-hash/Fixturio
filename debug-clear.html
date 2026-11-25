@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sync clear</title></head><body><pre id="o">starting...</pre><script src="/auth-config.json"></script><script src="/auth.js"></script><script>
+(async function(){
+  var o=document.getElementById('o'),log=[];
+  try{
+    localStorage.removeItem('fixturio:saved');
+    log.push('local cleared');
+    await new Promise(r=>{fxAuth.ready(t=>r())});
+    log.push('ready done');
+    var t=await fxAuth.token();
+    log.push('token='+(t?('yes len '+t.length):'NO TOKEN'));
+    if(t){
+      var url='https://ncpquoviqczrxupiihvv.supabase.co/auth/v1/user';
+      var res=await fetch(url,{method:'PUT',headers:{'Authorization':'Bearer '+t,'apikey':'sb_publishable_VHgrTvVRHEXMnltKq7at6A_jEd1D-P5','Content-Type':'application/json'},body:JSON.stringify({data:{fx_saves:[]}})});
+      var txt=await res.text();
+      log.push('PUT status='+res.status+' body='+txt.slice(0,300));
+      var res2=await fetch(url,{headers:{'Authorization':'Bearer '+t,'apikey':'sb_publishable_VHgrTvVRHEXMnltKq7at6A_jEd1D-P5'}});
+      var j=await res2.json();
+      log.push('READ fx_saves='+JSON.stringify((j.user_metadata||{}).fx_saves));
+    }
+  }catch(e){log.push('ERR '+e)}
+  o.textContent=log.join('\n');
+})();
+</script></body></html>
