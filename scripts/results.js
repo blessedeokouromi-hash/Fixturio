@@ -78,7 +78,9 @@ function grade(market, h, a) {
   try {
     const preds = load("data/preds.json", null);
     if (preds && preds.date === old.date && preds.m) {
-      const gr = load("grading.json", { updated: null, since: null, days: [], sum: { n: 0, brier: 0, hit: 0, sc: 0, goals: [0, 0], mk: {} } });
+      const gr = load("grading.json", {});
+      if (!gr.days) gr.days = [];
+      if (!gr.sum) gr.sum = { n: 0, brier: 0, hit: 0, sc: 0, goals: [0, 0], mk: {} };
       const MK = [
         ["Home win", q => q.h / 100, (h, a) => h > a],
         ["Away win", q => q.a / 100, (h, a) => a > h],
@@ -169,4 +171,8 @@ function grade(market, h, a) {
     console.error("Model grading skipped: " + e.message);
   }
   console.log("Checked " + old.date + ": " + won + " won, " + lost + " lost, " + voided + " void");
+
+  // Stage 4: nightly self-recalibration sweep (offline, no API calls).
+  try { await require("./recalibrate.js")(); }
+  catch (e) { console.error("Recalibration skipped: " + (e && e.message)); }
 })();
