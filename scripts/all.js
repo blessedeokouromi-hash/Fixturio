@@ -254,6 +254,8 @@ function model(lh, la) {
     const minN = Math.min(nh, na);
     mod.q = minN < VERYTHIN_GAMES ? "very-thin" : minN < THIN_GAMES ? "thin" : "ok";
     mod.cupish = CUP_RE.test(m.league.name || "");
+    mod.lg = m.league.id;
+    mod.kd = (m.fixture.date || "").slice(0, 10);
     if (minN < MIN_GAMES) thin++;
     out[m.fixture.id] = mod;
     lg[m.league.id] = 1;
@@ -266,4 +268,15 @@ function model(lh, la) {
     date: today, generated: new Date().toISOString(),
     leagues: Object.keys(lg).length, m: out
   }));
+  // Slim snapshot of every prediction made today, for the next build to grade
+  // against final scores (it reuses the results call, so no extra API use).
+  const slim = {};
+  Object.keys(out).forEach(id => {
+    const m = out[id];
+    slim[id] = { lg: m.lg, kd: m.kd, x: m.x, y: m.y, h: m.h, d: m.d, a: m.a, o: m.o, b: m.b, s: m.s, csP: m.csP, q: m.q, n: m.n };
+  });
+  try {
+    fs.writeFileSync("data/preds.json", JSON.stringify({ date: today, generated: new Date().toISOString(), m: slim }));
+    console.log("Saved preds snapshot: " + Object.keys(slim).length + " matches");
+  } catch (e) { console.error("preds snapshot failed: " + e.message); }
 })();
