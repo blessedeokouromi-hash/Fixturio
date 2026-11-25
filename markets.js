@@ -96,7 +96,7 @@
     function block(k) {
       var s = '<div class="sec"><h4>' + esc(k) + "</h4>";
       grp[k].forEach(function (r) {
-        s += '<div class="mrow' + (r === b1 ? " best" : "") + '"><span class="nm">' + esc(r.label) + '</span><span class="pv">' + r.p + '%</span><div class="tr"><i style="width:' + r.p + '%"></i></div>' + (pid != null && window.slipCtx && slipCtx[pid] ? '<button class="mkadd" data-id="' + pid + '" data-i="' + rows.indexOf(r) + '" aria-label="Add ' + esc(r.label) + ' to slip" onclick="event.stopPropagation();slipAdd(' + pid + ',' + rows.indexOf(r) + ')">+</button>' : '') + '</div>';
+        s += '<div class="mrow' + (r === b1 ? " best" : "") + '"><span class="nm">' + esc(r.label) + '</span><span class="pv">' + r.p + '%</span><div class="tr"><i style="width:' + r.p + '%"></i></div>' + (pid != null && typeof slipAdd === "function" && slipCtx[pid] ? '<button class="mkadd" data-id="' + pid + '" data-i="' + rows.indexOf(r) + '" aria-label="Add ' + esc(r.label) + ' to slip" onclick="event.stopPropagation();slipAdd(' + pid + ',' + rows.indexOf(r) + ')">+</button>' : '') + '</div>';
       });
       return s + "</div>";
     }
