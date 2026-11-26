@@ -129,7 +129,17 @@ function implProb(oh, oa) {
   console.log("basketball debug: games returned " + gs.length);
   const kept = gs.filter(g => g && g.teams && g.teams.home && g.teams.away && KEEP.test(g.league && g.league.name || ""));
   console.log("basketball debug: kept after league filter " + kept.length);
-  const open = kept.filter(g => !g.status || g.status.short === "NS").slice(0, 18);
+  // Stale-status guard: some games come through with a not-started status even
+  // though their tip-off time already passed, which used to let finished games
+  // into the picks and the acca. Skip anything whose start is clearly in the past.
+  const cutoff = Date.now() - 90 * 60 * 1000;
+  let staleSkipped = 0;
+  const open = kept.filter(g => !g.status || g.status.short === "NS").filter(g => {
+    const t = Date.parse(g.date || "");
+    if (t && !isNaN(t) && t < cutoff) { staleSkipped++; return false; }
+    return true;
+  }).slice(0, 18);
+  if (staleSkipped) console.log("basketball debug: skipped " + staleSkipped + " games whose start already passed");
   console.log("basketball debug: upcoming to price " + open.length);
 
   const priced = [];

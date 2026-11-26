@@ -241,10 +241,17 @@ function paint(d){
   $("date").textContent=lbl.toLocaleDateString([],{weekday:"long",month:"long",day:"numeric"});
   const arrs=document.querySelectorAll(".darr");arrs[0].disabled=false;arrs[1].disabled=true;
   if(d.acca&&d.acca.legs&&d.acca.legs.length){
-    $("acca-card").hidden=false;
-    $("acca-total").textContent="Total odds "+d.acca.total;
-    $("acca-joint").textContent=d.acca.joint+"% chance every leg lands";
-    $("acca-legs").innerHTML=d.acca.legs.map(l=>'<div class="leg"><div><b style="color:var(--tx);font-size:14px">'+esc(l.match)+'</b><small>'+esc(l.market)+" · "+esc(l.league)+(l.time?" · "+esc(l.time):"")+'</small></div><b>@'+l.odd+'</b></div>').join("");
+    const stMap={};(d.m||[]).forEach(r=>{stMap[r.game_id]=r.status||"";});
+    const legs=d.acca.legs.filter(l=>{const st=stMap[l.game_id];return st===undefined||st===""||st==="NS";});
+    if(legs.length>=2){
+      let tot=1,jt=1;legs.forEach(l=>{tot*=l.odd;jt*=l.probability/100;});
+      tot=Math.round(tot*100)/100;jt=Math.round(jt*1000)/10;
+      $("acca-card").hidden=false;
+      $("acca-total").textContent="Total odds "+tot;
+      $("acca-joint").textContent=jt+"% chance every leg lands";
+      $("acca-legs").innerHTML=legs.map(l=>'<div class="leg"><div><b style="color:var(--tx);font-size:14px">'+esc(l.match)+'</b><small>'+esc(l.market)+" · "+esc(l.league)+(l.time?" · "+esc(l.time):"")+'</small></div><b>@'+l.odd+'</b></div>').join("");
+      if(legs.length<d.acca.legs.length){BB=Object.assign({},d,{acca:Object.assign({},d.acca,{legs:legs,total:tot,joint:jt})});window.bbData=BB;}
+    } else $("acca-card").hidden=true;
   }
   const pool=(d.m||[]).length;
   $("srrow").style.display=pool?"":"none";
