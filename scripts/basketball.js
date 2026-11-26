@@ -5,7 +5,8 @@
 // odds-implied (overround removed) because basketball has no historical
 // model here yet; nothing is presented as guaranteed.
 // Writes data/basketball.json: { date, generated, picks[15], acca, m[] }
-// Budget: 1 games call + up to 18 odds calls. MOCK=1 runs on sample data.
+// Budget: 1 games call + 1 date-wide odds call when the API supports odds?date
+// (fallback: up to 40 per-game odds calls). MOCK=1 runs on sample data.
 const fs = require("fs");
 const KEY = process.env.BASKETBALL_KEY;
 const HOST = "https://v1.basketball.api-sports.io";
@@ -22,7 +23,7 @@ let nCalls = 0;
 async function api(path) {
   if (!KEY) { console.log("Basketball key missing; skipping the build."); process.exit(0); }
   nCalls++;
-  if (nCalls > 25) throw new Error("basketball call cap reached");
+  if (nCalls > 45) throw new Error("basketball call cap reached");
   await new Promise(r => setTimeout(r, 7500));
   const r = await fetch(HOST + path, { headers: { "x-apisports-key": KEY } });
   const d = await r.json();
@@ -88,13 +89,54 @@ function implProb(oh, oa) {
   return { home: ih / (ih + ia), away: ia / (ih + ia) };
 }
 
+// Game totals (Over/Under points) from the same odds response: pair Over/Under
+// values that share a line, average across bookmakers, odds-implied probability
+// with the overround removed. Skips team totals and period totals.
+function totals(oddsRows) {
+  const acc = {};
+  (oddsRows || []).forEach(r => (r.bookmakers || []).forEach(b => {
+    (b.bets || []).forEach(bt => {
+      const name = String(bt.name || "").toLowerCase();
+      if (!/total|over\/under/.test(name)) return;
+      if (/home|away|first half|quarter|period|1st|2nd/.test(name)) return;
+      const by = {};
+      (bt.values || []).forEach(v => {
+        const s2 = String(v.value || "").trim().toLowerCase();
+        const o = parseFloat(v.odd);
+        if (!isFinite(o) || o < 1.02) return;
+        const isO = /^over/.test(s2), isU = /^under/.test(s2);
+        if (!isO && !isU) return;
+        const lm = /([\d.]+)/.exec(s2);
+        const key = String(v.handicap != null ? v.handicap : (v.moreLess != null ? v.moreLess : (lm ? lm[1] : "")));
+        by[key] = by[key] || {}; by[key][isO ? "o" : "u"] = o;
+      });
+      Object.keys(by).forEach(k => {
+        const line = parseFloat(k);
+        if (!isFinite(line)) return;
+        const e = by[k];
+        if (!e.o || !e.u) return;
+        (acc[line] = acc[line] || []).push([e.o, e.u]);
+      });
+    });
+  }));
+  const lines = Object.keys(acc).map(Number);
+  if (!lines.length) return null;
+  // The line with the most bookmakers wins; tie-break toward a typical game total.
+  lines.sort((a, b) => acc[b].length - acc[a].length || Math.abs(a - 160) - Math.abs(b - 160));
+  const line = lines[0], pairs = acc[line];
+  let so = 0, su = 0; pairs.forEach(pp => { so += 1 / pp[0]; su += 1 / pp[1]; });
+  const oo = pairs.length / so, ou = pairs.length / su;
+  const io = 1 / oo, iu = 1 / ou;
+  return { line, oddO: Math.round(oo * 100) / 100, oddU: Math.round(ou * 100) / 100, pO: Math.round(io / (io + iu) * 100), pU: Math.round(iu / (io + iu) * 100) };
+}
+
 (async () => {
   if (!KEY) { console.log("Basketball key missing; skipping the build."); process.exit(0); }
   // Refresh mode: when today's data is already built, one games call patches
   // statuses, scores and team logos instead of rebuilding (a rebuild would
   // drop finished games and re-roll the picks and acca). Triggered by
   // dispatching the Basketball picks workflow in the evening.
-  if (process.env.MOCK !== "1") {
+  if (process.env.MOCK !== "1" && process.env.REBUILD !== "1") {
     try {
       const cur = JSON.parse(fs.readFileSync(OUT, "utf8"));
       if (cur.date === today) {
@@ -138,23 +180,42 @@ function implProb(oh, oa) {
     const t = Date.parse(g.date || "");
     if (t && !isNaN(t) && t < cutoff) { staleSkipped++; return false; }
     return true;
-  }).slice(0, 18);
+  }).slice(0, 120);
   if (staleSkipped) console.log("basketball debug: skipped " + staleSkipped + " games whose start already passed");
   console.log("basketball debug: upcoming to price " + open.length);
 
+  // One date-wide odds call prices every game at once when the API supports
+  // odds?date=; the per-game path stays as the fallback (cap 40 calls).
+  let oddsByGame = null, usedWide = false, noOdds = 0;
+  if (process.env.MOCK !== "1") {
+    try {
+      const rows = await api("/odds?date=" + today);
+      if (rows && rows.length) {
+        oddsByGame = {};
+        rows.forEach(r => { const gid = r.game && r.game.id; if (gid) (oddsByGame[gid] = oddsByGame[gid] || []).push(r); });
+        usedWide = Object.keys(oddsByGame).length > 0;
+        console.log("basketball debug: date-wide odds covered " + Object.keys(oddsByGame).length + " games in one call");
+      } else console.log("basketball debug: date-wide odds empty; using per-game odds calls");
+    } catch (e) { console.log("basketball debug: date-wide odds failed, using per-game calls: " + String(e.message).slice(0, 160)); }
+  }
+
   const priced = [];
   for (const g of open) {
-    let ml = null;
+    let ml = null, tl = null;
     if (process.env.MOCK === "1") ml = { home: g._odds.Home, away: g._odds.Away };
     else {
-      try {
-        const rows = await api("/odds?game=" + g.id);
-        ml = moneyline(rows);
-        if (!ml || !ml.home || !ml.away) console.log("basketball debug: no moneyline in odds for game " + g.id + ", rows " + (rows.length||0) + ", bets " + (((rows[0]||{}).bookmakers||[]).reduce((a,b)=>a+((b.bets||[]).length||0),0))
-        + (rows.length ? ", names: " + Array.from(new Set(((rows[0]||{}).bookmakers||[]).flatMap(b=>(b.bets||[]).map(bt=>bt.name)))).slice(0,8).join("|") : "") + (rows.length && (((rows[0]||{}).bookmakers||[])[0]||{}).bets ? ", sample: " + JSON.stringify((((rows[0].bookmakers||[])[0].bets||[]).find(bt=>/home\/away|3way/i.test(bt.name||""))||{}).values||[]).slice(0,160) : ""));
-      } catch (e) { console.log("basketball debug: odds failed for game " + g.id + ": " + String(e.message).slice(0, 180)); ml = null; }
+      let rows = usedWide ? (oddsByGame[g.id] || null) : null;
+      if (rows && rows.length) { ml = moneyline(rows); tl = totals(rows); }
+      else if (!usedWide) {
+        try {
+          rows = await api("/odds?game=" + g.id);
+          ml = moneyline(rows);
+          tl = totals(rows);
+          if (!ml || !ml.home || !ml.away) console.log("basketball debug: no moneyline in odds for game " + g.id);
+        } catch (e) { console.log("basketball debug: odds failed for game " + g.id + ": " + String(e.message).slice(0, 180)); ml = null; }
+      }
+      if (!ml || !ml.home || !ml.away) { if (usedWide) noOdds++; continue; }
     }
-    if (!ml || !ml.home || !ml.away) continue;
     const p = implProb(ml.home, ml.away);
     const when = (g.date || "").slice(11, 16) || g.time || "";
     const tot = side => g.scores && g.scores[side] && g.scores[side].total != null ? g.scores[side].total : null;
@@ -172,7 +233,17 @@ function implProb(oh, oa) {
       market: "Away team to win", odd: Math.round(ml.away * 100) / 100,
       probability: Math.round(p.away * 100)
     }));
+    if (tl) {
+      priced.push(Object.assign({}, base, {
+        market: "Over " + tl.line + " pts", odd: tl.oddO, probability: tl.pO
+      }));
+      priced.push(Object.assign({}, base, {
+        market: "Under " + tl.line + " pts", odd: tl.oddU, probability: tl.pU
+      }));
+    }
   }
+  if (usedWide) console.log("basketball debug: " + noOdds + " upcoming games had no odds in the date-wide response");
+
   priced.sort((a, b) => b.probability - a.probability);
 
   // One pick per game: priced holds both sides of every game, so keep only

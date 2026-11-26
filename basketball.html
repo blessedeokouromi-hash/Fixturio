@@ -160,7 +160,7 @@ function fav(id){let s=saved();const k="bb:"+id;const i=s.indexOf(k);if(i>=0)s.s
 function pSave(id){fav(id);const on=saved().indexOf("bb:"+id)>=0;const b=document.querySelector("#p"+id+" .star2");if(b){b.classList.toggle("on",on);b.textContent=on?"\u2605 Saved":"\u2606 Save match";}}
 function utcNow(){const n=new Date();return String(n.getUTCHours()).padStart(2,"0")+":"+String(n.getUTCMinutes()).padStart(2,"0");}
 function games(){
-  const by={};(BB.m||[]).forEach(p=>{const g=by[p.game_id]||(by[p.game_id]={game_id:p.game_id,league:p.league,country:p.country,time:p.time,status:p.status||"",h:p.h,a:p.a,ph:0,pa:0,oh:null,oa:null,sc_h:p.sc_h,sc_a:p.sc_a,lh:p.lh,la:p.la});if(/^home/i.test(p.market)){g.ph=p.probability;g.oh=p.odd;}else{g.pa=p.probability;g.oa=p.odd;}});
+  const by={};(BB.m||[]).forEach(p=>{const g=by[p.game_id]||(by[p.game_id]={game_id:p.game_id,league:p.league,country:p.country,time:p.time,status:p.status||"",h:p.h,a:p.a,ph:0,pa:0,oh:null,oa:null,sc_h:p.sc_h,sc_a:p.sc_a,lh:p.lh,la:p.la,mkts:[]});if(/^home/i.test(p.market)){g.ph=p.probability;g.oh=p.odd;}else if(/^away/i.test(p.market)){g.pa=p.probability;g.oa=p.odd;}else{g.mkts.push({market:p.market,odd:p.odd,p:p.probability});}});
   return Object.values(by);
 }
 function keep(g){
@@ -189,7 +189,7 @@ function draw(){
   const gs=games().filter(keep);
   $("chips").innerHTML=chipRow();
   const cov=$("cov");
-  cov.textContent=gs.length?("Best moneyline pick and confidence bars for "+gs.length+" games. More green bars means more confident."):"";
+  cov.textContent=gs.length?("Best pick and confidence bars for "+gs.length+" games. More green bars means more confident."):"";
   const byLg={};gs.forEach(g=>{(byLg[g.league]=byLg[g.league]||[]).push(g);});
   lgsNow=Object.keys(byLg).sort((x,y)=>byLg[y].length-byLg[x].length||x.localeCompare(y));
   if(!gs.length){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">No games here.</p>';return;}
@@ -200,15 +200,28 @@ function draw(){
 }
 function tgLg(i){const l=lgsNow[i];if(lgClosed.has(l))lgClosed.delete(l);else lgClosed.add(l);draw();}
 function winnerOf(g){const dn=DONE.includes(g.status),hasScore=g.sc_h!=null&&g.sc_a!=null;return dn&&hasScore?(g.sc_h>g.sc_a?"1":"2"):null;}
+function bestOf(g){
+  let best=g.ph>=g.pa?{lab:"1",p:g.ph,odd:g.oh,market:""}:{lab:"2",p:g.pa,odd:g.oa,market:""};
+  (g.mkts||[]).forEach(mk=>{if(mk.p>best.p){const om=/^(Over|Under)\s+([\d.]+)/.exec(mk.market);best={lab:om?(om[1]==="Over"?"O":"U"):"?",line:om?om[2]:"",p:mk.p,odd:mk.odd,market:mk.market};}});
+  return best;
+}
+function totMark(g,best){
+  if(!best.market||g.sc_h==null||g.sc_a==null||!DONE.includes(g.status))return "";
+  const tt=g.sc_h+g.sc_a,L=parseFloat(best.line);
+  if(!isFinite(L))return "";
+  if(tt>L)return best.lab==="O"?"\u2705":"\u274c";
+  if(tt<L)return best.lab==="U"?"\u2705":"\u274c";
+  return "";
+}
 function gameRow(g){
-  const best=g.ph>=g.pa?{lab:"1",p:g.ph,odd:g.oh}:{lab:"2",p:g.pa,odd:g.oa};
+  const best=bestOf(g);
   const lv=LIVE.includes(g.status),dn=DONE.includes(g.status);
   const hasScore=g.sc_h!=null&&g.sc_a!=null;
   const stc=lv?'<div class="st live">'+esc(g.status==="BT"?"Break":g.status)+'<i class="dot"></i></div>':(dn?'<div class="st">'+esc(g.status)+"</div>":'<div class="st">'+esc(g.time||"")+"</div>");
   const sig="sig "+(best.p>=70?"s3":best.p>=50?"s2":"s1");
   const win=winnerOf(g);
-  const mark=win?(best.lab===win?"\u2705":"\u274c"):"";
-  const pill='<div class="pill">'+esc(best.lab)+" "+Math.round(best.p)+"%"+(mark?'<span class="rmark">'+mark+"</span>":"")+"</div>";
+  const mark=best.market?totMark(g,best):(win?(best.lab===win?"\u2705":"\u274c"):"");
+  const pill='<div class="pill">'+esc(best.market?best.lab+(best.line?" "+best.line:""):best.lab)+" "+Math.round(best.p)+"%"+(mark?'<span class="rmark">'+mark+"</span>":"")+"</div>";
   const sgc=dn?"":'<span class="'+sig+'"><i></i><i></i><i></i></span>';
   const logo=t=>t?'<img src="'+esc(t)+'" alt="" loading="lazy">':"";
   const scCell=hasScore?'<div class="sc'+(lv?" live":"")+'"><div>'+g.sc_h+'</div><div>'+g.sc_a+"</div></div>":(best.odd?"<div>"+best.odd+"</div><small>odd</small>":"");
@@ -216,9 +229,11 @@ function gameRow(g){
 }
 function panel(g){
   const win=winnerOf(g);
-  const rows=[{lab:"Home team to win",k:"1",p:g.ph,odd:g.oh},{lab:"Away team to win",k:"2",p:g.pa,odd:g.oa}];
+  const rows=[{lab:"Home team to win",k:"1",p:g.ph,odd:g.oh},{lab:"Away team to win",k:"2",p:g.pa,odd:g.oa}].concat((g.mkts||[]).map(mk=>({lab:mk.market,k:mk.market,p:mk.p,odd:mk.odd,tot:true})));
   return rows.map(r=>{
-    const mark=win?(r.k===win?"\u2705":"\u274c"):"";
+    let mark="";
+    if(r.tot){const L=parseFloat((/([\d.]+)/.exec(r.lab)||[])[1]);if(DONE.includes(g.status)&&g.sc_h!=null&&g.sc_a!=null&&isFinite(L)){const tt=g.sc_h+g.sc_a;if(tt>L)mark=r.lab.indexOf("Over")===0?"\u2705":"\u274c";else if(tt<L)mark=r.lab.indexOf("Under")===0?"\u2705":"\u274c";}}
+    else mark=win?(r.k===win?"\u2705":"\u274c"):"";
     const sig="sig "+(r.p>=70?"s3":r.p>=50?"s2":"s1");
     return '<div class="prow"><span>'+esc(r.lab)+(mark?'<span class="rmark">'+mark+"</span>":"")+'</span><span class="'+sig+'"><i></i><i></i><i></i></span><span><b>'+Math.round(r.p)+"%</b>"+(r.odd?" · @"+r.odd:"")+"</span></div>";
   }).join("")+'<div class="pacts"><button class="star2'+(saved().indexOf("bb:"+g.game_id)>=0?" on":"")+'" onclick="pSave('+g.game_id+')">'+(saved().indexOf("bb:"+g.game_id)>=0?"\u2605 Saved":"\u2606 Save match")+"</button></div>";
