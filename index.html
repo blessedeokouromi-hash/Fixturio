@@ -200,6 +200,8 @@ body.tm .dock{display:block}
 #wem p{margin:0 0 12px;font-size:14px;color:var(--mu);line-height:1.5}
 #wem p b{color:var(--tx);font-weight:700}
 #wem .fine{margin:10px 0 12px}
+#wem li{margin:0 0 6px;font-size:14px;color:var(--mu);line-height:1.5}
+#wem li b{color:var(--tx);font-weight:700}
 #wem button{width:100%;border:0;border-radius:12px;padding:13px;font-weight:800;font-size:15px;background:var(--slip);color:var(--sink)}
 .fxmsg{position:fixed;left:50%;bottom:calc(190px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#0B1220;color:#E8EDF7;font:700 14px Manrope,system-ui,sans-serif;padding:12px 18px;border-radius:999px;box-shadow:0 6px 24px rgba(0,0,0,.35);z-index:99999;max-width:88vw;text-align:center}
 </style><link rel="manifest" href="/manifest.json"><link rel="apple-touch-icon" href="/icon-192.png"><meta name="fx-build" content="20261124-01">
@@ -644,7 +646,30 @@ fetch("/all.json").then(r=>r.ok?r.json():null).then(d=>{
   if(d&&d.m){pred=d.m;cov=d;render();}
 }).catch(()=>{});
 </script><script src="/markets.js"></script><script src="/share.js"></script><script src="/share-image.js" defer></script><script src="/affiliate.js" defer></script><script src="/ads.js" defer></script><script src="/push.js" defer></script>
-<div id="wem" role="dialog" aria-label="How Fixturio works"><div class="wc"><h3>Welcome to <em>Fixturio</em></h3><p><b>Daily predictions</b> for football and basketball: top picks, live scores, standings and news. Free, every day.</p><h3>What the % means</h3><p>Every percentage is <b>our model&#39;s confidence</b> in that pick, blended with bookmaker odds. They are estimates, not promises.</p><h3>Build your slip</h3><p>Tap any match for details, tap <b>+</b> next to a market to add it, then <b>Make image</b> to share your slip on WhatsApp, TikTok or X.</p><p class="fine">18+ only. Bet responsibly.</p><button type="button" onclick="weDone()">Got it</button></div></div>
+<div id="wem" role="dialog" aria-label="How Fixturio works"><div class="wc">
+<h3>Welcome to <em>Fixturio</em></h3>
+<p>Daily <b>football and basketball predictions</b>, live scores, standings and news. Free, every day.</p>
+<h3>Reading a match card</h3>
+<p>Each card shows the kickoff time, each team&rsquo;s last five results (green <b>W</b>, grey <b>D</b>, red <b>L</b>) and our prediction: a <b>market chip</b> like <b>12 80%</b> (double chance, 80% confidence) with <b>confidence bars</b> under it. More green bars means more confident.</p>
+<p>A gold <b>Value</b> tag means our estimate is clearly higher than the bookmaker odds imply. A <b>dot</b> beside the time means a deeper analysis using bookmaker odds.</p>
+<h3>After the match</h3>
+<p>Finished matches show what happened (&ldquo;Home win&rdquo;) plus a <b>&#9989;</b> or <b>&#10060;</b> saying whether our best pick won.</p>
+<h3>What each tab does</h3>
+<ul>
+<li><b>Matches</b> &mdash; today&rsquo;s games with live scores, filters and search.</li>
+<li><b>Top 15</b> &mdash; our 15 strongest picks of the day plus the daily accumulator.</li>
+<li><b>Basketball</b> &mdash; basketball predictions.</li>
+<li><b>Standings</b> &mdash; league tables and top scorers.</li>
+<li><b>News</b> &mdash; football news and transfers.</li>
+<li><b>Video</b> &mdash; official match highlights.</li>
+<li><b>Saved</b> &mdash; matches you starred, synced to your account.</li>
+<li><b>Tools</b> &mdash; accumulator calculator and odds converter.</li>
+<li><b>Community</b> &mdash; share slips, comment and chat.</li>
+</ul>
+<h3>Stay updated</h3>
+<p>Tap any match for full details, star matches to save them, and turn on <b>notifications</b> to get today&rsquo;s picks and match alerts.</p>
+<p class="fine">18+ only. Predictions are estimates, not guarantees.</p>
+<button type="button" onclick="weDone()">Got it</button></div></div>
 <div id="slipdock" role="button" tabindex="0" onclick="slipOpen()"><b id="slipcnt"></b><small id="sliphint"></small><button type="button" onclick="event.stopPropagation();slipMake()">Make image</button></div>
 <div id="slipsheet"><div class="bw" onclick="slipClose()"></div><div class="bc"><h3>My slip</h3><p class="sliptip">Tap + next to a market to add it here, up to 20 games.</p><div id="sliprows"></div><input id="slipname" type="text" maxlength="24" placeholder="Your name on the image (optional)" oninput="slipNameSave()"><div class="slact"><button class="clr" type="button" onclick="slipClear()">Clear all</button><button class="go" type="button" onclick="slipMake()">Make my image</button></div></div></div>
 <div class="morelist" id="morelist"><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a><a href="/info.html">About</a><a href="/auth.html">Sign in</a></div>
