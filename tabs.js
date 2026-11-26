@@ -141,7 +141,12 @@
   var SUB = { "1x2": ["1", "X", "2"], "ou": ["Over", "Under"], "btts": ["Yes", "No"] };
   window.mkSel = window.mkSel || "all";
 
+  var _fxPred = window.predCell;
   window.predCell = function (m) {
+    // In Predictions mode the page's own best-market cell (market pill,
+    // confidence bars, win/loss mark) is the one design; this tab code only
+    // supplies the other market tabs, so defer to it when it exists.
+    if (mkMode === "main" && typeof _fxPred === "function") return _fxPred(m);
     var p = pred[m.fixture.id];
     if (!p) return '<div class="pr"></div>';
     var t = tipOf(p, mkMode), thin = p.n != null && p.n < 3;

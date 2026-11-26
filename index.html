@@ -335,14 +335,17 @@ function predCell(m){
   if(!bm)return '<div class="pr"></div>';
   const pc=Math.round(bm.p*100);
   const lv=pc>=60?3:pc>=45?2:1;
-  let cls="";
+  let cls="",res="";
   if(DONE.includes(m.fixture.status.short)&&m.goals.home!==null){
     const w=mkWon(bm.market,m.goals);
     cls=w===true?" ok":w===false?" bad":"";
+    const word=m.goals.home>m.goals.away?"Home win":m.goals.home<m.goals.away?"Away win":"Draw";
+    const mark=w===true?'<span class="rmark" role="img" aria-label="Our best pick won">\u2705</span>':w===false?'<span class="rmark" role="img" aria-label="Our best pick missed">\u274c</span>':"";
+    res='<span class="rs'+cls+'">'+word+"</span>"+mark;
   }
   const lab=MKLAB[bm.market]||bm.market;
   const t="Best market: "+bm.market+(bm.odd?" at odds "+bm.odd:"")+", "+pc+"% chance. Estimates, not guarantees.";
-  return '<div class="pr" title="'+esc(t)+'"><span class="pill'+cls+'">'+esc(lab)+' '+pc+'%</span>'+valChip(id)+'<span class="sig s'+lv+'" role="img" aria-label="Confidence '+(lv===3?"high":lv===2?"medium":"low")+'"><i></i><i></i><i></i></span></div>';
+  return '<div class="pr" title="'+esc(t)+'"><span class="pill'+cls+'">'+esc(lab)+' '+pc+'%</span>'+res+valChip(id)+'<span class="sig s'+lv+'" role="img" aria-label="Confidence '+(lv===3?"high":lv===2?"medium":"low")+'"><i></i><i></i><i></i></span></div>';
 }
 
 function row(m){
