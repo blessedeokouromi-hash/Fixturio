@@ -308,6 +308,26 @@ function bestMkt(id){
   // first-half markets are not ticket-worthy, so they never win "best market".
   l=l.filter(x=>!/over 0\.5|under 0\.5|first half/i.test(x.market));
   if(!l.length)return null;
+  // Fit the market to the game's shape, like a tipster would: a heavy favorite's
+  // card backs the favorite itself, a goal-heavy game backs goals, a tight
+  // low-scoring game backs unders; otherwise the safest market wins.
+  const p=pred[id];
+  if(p){
+    const H=+p.h||0,A=+p.a||0,x=+p.x||0,y=+p.y||0,goals=x+y;
+    const has=n=>l.find(m=>m.market===n);
+    const top=names=>{const s=names.map(has).filter(Boolean);return s.length?s.sort((a,b)=>b.p-a.p)[0]:null;};
+    let bm=null;
+    if(Math.max(H,A)>=55&&Math.abs(H-A)>=20){
+      bm=top(H>=A?["Double chance 1X (home or draw)","Home win","Home team over 1.5 goals","Handicap home -1.5"]:["Double chance X2 (away or draw)","Away win","Away team over 1.5 goals","Handicap away -1.5"]);
+    }
+    if(!bm&&goals>=3){
+      const c=top(["Over 2.5 goals","Both teams to score"]);if(c&&c.p>=0.58)bm=c;
+    }
+    if(!bm&&goals>0&&goals<=2.25){
+      const c=top(["Under 2.5 goals"]);if(c&&c.p>=0.60)bm=c;
+    }
+    if(bm)return bm;
+  }
   l.sort((a,b)=>b.p-a.p);return l[0];
 }
 function predCell(m){
