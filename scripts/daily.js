@@ -420,7 +420,9 @@ function reason(m) {
     // ones the model and the odds disagree on, and hold picks to a 55%
     // confidence floor so coin-flip markets never become recommendations.
     if (!(m.markets || []).length) return;
-    const ranked = m.markets.filter(x => !x.skip).sort((x, y) => y.prob - x.prob);
+    const trivial = x => /over 0\.5|under 0\.5|first half/i.test(x.market);
+    let ranked = m.markets.filter(x => !x.skip && !trivial(x)).sort((x, y) => y.prob - x.prob);
+    if (!ranked.length) ranked = m.markets.filter(x => !x.skip).sort((x, y) => y.prob - x.prob);
     const usable = ranked.filter(x => x.prob >= 0.55);
     const best = usable[0] || ranked[0];
     const single = usable.find(x => x.kind === "single");
@@ -468,7 +470,7 @@ function reason(m) {
   const candAcca = [];
   poolMatches.forEach(m => {
     (m.markets || []).forEach(x => {
-      if (x.skip || !(x.odd >= 1.12)) return;
+      if (x.skip || !(x.odd >= 1.12) || /over 0\.5|under 0\.5|first half/i.test(x.market)) return;
       // Legs carry the same thin-data cap as the picks: a leg built on very
       // little history shows its capped confidence, and the slip's joint
       // chance is computed from those capped numbers.

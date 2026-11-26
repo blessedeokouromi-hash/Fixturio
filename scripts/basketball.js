@@ -165,7 +165,12 @@ function implProb(oh, oa) {
   }
   priced.sort((a, b) => b.probability - a.probability);
 
-  const picks = priced.slice(0, 15).map(p => ({
+  // One pick per game: priced holds both sides of every game, so keep only
+  // the higher-probability side (the list is already sorted) and the Top 15
+  // never shows the same game twice with opposite predictions.
+  const seenG = {};
+  const pricedOnce = priced.filter(p => (seenG[p.game_id] ? false : (seenG[p.game_id] = 1, true)));
+  const picks = pricedOnce.slice(0, 15).map(p => ({
     match: p.home + " vs " + p.away, market: p.market, odd: p.odd,
     probability: p.probability, league: p.league, country: p.country, time: p.time, game_id: p.game_id
   }));
@@ -175,16 +180,17 @@ function implProb(oh, oa) {
   // product cannot reach 20, top up with the next safest legs; if it ever
   // overshoots 50, drop the longest-odds legs until it fits.
   function buildSlip(pool, capLeague, capCountry, minOdd, maxOdd, minProb) {
-    const perLeague = {}, perCountry = {};
+    const perLeague = {}, perCountry = {}, usedG = {};
     const legs = [];
     let total = 1;
     const atCap = p => (perLeague[p.league] || 0) >= capLeague || (perCountry[p.country] || 0) >= capCountry;
     for (const p of pool) {
       if (total >= 20) break;
       if (atCap(p)) continue;
+      if (usedG[p.game_id]) continue;
       if (p.odd < minOdd || p.odd > maxOdd || p.probability < minProb) continue;
       if (total * p.odd > 50) continue; // too short, would overshoot
-      legs.push(p); total *= p.odd;
+      legs.push(p); total *= p.odd; usedG[p.game_id] = 1;
       perLeague[p.league] = (perLeague[p.league] || 0) + 1;
       perCountry[p.country] = (perCountry[p.country] || 0) + 1;
     }
@@ -197,20 +203,20 @@ function implProb(oh, oa) {
       legs: legs.map(l => ({ match: l.home + " vs " + l.away, market: l.market, odd: l.odd, probability: l.probability, league: l.league, country: l.country, time: l.time, game_id: l.game_id }))
     };
   }
-  const allPool = priced.sort((a, b) => b.probability - a.probability);
+  const allPool = pricedOnce;
   const first = buildSlip(allPool, 2, 4, 1.12, 2.6, 45);
   let legs = first.legs, total = first.total;
   if (total < 20) {
     // top-up: same safety order, league cap lifted
-    const perLeague = {}, perCountry = {};
-    legs.forEach(l => { perLeague[l.league] = (perLeague[l.league] || 0) + 1; perCountry[l.country] = (perCountry[l.country] || 0) + 1; });
+    const perLeague = {}, perCountry = {}, usedG = {};
+    legs.forEach(l => { perLeague[l.league] = (perLeague[l.league] || 0) + 1; perCountry[l.country] = (perCountry[l.country] || 0) + 1; usedG[l.game_id] = 1; });
     for (const p of allPool) {
       if (total >= 20) break;
-      if (legs.includes(p)) continue;
+      if (legs.includes(p) || usedG[p.game_id]) continue;
       if ((perLeague[p.league] || 0) >= 3 || (perCountry[p.country] || 0) >= 5) continue;
       if (p.odd < 1.12 || p.odd > 2.6 || p.probability < 45) continue;
       if (total * p.odd > 50) continue;
-      legs.push(p); total *= p.odd;
+      legs.push(p); total *= p.odd; usedG[p.game_id] = 1;
       perLeague[p.league] = (perLeague[p.league] || 0) + 1;
       perCountry[p.country] = (perCountry[p.country] || 0) + 1;
     }

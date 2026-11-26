@@ -17,7 +17,9 @@
     "_paused_reason": "paused 2026-11-23: the social bar's fake 'confirm you are not a robot' creative erodes trust; restore by moving _paused into src"
   },
   "popunder": {
-    "src": "https://abscloud.org/1/d4b9b066ad36a0635a71374587e43b3b"
+    "src": "",
+    "_paused": "https://abscloud.org/1/d4b9b066ad36a0635a71374587e43b3b",
+    "_paused_reason": "paused 2026-11-26: popunder opened a fake 'App Security Scan' scareware page in the owner's own recording; restore by moving _paused into src"
   },
   "vast": {
     "url": ""

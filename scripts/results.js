@@ -16,6 +16,14 @@ function grade(market, h, a) {
   if (market === "Under 2.5 goals") return h + a < 2.5;
   if (market === "Both teams to score") return h > 0 && a > 0;
   if (market === "Both teams not to score") return h === 0 || a === 0;
+  if (market === "Home team over 0.5 goals") return h >= 1;
+  if (market === "Home team over 1.5 goals") return h >= 2;
+  if (market === "Home team under 1.5 goals") return h < 2;
+  if (market === "Away team over 0.5 goals") return a >= 1;
+  if (market === "Away team over 1.5 goals") return a >= 2;
+  if (market === "Away team under 1.5 goals") return a < 2;
+  if (market === "Handicap home -1.5") return h - a >= 2;
+  if (market === "Handicap away -1.5") return a - h >= 2;
   return null;
 }
 
