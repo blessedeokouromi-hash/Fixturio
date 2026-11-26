@@ -269,18 +269,24 @@ function loadDay(off){
   $("acca-card").hidden=true;
   $("srrow").style.display="none";$("chips").style.display="none";$("cov").style.display="none";
   $("lgcs").innerHTML='<p class="note" style="margin:14px 16px">Loading…</p>';
-  fetch("/api/basketball?date="+ds,{cache:"no-store"}).then(r=>r.json()).then(d=>{
+  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),8000);
+  fetch("/api/basketball?date="+ds,{cache:"no-store",signal:ctl.signal}).then(r=>{clearTimeout(t);return r.json();}).then(d=>{
     if(!d||d.empty||!d.picks||!d.picks.length){BB=null;$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">No basketball picks saved for this day.</p>';return;}
     try{localStorage.setItem("fx_bb_"+ds,JSON.stringify(d))}catch(e){}
     paint(d);
-  }).catch(function(){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">Could not load this day.</p>';});
+  }).catch(function(){clearTimeout(t);$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">Could not load this day.</p>';});
 }
 try{const c=JSON.parse(localStorage.getItem("fx_bb")||"null");if(c&&c.date===new Date().toISOString().slice(0,10))paint(c);}catch(e){}
-fetch("/api/basketball",{cache:"no-store"}).then(r=>r.json()).then(d=>{
-  if(!d||!d.picks||!d.picks.length){if(!BB){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">No basketball data yet. The daily build fills this page once the basketball data connection is live.</p>';}return;}
-  try{localStorage.setItem("fx_bb",JSON.stringify(d))}catch(e){}
-  paint(d);
-}).catch(()=>{if(!BB){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">Could not load basketball picks. Try again shortly.</p>';}});
+let bbTries=0;
+function bbTop(attempt){
+  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),8000);
+  fetch("/api/basketball",{cache:"no-store",signal:ctl.signal}).then(r=>{clearTimeout(t);return r.json();}).then(d=>{
+    if(!d||!d.picks||!d.picks.length){if(!BB){$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">No basketball data yet. The daily build fills this page once the basketball data connection is live.</p>';}return;}
+    try{localStorage.setItem("fx_bb",JSON.stringify(d))}catch(e){}
+    paint(d);
+  }).catch(()=>{clearTimeout(t);if(BB)return;if(attempt<1){setTimeout(()=>bbTop(1),3000);return;}$("lgcs").innerHTML='<p class="note" style="margin:14px 16px">Could not load basketball picks. Check your connection and reload.</p>';});
+}
+bbTop(0);
 function moreTgl(){const m=document.getElementById("morelist");if(m)m.classList.toggle("open");}
 </script>
 <script src="/share-image.js"></script><script src="/affiliate.js" defer></script>

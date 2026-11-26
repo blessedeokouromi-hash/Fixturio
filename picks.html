@@ -237,14 +237,29 @@ function record(hist){
 $("date").textContent=new Date().toLocaleDateString([],{weekday:"long",day:"numeric",month:"long"});
 fetch("/track.json").then(r=>r.ok?r.json():null).then(renderTrack).catch(()=>renderTrack(null));
 fetch("/history.json").then(r=>r.ok?r.json():null).then(record).catch(()=>record(null));
-fetch("/daily.json?v="+Date.now()).then(r=>{if(!r.ok)throw 0;return r.json();}).then(d=>{
+function pickPaint(d){
   picks=d.picks||[];
-  if(!picks.length)throw 0;
   acca=d.acca||null;
   (d.matches||[]).forEach(m=>{mm[m.id]=m;});
   $("sub").textContent="The day's safest picks with the biggest prices, from every league we follow. Built once each morning, so everyone sees the same list.";
   $("upd").textContent="Built at "+tm(d.generated);
   draw();
   drawAcca();
-}).catch(()=>{$("sub").textContent="Today’s picks are still being built. They appear every morning, so check back soon.";});
+}
+function pickLoad(attempt){
+  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),8000);
+  fetch("/daily.json?v="+Date.now(),{signal:ctl.signal}).then(r=>{clearTimeout(t);if(!r.ok)throw 0;return r.json();}).then(d=>{
+    if(!d||!(d.picks||[]).length)throw 0;
+    try{localStorage.setItem("fx_daily",JSON.stringify(d));}catch(e){}
+    pickPaint(d);
+  }).catch(()=>{
+    clearTimeout(t);
+    if(attempt<1){setTimeout(()=>pickLoad(1),3000);return;}
+    let c=null;try{c=JSON.parse(localStorage.getItem("fx_daily")||"null")}catch(e){}
+    if(c&&c.date===new Date().toISOString().slice(0,10)&&(c.picks||[]).length)pickPaint(c);
+    else $("sub").textContent="Picks could not load just now. Check your connection and reload the page.";
+  });
+}
+try{const c0=JSON.parse(localStorage.getItem("fx_daily")||"null");if(c0&&c0.date===new Date().toISOString().slice(0,10)&&(c0.picks||[]).length)pickPaint(c0);}catch(e){}
+pickLoad(0);
 </script><script src="/share-image.js"></script><script src="/share.js"></script><script src="/affiliate.js" defer></script><script src="/ads.js" defer></script></body></html>

@@ -70,7 +70,11 @@ function render(){
   chs.forEach(c=>{h+='<div class="ch"><b>'+esc(c.name)+"</b><a href=\""+esc(c.url)+'" target="_blank" rel="noopener">Open channel</a></div>';});
   $("app").innerHTML=h;
 }
-fetch("/videos.json").then(r=>r.ok?r.json():null).then(d=>{D=d;if(d&&d.generated)$("upd").textContent="Built "+new Date(d.generated).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});render();}).catch(()=>{if(!D)$("app").innerHTML='<p class="msg">Videos could not load just now. Check your connection and try again.</p>';});
+function vidLoad(attempt){
+  const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),8000);
+  fetch("/videos.json",{signal:ctl.signal}).then(r=>{clearTimeout(t);return r.ok?r.json():null;}).then(d=>{D=d;if(d&&d.generated)$("upd").textContent="Built "+new Date(d.generated).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});render();}).catch(()=>{clearTimeout(t);if(attempt<1){setTimeout(()=>vidLoad(1),3000);return;}if(!D)$("app").innerHTML='<p class="msg">Videos could not load just now. Check your connection and try again.</p>';});
+}
+vidLoad(0);
 </script>
 <script src="/affiliate.js" defer></script>
 <script src="/ads.js" defer></script></body></html>
