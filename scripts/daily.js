@@ -1,5 +1,4 @@
 const fs = require("fs");
-if (fs.existsSync("data/probe.flag")) { console.log("ODDS PROBE ONLY (flag present, real build skipped)"); require("./odds-probe.js"); }
 
 // Scoreline fallback: used only when all.json has no entry for a match. It fits
 // a Dixon-Coles Poisson to the blended 1X2 probabilities and picks the modal
@@ -245,44 +244,33 @@ function reason(m) {
     if (pj && pj.date === date && pj.m) pred = pj.m;
   } catch (e) {}
 
-  // Odds come from one league-level request per league (the same bookmaker data
-  // the per-fixture endpoint returns), shared by the featured slate and the
-  // wider acca pool below. A full day of pricing therefore costs a handful of
-  // calls, and per-fixture odds are only a small fallback for leagues outside
-  // the cap. The old per-fixture /predictions calls are gone: the nightly model
-  // in all.json covers every fixture, so those ~16 calls a day are freed.
-  const yy0 = Number(date.slice(0, 4));
-  const season0 = Number(date.slice(5, 7)) >= 7 ? yy0 : yy0 - 1;
-  const leagueOdds = new Map();
-  const LEAGUE_ODDS_CAP = 18;
-  async function leagueBets(lid) {
-    if (leagueOdds.has(lid)) return leagueOdds.get(lid);
-    if (leagueOdds.size >= LEAGUE_ODDS_CAP) { leagueOdds.set(lid, null); return null; }
-    const od = await api("/odds?league=" + lid + "&season=" + season0 + "&date=" + date);
-    if (od.errors && Object.keys(od.errors).length) { leagueOdds.set(lid, null); return null; }
-    const map = {};
-    (od.response || []).forEach(r => {
-      if (!r.fixture || !r.bookmakers) return;
-      const bm = r.bookmakers.find(b => (b.bets || []).some(x => x.id === 1)) || r.bookmakers[0];
-      if (bm) map[r.fixture.id] = bm.bets || [];
-    });
-    leagueOdds.set(lid, map);
-    return map;
-  }
-  let fixOddsLeft = 8;
+  // Odds are priced per fixture: one /odds?fixture=<id> call per featured
+  // match. The league-level variant (one call per league, shared by the slate
+  // and the wider acca pool) is gone: probed live on 2026-11-26, the odds
+  // endpoint rejects current-season league queries on the free plan with
+  // "Free plans do not have access to this season, try from 2022 to 2024",
+  // which burned a call per league for nothing (both Nov 26 builds came back
+  // with zero prices). Per-fixture odds DO work on the free plan. The cap is a
+  // safety ceiling for the daily quota. The old per-fixture /predictions
+  // calls stay gone: the nightly model in all.json covers every fixture.
+  let fixOddsLeft = 20;
 
   const matches = [];
   for (const c of cands) {
-    const lm = await leagueBets(c.league.id);
-    let bets = lm && lm[c.fixture.id];
-    if (!bets && fixOddsLeft > 0) {
+    let bets = null;
+    if (fixOddsLeft > 0) {
+      fixOddsLeft--;
       const od = await api("/odds?fixture=" + c.fixture.id);
       if (od.errors && Object.keys(od.errors).length) {
-        console.log("API quota reached mid-run, keeping the existing picks.");
-        break;
+        const emsg = JSON.stringify(od.errors);
+        if (emsg.includes("limit") || emsg.includes("quota")) {
+          console.log("API quota reached mid-run, keeping the existing picks.");
+          break;
+        }
+        console.log("Odds unavailable for fixture " + c.fixture.id + ": " + emsg);
+      } else {
+        bets = pickBets(od);
       }
-      fixOddsLeft--;
-      bets = pickBets(od);
     }
     const q = pred && pred[c.fixture.id];
     if (!q && !bets) {
@@ -338,10 +326,10 @@ function reason(m) {
   }
   if (matches.length < 2) { console.error("Not enough matches"); process.exit(1); }
 
-  // Wider pool: every other fixture today in the leagues we follow. One
-  // league-level odds request per league prices the whole slate; matches whose
-  // league has no odds available are kept as model-only entries so the picks
-  // list never loses them, they just carry no prices.
+  // Wider pool: every other fixture today in the leagues we follow. League-level
+  // odds are unavailable on the free plan (see above), so these are kept as
+  // model-only entries so the picks list never loses them, they just carry no
+  // prices.
   let wideMatches = [];
   try {
     const d0 = JSON.parse(fs.readFileSync("data/d0.json", "utf8"));
@@ -351,7 +339,9 @@ function reason(m) {
     todayFixtures.forEach(f => { (byLeague[f.league.id] = byLeague[f.league.id] || []).push(f); });
     wideMatches = [];
     for (const lid of Object.keys(byLeague)) {
-      const oddsByFixture = (await leagueBets(lid)) || {};
+      // League-level odds are unavailable on the free plan (see above), so
+      // wide-pool entries stay model-only until the plan is ever upgraded.
+      const oddsByFixture = {};
       for (const f of byLeague[lid]) {
         if (featuredIds.has(f.fixture.id)) continue;
         if (f.fixture.status && f.fixture.status.short !== "NS") continue;
@@ -376,28 +366,11 @@ function reason(m) {
     console.log("Wide pool: added " + wideMatches.length + " matches beyond the featured slate (" + wideMatches.filter(m => m.modelOnly).length + " model-only).");
   } catch (e) { console.log("Wide acca pool skipped: " + (e && e.message ? e.message : e)); }
 
-  // Priced extras: every fixture today in a league whose odds we already
-  // fetched gets its bookmaker prices stored, so the site can show an
-  // odds-based score chip for it too. Zero extra API calls: these are the
-  // same league-level responses the featured slate and the wide pool used.
-  // Only fixtures the nightly model already covers make the list, since the
-  // card needs its confidence bars from there anyway.
-  let px = [];
-  try {
-    const featIds = new Set(matches.map(m => m.id));
-    for (const oddsByFixture of leagueOdds.values()) {
-      if (!oddsByFixture) continue;
-      for (const fid of Object.keys(oddsByFixture)) {
-        if (featIds.has(Number(fid))) continue;
-        if (!pred || !pred[fid]) continue;
-        const mk = pxMarkets(oddsByFixture[fid] || []);
-        if (mk.length) px.push({ id: Number(fid), markets: mk });
-        if (px.length >= 800) break;
-      }
-      if (px.length >= 800) break;
-    }
-    console.log("Priced extras: " + px.length + " more fixtures carry bookmaker prices from leagues already fetched.");
-  } catch (e) { console.log("Priced extras skipped: " + (e && e.message ? e.message : e)); }
+  // Priced extras (odds chips for wide-pool matches) relied on league-level
+  // odds responses, which the free plan does not return for the current
+  // season. Featured matches are priced per-fixture instead; px stays an
+  // empty list so daily.json keeps its shape.
+  const px = [];
 
   // The full candidate pool: featured matches plus every other fixture,
   // so the Top 15 and the acca both shop the whole day, lower leagues included.
