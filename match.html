@@ -150,7 +150,7 @@ function tm(t){return new Date(t).toLocaleTimeString([],{hour:"2-digit",minute:"
 function stTxt(){const s=m.fixture.status.short;if(s==="HT")return "Half time";if(LIVE.includes(s))return (m.fixture.status.elapsed||"")+"′ live";if(s==="NS")return "Kick-off "+tm(m.fixture.date);if(s==="FT")return "Full time";return s;}
 
 function render(){
-  if(!m){$("app").innerHTML='<p class="msg">This match is not in our coverage for today or the neighbouring days.</p>';return;}
+  if(!m){$("app").innerHTML='<p class="msg">'+(searchDone?"This match is not in our coverage for today or the neighbouring days.":"Loading match\u2026")+'</p>';return;}
   const h=m.teams.home,a=m.teams.away,pred=p?p[mid]:null;
   document.title=h.name+" vs "+a.name+" | Fixturio";
   let html='<div class="hero"><div class="lg2">'+esc(m.league.name)+" · "+esc(m.league.country)+" · "+tm(m.fixture.date)+'</div>';
@@ -349,9 +349,9 @@ function share(){
   if(navigator.share)navigator.share({title:"Fixturio",text:txt,url:location.href}).catch(function(){});
   else if(navigator.clipboard)navigator.clipboard.writeText(location.href);
 }
-const tryDates=["0","-1","1"];let di=0;
+const tryDates=["0","-1","1"];let di=0,searchDone=false;
 function findIt(){
-  if(di>=tryDates.length){render();return;}
+  if(di>=tryDates.length){searchDone=true;render();return;}
   const off=tryDates[di++];
   fetch("/api/matches?date="+off).then(r=>r.json()).then(d=>{
     const f=(d.response||[]).find(x=>x.fixture.id===+mid);
