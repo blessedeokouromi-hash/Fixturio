@@ -1,4 +1,5 @@
 const fs = require("fs");
+if (fs.existsSync("data/probe.flag")) { console.log("ODDS PROBE ONLY (flag present, real build skipped)"); require("./odds-probe.js"); }
 
 // Scoreline fallback: used only when all.json has no entry for a match. It fits
 // a Dixon-Coles Poisson to the blended 1X2 probabilities and picks the modal
