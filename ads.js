@@ -43,8 +43,19 @@
     host.appendChild(s);
     track(zone);
   }
-  fetch("/ads.json", { cache: "no-store" })
+  // Phase 0: settings live in Supabase and are served by /api/admin; the
+  // static /ads.json file is the fallback while the table is empty or the
+  // API is unreachable.
+  fetch("/api/admin", { cache: "no-store" })
     .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) { return d && d.config ? d.config : null; })
+    .catch(function () { return null; })
+    .then(function (cfg) {
+      if (cfg) return cfg;
+      return fetch("/ads.json", { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; });
+    })
     .then(function (cfg) {
       if (!cfg || !cfg.enabled) return;
       var banner = document.getElementById("ad-banner");

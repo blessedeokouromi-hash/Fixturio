@@ -42,14 +42,14 @@ textarea{width:100%;min-height:260px;background:var(--ink);border:1px solid var(
 <input id="tok" type="password" placeholder="Admin token" autocomplete="off">
 <button class="go" onclick="load0()">Load current settings</button><span class="st" id="st"></span>
 <textarea id="cfg" spellcheck="false" style="display:none"></textarea>
-<button class="go" id="save" style="display:none;margin-top:6px" onclick="save0()">Save and redeploy</button>
+<button class="go" id="save" style="display:none;margin-top:6px" onclick="save0()">Save settings</button>
 </div>
 <div class="card">
 <h3>One-time setup (Vercel)</h3>
 <p>1. In Vercel, open your Fixturio project → Settings → Environment Variables.</p>
 <p>2. Add <code>ADMIN_TOKEN</code> with any secret phrase you choose. That is the password for this page.</p>
-<p>3. Add <code>GITHUB_TOKEN</code> with a GitHub personal access token that has write access to the Fixturio repository (repo scope). That is what lets this page save settings.</p>
-<p>4. Redeploy once. After that, this page can switch ads on and off and paste your Adsterra zone links, and every save redeploys the site automatically.</p>
+<p>3. Add <code>SUPABASE_SERVICE_ROLE_KEY</code> with the service-role key from your Supabase project (Dashboard &rarr; Project Settings &rarr; API). That is what lets this page save settings without touching the repository.</p>
+<p>4. Redeploy once. After that, this page can switch ads on and off and paste your Adsterra zone links, and every save goes straight to the database with no redeploy.</p>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -59,7 +59,7 @@ function load0(){
   const t=$("tok").value.trim();
   if(t)localStorage.setItem("fixturio:admin",t);
   fetch("/api/admin").then(r=>r.json()).then(d=>{
-    if(d.connected===false){$("st").textContent="Server not connected yet: add the two environment variables in Vercel (see below), then redeploy.";$("st").className="st bad";return;}
+    if(d.connected===false){$("st").textContent="Server not connected yet: add SUPABASE_SERVICE_ROLE_KEY in Vercel (see below), then redeploy.";$("st").className="st bad";return;}
     $("cfg").style.display="block";$("save").style.display="inline-block";
     $("cfg").value=JSON.stringify(d.config||{enabled:false},null,2);
     $("st").textContent="Loaded.";$("st").className="st ok";
@@ -70,7 +70,7 @@ function save0(){
   let cfg;
   try{cfg=JSON.parse($("cfg").value)}catch(e){$("st").textContent="Not valid JSON: "+e.message;return;}
   fetch("/api/admin",{method:"POST",headers:{"Content-Type":"application/json","x-admin-token":tok()},body:JSON.stringify(cfg)}).then(r=>r.json()).then(d=>{
-    if(d.ok){$("st").textContent="Saved. The site redeploys in about a minute.";$("st").className="st ok";}
+    if(d.ok){$("st").textContent=d.note||"Saved.";$("st").className="st ok";}
     else{$("st").textContent=d.error||"Save failed.";$("st").className="st bad";}
   }).catch(()=>{$("st").textContent="Save failed.";});
 }

@@ -225,11 +225,26 @@ function vote(c){
   myVote=c;vCnt[c]++;vTot++;
   try{localStorage.setItem(VKEY,c);}catch(e){}
   renderVote();
-  fetch("/api/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fixture:mid,choice:c})})
-    .then(r=>r.json()).then(d=>{
-      if(d&&d.counts){vCnt={h:d.counts.h||0,d:d.counts.d||0,a:d.counts.a||0};vTot=vCnt.h+vCnt.d+vCnt.a;}
-      renderVote();
-    }).catch(function(){});
+  // Voting needs a signed-in session (Phase 0). Send the session token when
+  // there is one; on a sign-in prompt, undo the local tally and offer the link.
+  const sendVote=function(tok){
+    const headers={"Content-Type":"application/json"};
+    if(tok)headers["Authorization"]="Bearer "+tok;
+    fetch("/api/vote",{method:"POST",headers:headers,body:JSON.stringify({fixture:mid,choice:c})})
+      .then(r=>r.json()).then(d=>{
+        if(d&&d.counts){vCnt={h:d.counts.h||0,d:d.counts.d||0,a:d.counts.a||0};vTot=vCnt.h+vCnt.d+vCnt.a;}
+        if(d&&d.error&&/sign in/i.test(d.error)){
+          myVote=null;vCnt[c]--;vTot--;try{localStorage.removeItem(VKEY);}catch(e){}
+        }
+        renderVote();
+        if(d&&d.error&&/sign in/i.test(d.error)){
+          const ve=$("vote");
+          if(ve&&!ve.querySelector(".needauth")){const n=document.createElement("p");n.className="note needauth";n.innerHTML='Sign in to vote: <a href="/auth.html">Sign in</a>';ve.appendChild(n);}
+        }
+      }).catch(function(){});
+  };
+  if(window.fxAuth&&fxAuth.ready){fxAuth.token().then(sendVote).catch(function(){sendVote(null);});}
+  else sendVote(null);
 }
 function loadStand(){
   fetch("/standings.json").then(r=>r.ok?r.json():null).then(d=>{

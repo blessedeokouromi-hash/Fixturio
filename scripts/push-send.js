@@ -1,15 +1,17 @@
-// Sends the daily picks push notification to every subscriber in data/push-subs.json.
+// Sends the daily picks push notification to every subscriber in the Supabase
+// push_subs table. Phase 0 of the pre-launch audit: subscriptions no longer
+// live in data/push-subs.json (that file was public in the repository), so
+// this script reads them from Supabase and prunes dead endpoints there too.
 // Runs in the "Daily Telegram post" workflow right after the Telegram step.
-// Env: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, GITHUB_TOKEN (optional, prunes dead
-// subscriptions by committing the cleaned file), ADMIN_REPO (optional).
+// Env: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 // `node scripts/push-send.js --dry` prints what would be sent and sends nothing.
 const fs = require("fs");
-const REPO = process.env.ADMIN_REPO || "blessedeokouromi-hash/Fixturio";
-const FILE = "data/push-subs.json";
 const dry = process.argv.includes("--dry");
 const PUB = process.env.VAPID_PUBLIC_KEY ||
   "BAO0iCFzZnpnxahZ4FoeW6toT8WX8kh-H4Gj43bg6r9hvZcBshhEItZLCirvEvqev7sBBXkJ7HiOstSLK1OQwRA";
 const PRIV = process.env.VAPID_PRIVATE_KEY;
+const SB_URL = (process.env.SUPABASE_URL || "https://ncpquoviqczrxupiihvv.supabase.co").replace(/\/$/, "");
+const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 function payloadFor() {
   const d = JSON.parse(fs.readFileSync("daily.json", "utf8"));
@@ -20,34 +22,47 @@ function payloadFor() {
   return { title: "Fixturio: today's picks are in", body: body, url: "/picks.html", tag: "fixturio-" + (d.date || new Date().toISOString().slice(0, 10)) };
 }
 
-if (dry) {
-  console.log("DRY RUN");
-  console.log(JSON.stringify(payloadFor(), null, 2));
-  const subs = (JSON.parse(fs.readFileSync(FILE, "utf8")).subs) || [];
-  console.log("subscribers:", subs.length);
-  process.exit(0);
+async function loadSubs() {
+  if (!SB_KEY) throw new Error("SUPABASE_SERVICE_ROLE_KEY missing");
+  const r = await fetch(SB_URL + "/rest/v1/push_subs?select=endpoint,keys&order=added.desc&limit=5000", {
+    headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY }
+  });
+  if (!r.ok) throw new Error("Supabase read failed: " + r.status);
+  const rows = await r.json();
+  return (rows || []).map(function (s) { return { endpoint: s.endpoint, keys: s.keys || {} }; });
 }
-if (!PRIV) { console.log("VAPID_PRIVATE_KEY missing; push skipped."); process.exit(0); }
 
-const webpush = require("web-push");
-webpush.setVapidDetails("mailto:blessed.e.okouromi@gmail.com", PUB, PRIV);
-
-const data = JSON.parse(fs.readFileSync(FILE, "utf8"));
-const subs = data.subs || [];
-const payload = JSON.stringify(payloadFor());
-let sent = 0, failed = 0;
-const dead = [];
-
-(async () => {
-  await Promise.all(subs.map(async (s) => {
+async function dropDead(endpoints) {
+  if (!SB_KEY || !endpoints.length) return;
+  for (const ep of endpoints) {
     try {
-      await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, payload);
-      sent++;
-    } catch (e) {
-      const code = e && e.statusCode;
-      if (code === 404 || code === 410) { dead.push(s.endpoint); }
-      else failed++;
-    }
+      await fetch(SB_URL + "/rest/v1/push_subs?endpoint=eq." + encodeURIComponent(ep), {
+        method: "DELETE", headers: { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY }
+      });
+    } catch (e) {}
+  }
+}
+
+async function main() {
+  if (dry) {
+    console.log("DRY RUN");
+    console.log(JSON.stringify(payloadFor(), null, 2));
+    try { console.log("subscribers:", (await loadSubs()).length); }
+    catch (e) { console.log("subscribers: not read (" + e.message + ")"); }
+    process.exit(0);
+  }
+  if (!PRIV) { console.log("VAPID_PRIVATE_KEY missing; push skipped."); process.exit(0); }
+  let subs;
+  try { subs = await loadSubs(); }
+  catch (e) { console.log("Push skipped: " + e.message); process.exit(0); }
+  const webpush = require("web-push");
+  webpush.setVapidDetails("mailto:blessed.e.okouromi@gmail.com", PUB, PRIV);
+  const payload = JSON.stringify(payloadFor());
+  let sent = 0, failed = 0;
+  const dead = [];
+  await Promise.all(subs.map(async function (s) {
+    try { await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, payload); sent++; }
+    catch (e) { const code = e && e.statusCode; if (code === 404 || code === 410) dead.push(s.endpoint); else failed++; }
   }));
   console.log("sent", sent, "failed", failed, "dead", dead.length);
   // Basketball picks push, only when today's basketball build ran.
@@ -55,22 +70,13 @@ const dead = [];
     const b = JSON.parse(fs.readFileSync("data/basketball.json", "utf8"));
     if (b && b.date === new Date().toISOString().slice(0, 10) && b.picks && b.picks.length) {
       const bp = JSON.stringify({ title: "Fixturio: basketball picks are in", body: "Today\u2019s basketball top picks and acca are live. Top pick: " + b.picks[0].match + ".", url: "/basketball.html", tag: "fixturio-bball-" + b.date });
-      await Promise.all(subs.map(async s => { try { await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, bp); } catch (e) {} }));
+      await Promise.all(subs.map(async function (s) { try { await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, bp); } catch (e) {} }));
       console.log("basketball push sent");
     }
   } catch (e) {}
-  const kept = subs.filter(s => dead.indexOf(s.endpoint) === -1);
-  if (dead.length && process.env.GITHUB_TOKEN) {
-    const headers = { "Accept": "application/vnd.github+json", "User-Agent": "fixturio-push", "Authorization": "Bearer " + process.env.GITHUB_TOKEN };
-    try {
-      const cur = await fetch("https://api.github.com/repos/" + REPO + "/contents/" + FILE + "?ref=main", { headers }).then(r => r.json());
-      const body = JSON.stringify({ subs: kept, updated: new Date().toISOString() });
-      const put = await fetch("https://api.github.com/repos/" + REPO + "/contents/" + FILE + "?ref=main", {
-        method: "PUT",
-        headers: Object.assign({ "Content-Type": "application/json" }, headers),
-        body: JSON.stringify({ message: "prune dead push subscriptions", content: Buffer.from(body).toString("base64"), sha: cur.sha, branch: "main" })
-      });
-      console.log("prune commit:", put.ok ? "ok" : put.status);
-    } catch (e) { console.log("prune commit failed:", e.message); }
+  if (dead.length) {
+    await dropDead(dead);
+    console.log("pruned", dead.length, "dead subscriptions from Supabase");
   }
-})();
+}
+main();

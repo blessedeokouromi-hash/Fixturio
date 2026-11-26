@@ -3,7 +3,8 @@
 // workflow right after "Refresh today's matches". Zero API-Football calls:
 // it diffs the freshly built data/d0.json against data/live-state.json,
 // which the same workflow commits back for the next run.
-// Env: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY. Without the private key it
+// Env: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, SUPABASE_SERVICE_ROLE_KEY (subscriptions).
+// Without the private key it
 // still tracks state (so nothing double-fires later) but sends nothing.
 // `node scripts/live-alerts.js --dry` prints what would be sent.
 const fs = require("fs");
@@ -61,32 +62,36 @@ const send = events.slice(0, MAX_PER_RUN);
 if (events.length > MAX_PER_RUN) console.log("capped", events.length - MAX_PER_RUN, "events");
 
 if (DRY) {
-  console.log("DRY RUN day", day, "watch", watch.length, "subs", (load("data/push-subs.json", { subs: [] }).subs || []).length);
-  console.log(JSON.stringify(send, null, 1) || "no events");
-  process.exit(0);
+  pushSubs().then(function (subs) {
+    console.log("DRY RUN day", day, "watch", watch.length, "subs", subs.length);
+    console.log(JSON.stringify(send, null, 1) || "no events");
+    process.exit(0);
+  });
+  return;
 }
 if (send.length && !process.env.VAPID_PRIVATE_KEY) {
   console.log("VAPID_PRIVATE_KEY missing; " + send.length + " event(s) skipped, state still saved.");
 }
 let sent = 0, failed = 0, dead = 0;
 if (send.length && process.env.VAPID_PRIVATE_KEY) {
-  const webpush = require("web-push");
-  webpush.setVapidDetails("mailto:blessed.e.okouromi@gmail.com",
-    process.env.VAPID_PUBLIC_KEY || "BAO0iCFzZnpnxahZ4FoeW6toT8WX8kh-H4Gj43bg6r9hvZcBshhEItZLCirvEvqev7sBBXkJ7HiOstSLK1OQwRA",
-    process.env.VAPID_PRIVATE_KEY);
-  const subs = (load("data/push-subs.json", { subs: [] }).subs) || [];
-  const payload = JSON.stringify({ url: "/" });
-  (async () => {
-    for (const ev of send) {
-      const msg = JSON.stringify({ title: ev.title, body: ev.body, tag: ev.tag, url: "/" });
-      for (const s of subs) {
-        try { await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, msg); sent++; }
-        catch (e) { const c = e && e.statusCode; if (c === 404 || c === 410) dead++; else failed++; }
+  pushSubs().then(function (subs) {
+    const webpush = require("web-push");
+    webpush.setVapidDetails("mailto:blessed.e.okouromi@gmail.com",
+      process.env.VAPID_PUBLIC_KEY || "BAO0iCFzZnpnxahZ4FoeW6toT8WX8kh-H4Gj43bg6r9hvZcBshhEItZLCirvEvqev7sBBXkJ7HiOstSLK1OQwRA",
+      process.env.VAPID_PRIVATE_KEY);
+    const payload = JSON.stringify({ url: "/" });
+    (async () => {
+      for (const ev of send) {
+        const msg = JSON.stringify({ title: ev.title, body: ev.body, tag: ev.tag, url: "/" });
+        for (const s of subs) {
+          try { await webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, msg); sent++; }
+          catch (e) { const c = e && e.statusCode; if (c === 404 || c === 410) dead++; else failed++; }
+        }
       }
-    }
-    console.log("events", send.length, "sent", sent, "failed", failed, "dead", dead);
-    done();
-  })();
+      console.log("events", send.length, "sent", sent, "failed", failed, "dead", dead);
+      done();
+    })();
+  }).catch(function () { console.log("events", send.length, "sent 0 (subscription read failed)"); done(); });
 } else { console.log("events", send.length, "sent 0"); done(); }
 
 function done() {
