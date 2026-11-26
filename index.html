@@ -299,7 +299,7 @@ function mkList(id){
   return l.filter(x=>x.p!=null&&!isNaN(x.p)&&x.p>0.01&&x.p<0.999);
 }
 function bestMkt(id){
-  const inf=info[id],have={},l=[];
+  const inf=info[id],have={};let l=[];
   if(inf&&inf.markets){
     inf.markets.filter(x=>!x.skip&&x.prob>0.01&&x.prob<0.999).forEach(x=>{have[x.market]=1;l.push({market:x.market,p:x.prob,odd:x.odd||null});});
   }
