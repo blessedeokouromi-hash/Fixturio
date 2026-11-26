@@ -304,6 +304,9 @@ function bestMkt(id){
     inf.markets.filter(x=>!x.skip&&x.prob>0.01&&x.prob<0.999).forEach(x=>{have[x.market]=1;l.push({market:x.market,p:x.prob,odd:x.odd||null});});
   }
   mkList(id).forEach(x=>{if(!have[x.market])l.push({market:x.market,p:x.p,odd:null});});
+  // Headline pick rule (same as the Top 15): near-certain one-goal filler and
+  // first-half markets are not ticket-worthy, so they never win "best market".
+  l=l.filter(x=>!/over 0\.5|under 0\.5|first half/i.test(x.market));
   if(!l.length)return null;
   l.sort((a,b)=>b.p-a.p);return l[0];
 }
