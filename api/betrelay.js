@@ -19,6 +19,7 @@ const DAILY_LIMIT = 3;
 const CACHE_MS = 6 * 3600 * 1000;
 
 let cache = null; // { at, bookies }
+let lastUp = null; // diagnostics: status of the last upstream call
 
 function key() { return (process.env.BETRELAY_API_KEY || "").trim(); }
 
@@ -27,6 +28,7 @@ async function brFetch(path) {
   const text = await r.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (e) {}
+  lastUp = { status: r.status, json: !!data, head: text.slice(0, 160) };
   return { ok: r.ok, status: r.status, data: data };
 }
 
@@ -104,7 +106,7 @@ module.exports = async (req, res) => {
       const bookies = await bookiesList();
       res.status(200).json({ bookies: bookies, left: await remainingToday(ip), limit: DAILY_LIMIT });
     } catch (e) {
-      res.status(502).json({ error: "Could not load the bookmaker list. Try again in a moment." });
+      res.status(502).json({ error: "Could not load the bookmaker list. Try again in a moment.", up: lastUp });
     }
     return;
   }
