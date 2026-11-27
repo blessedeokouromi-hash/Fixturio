@@ -88,7 +88,10 @@ async function bookiesList() {
   }
   const payload = r.data.data && typeof r.data.data === "object" && !Array.isArray(r.data.data) ? r.data.data : r.data;
   const list = parseBookies(payload);
-  if (!list.length) throw new Error("bookies unavailable");
+  // A real bookies answer lists many bookies usable as source or target; an
+  // auth failure still returns HTTP 200 with an empty data array, so the
+  // answer must prove itself before it is cached.
+  if (list.length < 5 || !list.some(function (b) { return b.from || b.to; })) throw new Error("bookies unavailable");
   cache = { at: Date.now(), bookies: list };
   return list;
 }
