@@ -21,10 +21,29 @@ const CACHE_MS = 6 * 3600 * 1000;
 let cache = null; // { at, bookies }
 let lastUp = null; // diagnostics: status of the last upstream call
 
-function key() { return (process.env.BETRELAY_API_KEY || "").trim(); }
+function key() {
+  // Strip accidental surrounding quotes/whitespace from the saved value.
+  return (process.env.BETRELAY_API_KEY || "").trim().replace(/^["']+|["']+$/g, "").trim();
+}
 
-async function brFetch(path) {
-  const r = await fetch(BASE + path + (path.includes("?") ? "&" : "?") + "api_key=" + encodeURIComponent(key()));
+async function brFetch(path, attempt) {
+  const r = await fetch(BASE + path + (path.includes("?") ? "&" : "?") + "api_key=" + encodeURIComponent(key()) + (attempt === 2 ? "&v=2" : ""));
+  const text = await r.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (e) {}
+  const rejected = data && typeof data.message === "string" && data.message.indexOf("unauthorized") !== -1;
+  if (rejected && attempt !== 2) {
+    // The saved key value may be wrapped in quotes or carry stray characters;
+    // one retry with a header instead of the query param rules that out.
+    lastUp = { status: r.status, json: true, head: text.slice(0, 160), retried: true };
+    const r2 = await fetch(BASE + path, { headers: { "api_key": key() } });
+    const t2 = await r2.text();
+    let d2 = null;
+    try { d2 = t2 ? JSON.parse(t2) : null; } catch (e) {}
+    return { ok: r2.ok, status: r2.status, data: d2, text: t2 };
+  }
+  lastUp = { status: r.status, json: !!data, head: text.slice(0, 160) };
+  return { ok: r.ok, status: r.status, data: data, text: text };
   const text = await r.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (e) {}
