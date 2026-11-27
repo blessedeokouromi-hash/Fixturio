@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B5A3C">
+<title>Build a bet slip: safest picks for your target odds | Fixturio</title>
+<meta name="description" content="Choose how many games, your target odds and a bookmaker. Fixturio picks the safest legs from today's priced matches to reach your target. Free slip builder.">
+<link rel="stylesheet" href="/theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--tx);font:500 15px/1.4 var(--f);-webkit-text-size-adjust:100%}
+body{background:radial-gradient(900px 420px at 50% -80px,var(--shadow),transparent 65%),var(--ink)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+.top{position:sticky;top:0;z-index:4;background:var(--pitch);border-bottom:0;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo img{width:32px;height:32px;flex:none;border-radius:8px}
+.logo b{font-size:21px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.top>a{color:var(--hmu);text-decoration:none;font-weight:700}
+.tabs{display:flex;align-items:center;gap:22px;padding:0 16px;background:var(--pitch);border-bottom:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{padding:11px 0;color:var(--hmu);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs a.on{color:#fff;border-color:var(--amb)}
+.card{margin:12px 16px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--s1);box-shadow:0 8px 24px var(--shadow)}
+.card h3{margin:0 0 10px;font-size:16px;font-weight:800}
+.card h3::after{content:"";display:block;width:36px;height:3px;background:var(--amb);border-radius:2px;margin-top:7px}
+.note{font-size:13px;color:var(--mu);margin:8px 0 0}
+label{display:block;font-size:13px;font-weight:700;margin:12px 0 5px}
+select,input{width:100%;padding:11px 14px;background:var(--s2);border:1px solid var(--line);border-radius:10px;color:var(--tx);font:inherit;font-size:16px}
+.two{display:flex;gap:10px}
+.two>label{flex:1}
+.post{margin-top:14px;width:100%;padding:12px;background:linear-gradient(135deg,var(--amb),var(--bar));border-color:transparent;color:var(--ink);border-radius:12px;font-weight:800;font-size:15px;box-shadow:0 4px 14px var(--shadow)}
+.post[disabled]{opacity:.55}
+.err{color:var(--live);font-size:13px;margin-top:8px}
+.res{display:none}
+.legrow{padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.legrow:last-child{border-bottom:0}
+.legrow .top2{display:flex;justify-content:space-between;gap:10px}
+.legrow b{font-weight:700;word-break:break-word}
+.legrow .mk{flex:none;font-style:normal;font-weight:800;color:var(--amb);white-space:nowrap}
+.legrow .sub{font-size:12px;color:var(--mu);margin-top:2px}
+.tot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:14px;font-weight:700}
+.tot b{font-size:22px;color:var(--amb)}
+.chance{font-size:12.5px;color:var(--mu);margin-top:4px}
+.cbx{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px dashed var(--amb);border-radius:12px;padding:10px 12px;background:var(--s1);margin-top:12px}
+.cbx b{font-size:16px;font-weight:800;color:var(--amb)}
+.cbx span{font-size:12px;color:var(--mu)}
+.copybtn{margin-top:10px;width:100%;padding:10px;border:1px solid var(--bar);background:var(--s1);border-radius:10px;font-size:13px;font-weight:800;color:var(--amb)}
+.warn{margin-top:10px;font-size:12.5px;color:var(--mu);background:var(--s2);border-radius:10px;padding:9px 11px}
+.adslot{min-height:60px;margin:12px 16px;display:flex;justify-content:center;align-items:center}
+.adslot:empty{display:none}
+.fine{margin:16px 16px 0;font-size:12px;color:var(--mu)}
+</style>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="stylesheet" href="/fix.css">
+</head><body>
+<div class="wrap">
+<header class="top"><a class="logo" href="/"><img src="/logo.png" alt="Fixturio logo"><b>Fixturio</b></a><a href="/">All matches</a></header>
+<nav class="tabs"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/basketball.html">Basketball</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a><a href="/convert.html">Convert</a><a href="/builder.html" class="on">Builder</a></nav>
+<div class="adslot" id="ad-banner"></div>
+<main id="app">
+<div class="card">
+  <h3>Build a bet slip</h3>
+  <p class="note">Choose how many games, your target odds and a bookmaker. Fixturio assembles the safest slip from today's priced matches to reach your target.</p>
+  <div class="two">
+    <label>Games<span></span>
+      <select id="n">
+        <option value="2">2 games</option><option value="3">3 games</option><option value="4">4 games</option>
+        <option value="5" selected>5 games</option><option value="6">6 games</option><option value="7">7 games</option>
+        <option value="8">8 games</option><option value="9">9 games</option><option value="10">10 games</option>
+      </select>
+    </label>
+    <label>Target odds
+      <select id="t">
+        <option value="2">About 2</option><option value="5">About 5</option><option value="10" selected>About 10</option>
+        <option value="20">About 20</option><option value="50">About 50</option>
+      </select>
+    </label>
+  </div>
+  <label>Bookmaker (for your booking code)
+    <select id="bk"><option>Loading bookmakers…</option></select>
+  </label>
+  <button class="post" id="go" onclick="buildSlip()">Build my slip</button>
+  <div id="err" class="err" style="display:none"></div>
+</div>
+<div class="card res" id="out">
+  <h3>Your slip</h3>
+  <div id="legs"></div>
+  <div class="tot"><span>Total odds</span><b id="tot"></b></div>
+  <p class="chance" id="chance"></p>
+  <div id="warn"></div>
+  <div class="cbx"><div><b>Booking code: coming soon</b><span id="bknote"></span></div></div>
+  <button class="copybtn" id="copy">Copy slip</button>
+</div>
+<div id="ad-native"></div><div class="bet-cta" data-banner="1"></div>
+<p class="fine">Selections come from today's featured matches and our prediction engine. Odds are the latest prices from the daily build and can move before kickoff. 18+ only. Nothing here is guaranteed; always check the slip on your bookmaker before you stake. Please gamble responsibly.</p>
+</main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const esc=v=>String(v==null?"":v).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let D=null;
+const BN={msport:"MSport","1xbet":"1xBet",bet9ja:"Bet9ja",sportybet:"SportyBet",betking:"BetKing",nairabet:"NairaBet",paripesa:"Paripesa",bangbet:"BangBet",football:"Football.com",betwgb:"BetWGB",betwinner:"BetWinner","22bet":"22Bet",livescorebet:"LiveScore Bet",betano:"Betano",stake:"Stake",betway:"Betway"};
+const CN={ng:"Nigeria",gh:"Ghana",ke:"Kenya",tz:"Tanzania",ug:"Uganda",zm:"Zambia",cm:"Cameroon",ci:"Cote D Ivoire",sn:"Senegal",bf:"Burkina Faso",et:"Ethiopia",mw:"Malawi",gm:"Gambia",bj:"Benin",global:"Global",za:"South Africa",mz:"Mozambique"};
+function bname(k){const s=String(k).split("|")[0];return BN[s]||s.charAt(0).toUpperCase()+s.slice(1);}
+function cdisp(k){const c=String(k).split("|")[1]||"";return CN[c]||c.toUpperCase();}
+fetch("/daily.json?v="+Date.now()).then(r=>r.ok?r.json():null).then(d=>{D=d;}).catch(()=>{});
+fetch("/api/betrelay?action=bookies").then(r=>r.json()).then(d=>{
+  const sel=$("bk"); sel.innerHTML="";
+  const seen={},list=[];
+  (d.bookies||[]).forEach(b=>{
+    const k=b.key||((b.bookie||b.name||"")+"|"+(b.country||""));
+    if(!k||seen[k])return; seen[k]=1;
+    list.push({key:k,lab:bname(k)+(cdisp(k)?" ("+cdisp(k)+")":"")});
+  });
+  list.sort((a,b)=>a.lab<b.lab?-1:a.lab>b.lab?1:0);
+  list.forEach(x=>{const o=document.createElement("option");o.value=x.key;o.textContent=x.lab;sel.appendChild(o);});
+  if(!list.length) sel.innerHTML='<option value="">Any bookmaker</option>';
+}).catch(()=>{$("bk").innerHTML='<option value="">Any bookmaker</option>';});
+
+function pool(){
+  const out=[],now=Date.now();
+  ((D&&D.matches)||[]).forEach(m=>{
+    if(!m||!m.markets)return;
+    const ko=m.kickoff?new Date(m.kickoff).getTime():0;
+    if(ko&&ko<now)return;
+    m.markets.forEach(r=>{
+      if(r.skip===true)return;
+      if(!(r.odd>1.12))return;
+      const p=r.prob>1?r.prob/100:r.prob;
+      if(!(p>=0.2))return;
+      out.push({id:m.id,match:(m.home||"")+" vs "+(m.away||""),league:m.league||"",country:m.country||"",kickoff:m.kickoff||"",market:r.market,odd:r.odd,prob:p*100});
+    });
+  });
+  return out;
+}
+function buildSlip(){
+  const e=$("err");e.style.display="none";
+  if(!D){e.textContent="Still loading today's matches, try again in a moment.";e.style.display="block";return;}
+  const N=parseInt($("n").value,10)||5,T=parseFloat($("t").value)||10;
+  const bk=$("bk").value;
+  const cand=pool();
+  if(!cand.length){e.textContent="No priced matches available right now. The daily build lands around 12:30 PM WAT.";e.style.display="block";return;}
+  const g=Math.pow(T,1/N),maxOdd=Math.min(7,Math.max(2.6,g*2.2));
+  const P2=cand.filter(l=>l.odd<=maxOdd);
+  P2.sort((a,b)=>b.prob-a.prob||a.odd-b.odd);
+  const slip=[],fx={},lg={},co={};
+  for(let i=0;i<P2.length&&slip.length<N;i++){
+    const c=P2[i];
+    if(fx[c.id])continue;
+    if((lg[c.league]||0)>=2)continue;
+    if((co[c.country]||0)>=4)continue;
+    slip.push(c);fx[c.id]=1;lg[c.league]=(lg[c.league]||0)+1;co[c.country]=(co[c.country]||0)+1;
+  }
+  const prod=s=>s.reduce((a,l)=>a*l.odd,1);
+  let P=prod(slip);
+  function trySwap(reach){
+    let best=null;
+    for(const out of slip){
+      for(const c2 of P2){
+        if(c2===out)continue;
+        const sameFx=c2.id===out.id;
+        if(!sameFx&&fx[c2.id])continue;
+        if(!sameFx&&(lg[c2.league]||0)-(out.league===c2.league?1:0)>=2)continue;
+        if(!sameFx&&(co[c2.country]||0)-(out.country===c2.country?1:0)>=4)continue;
+        const newP=P/out.odd*c2.odd;
+        if(reach){
+          if(newP>=T&&(!best||c2.prob>best.c2.prob))best={out:out,c2:c2,newP:newP};
+        }else{
+          if(newP>=T){if(!best||10000+c2.prob>best.score)best={out:out,c2:c2,newP:newP,score:10000+c2.prob};}
+          else if(newP>P&&(!best||newP>best.score))best={out:out,c2:c2,newP:newP,score:newP};
+        }
+      }
+    }
+    return best;
+  }
+  function apply(sw){
+    fx[sw.out.id]=0;lg[sw.out.league]=(lg[sw.out.league]||1)-1;co[sw.out.country]=(co[sw.out.country]||1)-1;
+    slip[slip.indexOf(sw.out)]=sw.c2;
+    fx[sw.c2.id]=1;lg[sw.c2.league]=(lg[sw.c2.league]||0)+1;co[sw.c2.country]=(co[sw.c2.country]||0)+1;
+    P=sw.newP;
+  }
+  let guard=0;
+  while(P<T&&guard++<300){const s1=trySwap(false);if(!s1)break;apply(s1);}
+  guard=0;
+  while(P>=T&&guard++<300){const s2=trySwap(true);if(!s2)break;apply(s2);}
+  const legs=slip.slice().sort((a,b)=>(a.kickoff||"").localeCompare(b.kickoff||""));
+  let h="";
+  legs.forEach((l,i)=>{
+    const t=l.kickoff?new Date(l.kickoff).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}):"";
+    h+='<div class="legrow"><div class="top2"><b>'+(i+1)+". "+esc(l.match)+'</b><i class="mk">@'+esc(l.odd)+"</i></div>";
+    h+='<div class="sub">'+esc(l.market)+" &middot; "+esc(l.league)+(t?" &middot; "+t:"")+"</div></div>";
+  });
+  $("legs").innerHTML=h;
+  $("tot").textContent=P.toFixed(2);
+  const ch=legs.reduce((a,l)=>a*(l.prob/100),1)*100;
+  $("chance").textContent="Our model puts the chance of every leg landing at about "+(ch<1?ch.toFixed(2):ch.toFixed(1))+"%. Bookmaker prices may differ by kickoff.";
+  $("warn").innerHTML=P>=T?"":'<div class="warn">Today\'s slate could not safely reach '+T+" odds with "+N+" games. This is the strongest slip it could build at "+P.toFixed(2)+" odds. Try a lower target, more games, or check back after the next build.</div>";
+  const bl=$("bk").selectedIndex>=0?bname(bk):"your bookmaker";
+  $("bknote").textContent=" Real codes for "+bl+" arrive when our code service is upgraded. Until then, copy the slip and add the picks yourself.";
+  $("out").style.display="block";
+  $("out").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("copy").addEventListener("click",function(){
+  const rows=[...document.querySelectorAll("#legs .legrow")].map((el,i)=>{
+    const t=el.querySelector("b").textContent, s=el.querySelector(".sub").textContent;
+    return (i+1)+". "+t.replace(/^\d+\.\s*/,"")+" ["+s+"]";
+  });
+  const txt="Fixturio slip builder: "+$("n").value+" games, total odds "+$("tot").textContent+"\n"+rows.join("\n")+"\nPicked free on fixturio.vercel.app - 18+, bet responsibly";
+  const done=()=>{this.textContent="Copied!";const b=this;setTimeout(function(){b.textContent="Copy slip";},1600);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(()=>{});}
+  else{const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");done();}catch(err){}document.body.removeChild(ta);}
+});
+</script>
+<script src="/affiliate.js" defer></script>
+<script src="/ads.js" defer></script>
+</body></html>
