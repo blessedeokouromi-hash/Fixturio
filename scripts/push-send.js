@@ -7,6 +7,7 @@
 // `node scripts/push-send.js --dry` prints what would be sent and sends nothing.
 const fs = require("fs");
 const dry = process.argv.includes("--dry");
+const test = process.argv.includes("--test"); // debug: try only the newest sub and print the full web-push error
 const PUB = process.env.VAPID_PUBLIC_KEY ||
   "BAO0iCFzZnpnxahZ4FoeW6toT8WX8kh-H4Gj43bg6r9hvZcBshhEItZLCirvEvqev7sBBXkJ7HiOstSLK1OQwRA";
 const PRIV = process.env.VAPID_PRIVATE_KEY;
@@ -57,6 +58,19 @@ async function main() {
   catch (e) { console.log("Push skipped: " + e.message); process.exit(0); }
   const webpush = require("web-push");
   webpush.setVapidDetails("mailto:blessed.e.okouromi@gmail.com", PUB, PRIV);
+  if (test) {
+    const one = subs[0];
+    console.log("TEST: trying", one.endpoint.slice(0, 60), "pubkey", PUB.slice(0, 12));
+    try {
+      await webpush.sendNotification({ endpoint: one.endpoint, keys: one.keys }, JSON.stringify(payloadFor()));
+      console.log("TEST: OK, notification sent to newest subscriber");
+    } catch (e) {
+      console.log("TEST FAIL statusCode:", e && e.statusCode);
+      console.log("TEST FAIL body:", e && e.body);
+      console.log("TEST FAIL message:", e && e.message);
+    }
+    process.exit(0);
+  }
   const payload = JSON.stringify(payloadFor());
   let sent = 0, failed = 0;
   const dead = [];
