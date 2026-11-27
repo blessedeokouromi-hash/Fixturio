@@ -73,6 +73,21 @@ module.exports = async (req, res) => {
 
   if (req.method === "GET") {
     const want = String(req.query.action || "bookies");
+    if (want === "usage") {
+      // One upstream call to /usage: tells us whether the key is accepted
+      // (200), unknown (401) or domain-blocked (403).
+      if (!key()) { res.status(503).json({ error: "no key on file" }); return; }
+      try {
+        const r = await fetch(BASE + "/usage", { headers: { "X-API-Key": key() } });
+        const text = await r.text();
+        let data = null;
+        try { data = text ? JSON.parse(text) : null; } catch (e) {}
+        res.status(200).json({ status: r.status, data: data, body: data ? undefined : text.slice(0, 200) });
+      } catch (e) {
+        res.status(502).json({ error: "upstream unreachable" });
+      }
+      return;
+    }
     if (want !== "bookies") { res.status(400).json({ error: "Unknown action." }); return; }
     try {
       const bookies = await bookiesList();
