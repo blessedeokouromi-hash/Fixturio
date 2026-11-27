@@ -1,6 +1,8 @@
 // Fixturio push notifications: one soft opt-in on the homepage, then silent.
+// The signing key pair is kept in the repo's GitHub Actions secrets
+// (VAPID_PRIVATE_KEY must always match this public key).
 (function () {
-  var PUBKEY = "BAO0iCFzZnpnxahZ4FoeW6toT8WX8kh-H4Gj43bg6r9hvZcBshhEItZLCirvEvqev7sBBXkJ7HiOstSLK1OQwRA";
+  var PUBKEY = "BF0Fz8tRk1iB5Y4eyeXKTdQHwBVygfVq5-O4DHwDjzZdyk2h56yJg_5fgkeYsImEB1ZyjFk6sHcinkZkuSpS35E";
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
   var KEY = "fx-push", state = null;
   try { state = localStorage.getItem(KEY); } catch (e) {}
@@ -22,23 +24,41 @@
     return reg().then(function (r) { return r.pushManager.getSubscription(); })
       .then(function (s) { return !!s; }).catch(function () { return false; });
   }
+  function save(sub) {
+    var j = sub.toJSON();
+    return fetch("/api/push-subscribe", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: j.endpoint, keys: j.keys }) });
+  }
   function enable() {
     reg().then(function (r) { return r.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(PUBKEY) }); })
-      .then(function (sub) {
-        var j = sub.toJSON();
-        return fetch("/api/push-subscribe", { method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint: j.endpoint, keys: j.keys }) });
-      })
-      .then(function (r) { if (r.ok) { try { localStorage.setItem(KEY, "on"); } catch (e) {} } hide(); })
+      .then(function (sub) { return save(sub).then(function (r) {
+        if (r.ok) { try { localStorage.setItem(KEY, "on:" + PUBKEY); } catch (e) {} }
+        hide();
+      }); })
       .catch(function () { hide(); });
+  }
+  // A subscription made under an older signing key never receives anything,
+  // so once the key in this file changes, quietly swap old subscriptions over.
+  function migrate(old) {
+    var r = null;
+    reg().then(function (reg_) { r = reg_; return old.unsubscribe(); })
+      .then(function () { return r.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(PUBKEY) }); })
+      .then(function (sub) { return save(sub).then(function (res) {
+        if (res.ok) { try { localStorage.setItem(KEY, "on:" + PUBKEY); } catch (e) {} }
+      }); })
+      .catch(function () {});
   }
   function hide() { var c = document.getElementById("fx-push-card"); if (c) c.remove(); }
 
   if (Notification.permission === "granted") {
-    // Already allowed at some point: make sure a subscription exists, quietly.
-    subscribed().then(function (yes) {
-      if (!yes && state !== "off") enable();
-    });
+    // Already allowed at some point: make sure a subscription exists and is
+    // bound to the current key, quietly.
+    reg().then(function (r) { return r.pushManager.getSubscription(); })
+      .then(function (s) {
+        if (!s) { if (state !== "off") enable(); }
+        else if (state !== "on:" + PUBKEY) migrate(s);
+      })
+      .catch(function () {});
     return;
   }
   if (Notification.permission !== "default") return; // denied earlier: never nag

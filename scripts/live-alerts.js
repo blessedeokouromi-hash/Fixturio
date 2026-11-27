@@ -77,7 +77,9 @@ if (send.length && process.env.VAPID_PRIVATE_KEY) {
   pushSubs().then(function (subs) {
     const webpush = require("web-push");
     webpush.setVapidDetails("mailto:blessed.e.okouromi@gmail.com",
-      process.env.VAPID_PUBLIC_KEY || "BAO0iCFzZnpnxahZ4FoeW6toT8WX8kh-H4Gj43bg6r9hvZcBshhEItZLCirvEvqev7sBBXkJ7HiOstSLK1OQwRA",
+        // The saved VAPID private key signs with this public key (the
+      // VAPID_PUBLIC_KEY secret holds an older key and is ignored on purpose).
+      "BF0Fz8tRk1iB5Y4eyeXKTdQHwBVygfVq5-O4DHwDjzZdyk2h56yJg_5fgkeYsImEB1ZyjFk6sHcinkZkuSpS35E",
       process.env.VAPID_PRIVATE_KEY);
     const payload = JSON.stringify({ url: "/" });
     (async () => {

@@ -8,8 +8,9 @@
 const fs = require("fs");
 const dry = process.argv.includes("--dry");
 const test = process.argv.includes("--test"); // debug: try only the newest sub and print the full web-push error
-const PUB = process.env.VAPID_PUBLIC_KEY ||
-  "BAO0iCFzZnpnxahZ4FoeW6toT8WX8kh-H4Gj43bg6r9hvZcBshhEItZLCirvEvqev7sBBXkJ7HiOstSLK1OQwRA";
+const PUB =   // The saved VAPID private key signs with this public key (the
+  // VAPID_PUBLIC_KEY secret holds an older key and is ignored on purpose).
+  "BF0Fz8tRk1iB5Y4eyeXKTdQHwBVygfVq5-O4DHwDjzZdyk2h56yJg_5fgkeYsImEB1ZyjFk6sHcinkZkuSpS35E";
 const PRIV = process.env.VAPID_PRIVATE_KEY;
 const SB_URL = (process.env.SUPABASE_URL || "https://ncpquoviqczrxupiihvv.supabase.co").replace(/\/$/, "");
 const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
