@@ -11,10 +11,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Test one push
-        run: cd scripts && npm install --silent && cd .. && node scripts/push-send.js --test
+      - name: Check VAPID pair
+        run: node -e "
+          const b64u = s => Buffer.from(String(s).replace(/-/g,'+').replace(/_/g,'/'), 'base64');
+          const crypto = require('crypto');
+          const priv = b64u(process.env.VAPID_PRIVATE_KEY);
+          console.log('priv bytes:', priv.length);
+          const ecdh = crypto.createECDH('prime256v1');
+          ecdh.setPrivateKey(priv);
+          const pub = ecdh.getPublicKey('base64url');
+          console.log('derived pub:', pub);
+          console.log('expected pub:', process.env.VAPID_PUBLIC_KEY);
+          console.log('expected bytes:', b64u(process.env.VAPID_PUBLIC_KEY).length);
+          console.log('MATCH:', pub === String(process.env.VAPID_PUBLIC_KEY).replace(/=*$/,''));
+        "
         env:
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
