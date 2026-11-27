@@ -9,4 +9,10 @@
   <url><loc>https://fixturio.vercel.app/saved.html</loc><changefreq>weekly</changefreq><priority>0.3</priority></url>
   <url><loc>https://fixturio.vercel.app/info.html</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://fixturio.vercel.app/wallet.html</loc><changefreq>weekly</changefreq></url>
+  <url><loc>https://fixturio.vercel.app/basketball.html</loc><changefreq>daily</changefreq></url>
+  <url><loc>https://fixturio.vercel.app/builder.html</loc><changefreq>daily</changefreq></url>
+  <url><loc>https://fixturio.vercel.app/community.html</loc><changefreq>daily</changefreq></url>
+  <url><loc>https://fixturio.vercel.app/convert.html</loc><changefreq>daily</changefreq></url>
+  <url><loc>https://fixturio.vercel.app/match.html</loc><changefreq>daily</changefreq></url>
+  <url><loc>https://fixturio.vercel.app/team.html</loc><changefreq>daily</changefreq></url>
 </urlset>
