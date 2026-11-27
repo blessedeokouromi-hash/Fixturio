@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B5A3C">
+<title>Bet code tools: convert, view, merge, split, book &amp; track | Fixturio</title>
+<meta name="description" content="Convert, view, merge and split booking codes, generate a fresh code from your picks, and track slips live. SportyBet, Bet9ja, 1xBet, MSport, BetKing and 46 more, free on Fixturio.">
+<link rel="stylesheet" href="/theme.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--tx);font:500 15px/1.4 var(--f);-webkit-text-size-adjust:100%}
+body{background:radial-gradient(900px 420px at 50% -80px,var(--shadow),transparent 65%),var(--ink)}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--amb);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+.top{position:sticky;top:0;z-index:4;background:var(--pitch);border-bottom:0;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;display:flex;justify-content:space-between;align-items:center}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo img{width:32px;height:32px;flex:none;border-radius:8px}
+.logo b{font-size:21px;font-weight:800;color:#fff;letter-spacing:-.02em}
+.top>a{color:var(--hmu);text-decoration:none;font-weight:700}
+.tabs{display:flex;align-items:center;gap:22px;padding:0 16px;background:var(--pitch);border-bottom:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{padding:11px 0;color:var(--hmu);text-decoration:none;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs a.on{color:#fff;border-color:var(--amb)}
+.cfg{display:none;margin:12px 16px 0;padding:11px 13px;border:1px solid var(--amb);border-radius:12px;background:var(--s1);font-size:13px;color:var(--tx)}
+.card{margin:12px 16px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--s1);box-shadow:0 8px 24px var(--shadow)}
+.card h3{margin:0 0 10px;font-size:16px;font-weight:800}
+.card h3::after{content:"";display:block;width:36px;height:3px;background:var(--amb);border-radius:2px;margin-top:7px}
+.note{font-size:13px;color:var(--mu);margin:8px 0 0}
+label{display:block;font-size:13px;font-weight:700;margin:12px 0 5px}
+input,select,textarea{width:100%;padding:11px 14px;background:var(--s2);border:1px solid var(--line);border-radius:10px;color:var(--tx);font:inherit;font-size:16px}
+input{text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+textarea{font-size:14px;min-height:96px;resize:vertical}
+.ptabs{display:flex;gap:7px;flex-wrap:wrap;margin:12px 16px 0}
+.ptabs button{padding:9px 14px;border:1px solid var(--line);border-radius:20px;background:var(--s1);font-size:13.5px;font-weight:700;color:var(--mu)}
+.ptabs button.on{background:var(--amb);border-color:var(--amb);color:var(--ink)}
+.cost{display:inline-block;font-size:11px;font-weight:800;color:var(--amb);border:1px solid rgba(255,213,74,.55);border-radius:12px;padding:2px 8px;margin-left:8px;vertical-align:2px;text-transform:none}
+.seg{display:flex;gap:6px;margin-top:10px}
+.seg button{flex:1;padding:9px 4px;border:1px solid var(--line);border-radius:10px;background:var(--s2);font-size:13px;font-weight:700;color:var(--mu)}
+.seg button.on{background:var(--s1);color:var(--amb);border-color:var(--amb)}
+.post{margin-top:14px;width:100%;padding:12px;background:linear-gradient(135deg,var(--amb),var(--bar));border-color:transparent;color:var(--ink);border-radius:12px;font-weight:800;font-size:15px;box-shadow:0 4px 14px var(--shadow)}
+.post[disabled]{opacity:.55}
+.quota{font-size:12.5px;color:var(--mu);margin:10px 0 0;text-align:center}
+.err{color:var(--live);font-size:13px;margin-top:8px}
+.res{display:none}
+.cbx{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1.5px dashed var(--amb);border-radius:12px;padding:10px 12px;background:var(--s1);box-shadow:inset 0 1px 3px rgba(0,0,0,.05)}
+.cbx b{font-size:24px;letter-spacing:.16em;font-weight:800;color:var(--amb);word-break:break-all}
+.copybtn{flex:none;border:1px solid var(--bar);background:var(--s1);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;color:var(--amb)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip2{font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:20px;padding:5px 10px;color:var(--mu);background:var(--s1)}
+.chip2.ok{color:#4ADE9C;border-color:rgba(74,222,156,.5)}
+.chip2.bad{color:var(--live);border-color:rgba(255,99,99,.5)}
+.chip2.warn{color:var(--amb);border-color:rgba(255,213,74,.55)}
+.rows{margin-top:10px}
+.sel{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.sel:last-child{border-bottom:0}
+.sel span{color:var(--tx);word-break:break-word}
+.sel i{flex:none;font-style:normal;font-weight:800;color:var(--amb)}
+.pair{display:flex;gap:8px;margin-top:8px}
+.pair select{flex:1.2;min-width:0}
+.pair input{flex:1;min-width:0}
+.mini{flex:none;width:38px;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--s2);font-size:17px;color:var(--mu)}
+.addrow{margin-top:8px;padding:7px 12px;border:1px dashed var(--line);border-radius:10px;background:none;font-size:12.5px;font-weight:700;color:var(--mu)}
+.ck{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;font-weight:600}
+.ck input{width:18px;height:18px;padding:0;text-transform:none}
+.trk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;background:var(--s2)}
+.trk .tr1{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13.5px;font-weight:700}
+.trk .tr2{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.trk button{padding:5px 10px;border:1px solid var(--line);border-radius:10px;background:var(--s1);font-size:11.5px;font-weight:800;color:var(--mu)}
+.bkrow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.bkrow:last-child{border-bottom:0}
+.bkrow b{font-weight:800}
+.bkrow .fl{display:flex;gap:5px;flex:none}
+.fine{margin:16px 16px 0;font-size:12px;color:var(--mu)}
+.adslot{min-height:60px;margin:12px 16px;display:flex;justify-content:center;align-items:center}
+.adslot:empty{display:none}
+.raw{white-space:pre-wrap;font-size:11.5px;color:var(--mu);background:var(--s2);border-radius:10px;padding:10px;margin-top:10px;word-break:break-word;max-height:200px;overflow:auto}
+</style>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="stylesheet" href="/fix.css">
+<link rel="canonical" href="https://fixturio.vercel.app/betcode.html">
+<meta property="og:title" content="Bet code tools: convert, view, merge, split, book &amp; track | Fixturio">
+<meta property="og:description" content="Convert, view, merge and split booking codes, generate a fresh code from your picks, and track slips live. SportyBet, Bet9ja, 1xBet, MSport, BetKing and 46 more, free on Fixturio.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://fixturio.vercel.app/betcode.html">
+<meta property="og:image" content="https://fixturio.vercel.app/logo.png">
+<meta name="twitter:card" content="summary">
+</head><body>
+<div class="wrap">
+<header class="top"><a class="logo" href="/"><img src="/logo.png" alt="Fixturio logo"><b>Fixturio</b></a><a href="/">All matches</a></header>
+<nav class="tabs"><a href="/">Matches</a><a href="/picks.html">Top 15</a><a href="/basketball.html">Basketball</a><a href="/standings.html">Standings</a><a href="/news.html">News</a><a href="/video.html">Video</a><a href="/saved.html">Saved</a><a href="/tools.html">Tools</a><a href="/community.html">Community</a><a href="/convert.html">Convert</a><a href="/builder.html">Builder</a><a href="/betcode.html" class="on">Codes</a><a href="/wallet.html">Wallet</a></nav>
+<div class="adslot" id="ad-banner"></div>
+<div class="cfg" id="cfg">The bet-code tools need the service key, which is not connected yet. Everything here is ready and switches on once it is saved.</div>
+<div class="ptabs" id="ptabs">
+<button data-p="conv" class="on">Convert</button>
+<button data-p="view">View slip</button>
+<button data-p="merge">Merge</button>
+<button data-p="split">Split</button>
+<button data-p="book">Book<span class="cost">2 cr</span></button>
+<button data-p="track">Track</button>
+<button data-p="bookies">Bookies</button>
+</div>
+<main id="app">
+
+<div class="card" id="p-conv">
+<h3>Convert a bet code<span class="cost">2 cr per target</span></h3>
+<p class="note" style="margin-top:0">Move a booking code between bookmakers. Choose one target, fan out to every bookmaker, or convert a short list at once.</p>
+<div class="seg" id="cseg"><button data-m="one" class="on">One code</button><button data-m="all">To all</button><button data-m="bulk">Bulk list</button></div>
+<div id="row-code"><label for="code">Booking code</label><input id="code" autocomplete="off" maxlength="32" placeholder="e.g. 8XK2QP"></div>
+<div id="row-bulk" style="display:none"><label for="bulk">Codes, one per line (2 to 4)</label><textarea id="bulk" placeholder="8XK2QP&#10;QW7D3M"></textarea></div>
+<label for="from">From</label>
+<select id="from"><option value="">Select source</option></select>
+<div id="row-to"><label for="to">To</label><select id="to"><option value="">Select target</option></select></div>
+<button class="post" id="cgo">Convert code</button>
+<p class="err" id="cerr" style="display:none"></p>
+<div class="card res" id="cres" style="margin:14px 0 0">
+<h3 id="crestitle">Result</h3>
+<div class="cbx" id="cbxwrap"><b id="ccode">&nbsp;</b><button class="copybtn" id="ccopy" type="button">Copy</button></div>
+<div class="chips" id="cchips"></div>
+<div class="rows" id="crows"></div>
+<button class="addrow" id="cviewbtn" type="button" style="display:none">Open it in View slip &rarr;</button>
+<div class="raw" id="craw" style="display:none"></div>
+</div>
+</div>
+
+<div class="card res" id="p-view">
+<h3>View a slip<span class="cost">1 cr, image 2 cr</span></h3>
+<p class="note" style="margin-top:0">Open any booking code as clean text: every game, market, odds and result on the slip.</p>
+<label for="vcode">Booking code</label><input id="vcode" autocomplete="off" maxlength="32" placeholder="e.g. 8XK2QP">
+<label for="bkview">Bookmaker</label><select id="bkview"><option value="">Select bookmaker</option></select>
+<button class="post" id="vgo">View slip</button>
+<button class="addrow" id="vimg" type="button" style="display:block;margin-top:10px">Get it as a shareable image (2 cr)</button>
+<p class="err" id="verr" style="display:none"></p>
+<div class="chips" id="vchips" style="margin-top:12px"></div>
+<div class="rows" id="vrows"></div>
+<div id="vimgbox" style="margin-top:10px"></div>
+</div>
+
+<div class="card res" id="p-merge">
+<h3>Merge bet codes<span class="cost">2 cr + extras</span></h3>
+<p class="note" style="margin-top:0">Combine 2 to 30 codes into one slip on one bookmaker. Duplicate games are removed.</p>
+<div id="mpairs"></div>
+<button class="addrow" id="madd" type="button">+ Add another code</button>
+<label for="mtarget">Target bookmaker</label><select id="mtarget"><option value="">Same as first code</option></select>
+<button class="post" id="mgo">Merge codes</button>
+<p class="err" id="merr" style="display:none"></p>
+<div class="card res" id="mres" style="margin:14px 0 0">
+<h3>Merged code</h3>
+<div class="cbx"><b id="mcode">&nbsp;</b><button class="copybtn" id="mcopy" type="button">Copy</button></div>
+<div class="chips" id="mchips"></div>
+<div class="rows" id="mrows"></div>
+</div>
+</div>
+
+<div class="card res" id="p-split">
+<h3>Split a slip<span class="cost">2 cr + 1 per part</span></h3>
+<p class="note" style="margin-top:0">Break one long slip into 2 to 20 smaller codes on the same bookmaker.</p>
+<label for="scode">Booking code</label><input id="scode" autocomplete="off" maxlength="32" placeholder="e.g. 8XK2QP">
+<label for="bksplit">Bookmaker</label><select id="bksplit"><option value="">Select bookmaker</option></select>
+<label for="scount">Parts (2-20)</label><input id="scount" type="number" min="2" max="20" value="2" inputmode="numeric" style="text-transform:none">
+<label for="spattern">How to split</label>
+<select id="spattern">
+<option value="equal">Spread games evenly</option>
+<option value="by_batches">Keep consecutive games together</option>
+<option value="target_odds">Group to a target odds</option>
+<option value="custom">Exact game counts per part</option>
+</select>
+<div id="row-todds" style="display:none"><label for="stodds">Target odds per part</label><input id="stodds" inputmode="decimal" placeholder="e.g. 5.00" style="text-transform:none"></div>
+<div id="row-scounts" style="display:none"><label for="scounts">Games per part, comma separated</label><input id="scounts" placeholder="e.g. 4,3,3" style="text-transform:none"></div>
+<label for="sorder">Order</label>
+<select id="sorder"><option value="mixed">Keep the slip's order</option><option value="by_start_time">By kickoff time</option></select>
+<button class="post" id="sgo">Split code</button>
+<p class="err" id="serr" style="display:none"></p>
+<div class="rows" id="srows"></div>
+</div>
+
+<div class="card res" id="p-book">
+<h3>Book a fresh code<span class="cost">resolve free, book 2 cr</span></h3>
+<p class="note" style="margin-top:0">Type your picks, resolve the prices (free), then book a brand-new code on your bookmaker. One pick per line:<br><b>Home vs Away | Market | Outcome | line | odds</b><br>Line and odds are optional, e.g. <span style="color:var(--tx)">Arsenal vs Chelsea | Over/Under | Over | 2.5 | 1.90</span></p>
+<label for="bpicks">Your picks</label>
+<textarea id="bpicks" placeholder="Arsenal vs Chelsea | Over/Under | Over | 2.5 | 1.90&#10;Real Madrid vs Sevilla | 1X2 | Home"></textarea>
+<label for="bkbook">Bookmaker</label><select id="bkbook"><option value="">Select bookmaker</option></select>
+<div class="ck"><input type="checkbox" id="bstrict" checked><label for="bstrict" style="margin:0">Strict: every pick must resolve, or no code</label></div>
+<div class="ck"><input type="checkbox" id="bodds"><label for="bodds" style="margin:0">Allow odds changes</label></div>
+<button class="post" id="rgo">Resolve picks (free)</button>
+<button class="post" id="bgo" style="display:none;margin-top:10px">Book the code (2 cr)</button>
+<p class="err" id="berr" style="display:none"></p>
+<div class="chips" id="bchips" style="margin-top:10px"></div>
+<div class="rows" id="brows"></div>
+<div class="card res" id="bres" style="margin:14px 0 0">
+<h3>Your new code</h3>
+<div class="cbx"><b id="bcode">&nbsp;</b><button class="copybtn" id="bcopy" type="button">Copy</button></div>
+<div class="chips" id="bchips2"></div>
+</div>
+</div>
+
+<div class="card res" id="p-track">
+<h3>Track a slip live<span class="cost">1 cr to start</span></h3>
+<p class="note" style="margin-top:0">Follow a SportyBet, Football.com or Betway slip game by game: goals, full-time results and ticket progress.</p>
+<label for="tcode">Booking code</label><input id="tcode" autocomplete="off" maxlength="32" placeholder="e.g. 8XK2QP">
+<label for="bktrack">Bookmaker</label><select id="bktrack"><option value="">Select bookmaker</option></select>
+<label for="tmode">Alert style</label>
+<select id="tmode"><option value="ticket">Stop at the first lost game</option><option value="game">Track every game to the end</option></select>
+<label for="tlabel">Name it (optional)</label><input id="tlabel" maxlength="60" placeholder="e.g. Friday acca" style="text-transform:none">
+<button class="post" id="tgo">Start tracking</button>
+<p class="err" id="terr" style="display:none"></p>
+<div class="rows" id="trows"></div>
+<button class="addrow" id="trefresh" type="button" style="display:none">Refresh my tracked slips</button>
+</div>
+
+<div class="card res" id="p-bookies">
+<h3>Supported bookmakers</h3>
+<p class="note" style="margin-top:0">Every bookmaker these tools work with, and what each one supports.</p>
+<div class="rows" id="bkrows"><p class="note">Loading...</p></div>
+</div>
+
+<p class="quota" id="quota">Loading your free actions...</p>
+</main>
+<p class="fine">Powered by the Manage Bet Codes API. Selections can differ between bookmakers, so always check the slip on the target bookmaker before you stake. Codes here are tools, not recommendations, and nothing is guaranteed. 18+.</p>
+</div>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var BOOKIES=[], LEFT=null, LIMIT=3, CONFIGURED=true, PLAN=null;
+  var savedTracks="fx:mbc:tracks";
+
+  function post(action,payload,cb){
+    var body=payload||{}; body.action=action;
+    fetch("/api/mbc",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+      .then(function(r){return r.json()}).then(function(d){ if(d&&typeof d.left==="number"){LEFT=d.left;quota();} cb(d||{}); })
+      .catch(function(){ cb({error:"Network hiccup. Check your connection and try again."}); });
+  }
+  function quota(){
+    if(LEFT===null) return;
+    $("quota").textContent = LEFT>0 ? (LEFT+" of "+LIMIT+" free bet-code actions left today") : "No free bet-code actions left today, come back tomorrow";
+  }
+  function notConfigured(){
+    CONFIGURED=false; $("cfg").style.display="block";
+  }
+  function busy(btn,label,txt){ btn.disabled=true; var old=btn.textContent; btn.textContent=txt||"Working..."; return function(ok){ btn.disabled=false; btn.textContent=old; if(!ok&&label){} }; }
+
+  function err(id,msg){ var e=$(id); if(msg){ e.textContent=msg; e.style.display="block"; } else { e.style.display="none"; } }
+  function listOf(d){ var out=[]; if(Array.isArray(d)) return d; if(d&&typeof d==="object"){ ["results","targets","codes","conversions","parts"].forEach(function(n){ if(Array.isArray(d[n])) out=d[n]; }); if(!out.length&&Array.isArray(d.data)) out=d.data; } return out; }
+
+  /* ---- section switching ---- */
+  var pills=document.querySelectorAll("#ptabs button");
+  for(var i=0;i<pills.length;i++) pills[i].addEventListener("click",function(){
+    for(var j=0;j<pills.length;j++){ pills[j].classList.remove("on"); document.getElementById("p-"+pills[j].getAttribute("data-p")).style.display="none"; }
+    this.classList.add("on");
+    document.getElementById("p-"+this.getAttribute("data-p")).style.display="block";
+    if(this.getAttribute("data-p")==="track") loadTracks();
+  });
+
+  /* ---- bookmaker selects ---- */
+  function name(b){ return b.name || b.key; }
+  function fill(sel, filterTrack){
+    var el=$(sel); if(!el) return;
+    var first=el.options[0]?el.options[0].cloneNode(true):null;
+    el.innerHTML="";
+    if(first) el.appendChild(first);
+    var list=BOOKIES.filter(function(b){ return !filterTrack || b.track===true || ["sportybet","football.com","betway"].indexOf(b.key)>-1; });
+    list.forEach(function(b){ var o=document.createElement("option"); o.value=b.key; o.textContent=name(b); el.appendChild(o); });
+  }
+  fetch("/api/mbc?action=bookies").then(function(r){return r.json()}).then(function(d){
+    if(d.bookies&&d.bookies.length){ BOOKIES=d.bookies; ["from","to","bkview","bksplit","bkbook"].forEach(function(s){fill(s,false)}); fill("bktrack",true); fillMt(); }
+    if(d.configured===false) notConfigured();
+    if(typeof d.left==="number"){ LEFT=d.left; LIMIT=d.limit||LIMIT; quota(); }
+  }).catch(function(){});
+  function fillMt(){ /* merge pair selects are built dynamically */ }
+
+  /* ---- quota ---- */
+  fetch("/api/mbc?action=quota").then(function(r){return r.json()}).then(function(d){
+    if(d.configured===false) notConfigured();
+    if(typeof d.left==="number"){ LEFT=d.left; LIMIT=d.limit||LIMIT; quota(); }
+  }).catch(function(){});
+
+  /* ---- copy helper ---- */
+  function copyBtn(btn, get){
+    btn.addEventListener("click",function(){
+      var c=get(); if(!c) return;
+      var done=function(){ btn.textContent="Copied"; setTimeout(function(){btn.textContent="Copy"},1600); };
+      if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(c).then(done,done); }
+      else { var i=document.createElement("input"); i.value=c; document.body.appendChild(i); i.select(); try{document.execCommand("copy")}catch(x){} document.body.removeChild(i); done(); }
+    });
+  }
+  function codeInput(el){ el.addEventListener("input",function(){ this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,""); }); }
+  codeInput($("code")); codeInput($("vcode")); codeInput($("scode")); codeInput($("tcode"));
+
+  /* ================= CONVERT ================= */
+  var cmode="one";
+  var segs=document.querySelectorAll("#cseg button");
+  for(var k=0;k<segs.length;k++) segs[k].addEventListener("click",function(){
+    for(var j=0;j<segs.length;j++) segs[j].classList.remove("on");
+    this.classList.add("on"); cmode=this.getAttribute("data-m");
+    $("row-code").style.display = cmode==="bulk"?"none":"block";
+    $("row-bulk").style.display = cmode==="bulk"?"block":"none";
+    $("row-to").style.display = cmode==="one"?"block":"none";
+    $("cgo").textContent = cmode==="one"?"Convert code":cmode==="all"?"Convert to all bookmakers":"Bulk convert";
+  });
+  $("cgo").addEventListener("click",function(){
+    err("cerr");
+    var from=$("from").value, payload;
+    if(cmode==="bulk"){
+      var codes=$("bulk").value.split(/\n+/).map(function(s){return s.trim().toUpperCase().replace(/[^A-Z0-9]/g,"")}).filter(Boolean);
+      if(!codes.length){ err("cerr","Paste at least 2 codes."); return; }
+      payload={codes:codes,from:from};
+    } else {
+      var code=$("code").value.trim();
+      if(!code){ err("cerr","Enter a booking code first."); return; }
+      if(!from){ err("cerr","Choose the bookmaker the code is from."); return; }
+      payload = cmode==="one" ? {code:code,from:from,to:$("to").value} : {code:code,from:from};
+      if(cmode==="one"&&!payload.to){ err("cerr","Choose the bookmaker to convert to."); return; }
+    }
+    if(!from){ err("cerr","Choose the bookmaker the code is from."); return; }
+    var b=this; b.disabled=true; b.textContent="Converting...";
+    var finish=function(){ b.disabled=false; b.textContent=cmode==="one"?"Convert code":cmode==="all"?"Convert to all bookmakers":"Bulk convert"; };
+    post(cmode==="one"?"convert":cmode==="all"?"convert_all":"bulk", payload, function(d){
+      finish();
+      if(d.error&&d.error!=="not_configured"){ err("cerr",d.error); return; }
+      if(d.error){ err("cerr","The bet-code service is not connected yet."); return; }
+      var data=d.data||{}, chips=[], rows=[];
+      $("cchips").innerHTML=""; $("crows").innerHTML=""; $("craw").style.display="none"; $("cviewbtn").style.display="none";
+      var targetCode = data.target && data.target.code ? data.target.code : (data.code || (data.target_code||""));
+      if(targetCode){ $("cbxwrap").style.display="flex"; $("ccode").textContent=targetCode; }
+      else { $("cbxwrap").style.display="none"; }
+      if(data.counts) chips.push('<span class="chip2">'+data.counts.converted+" of "+data.counts.original+" games moved</span>");
+      if(data.odds&&(data.odds.source||data.odds.target)) chips.push('<span class="chip2 warn">'+(data.odds.source||"?")+" &rarr; "+(data.odds.target||"?")+" odds</span>");
+      if(data.partial) chips.push('<span class="chip2 bad">Some games could not come across</span>');
+      if(data.verified) chips.push('<span class="chip2 ok">Verified on '+((data.target&&data.target.name)||"the bookmaker")+"</span>");
+      if(data.total_odds) chips.push('<span class="chip2">Total odds '+data.total_odds+"</span>");
+      $("cchips").innerHTML=chips.join("");
+      var list=listOf(data);
+      list.forEach(function(it){
+        var n = it.bookmaker&&it.bookmaker.name ? it.bookmaker.name : (it.name||it.bookmaker||"");
+        var c = (it.target&&it.target.code)||(it.code||"");
+        var note = it.unmappable?(" / "+it.unmappable+" skipped"):"";
+        if(c||n) rows.push('<div class="sel"><span>'+n+note+"</span><i>"+(c||"failed")+"</i></div>");
+      });
+      if(!rows.length && !targetCode && data){ $("craw").textContent=JSON.stringify(data,null,1).slice(0,1500); $("craw").style.display="block"; }
+      $("crows").innerHTML=rows.join("");
+      if(targetCode){ $("cviewbtn").style.display="block"; $("cviewbtn").onclick=function(){ $("vcode").value=targetCode; $("bkview").value=data.target&&data.target.key?data.target.key:$("to").value; switchTo("view"); }; }
+      $("crestitle").textContent = targetCode ? "Your new code" : "Result";
+      $("cres").style.display="block";
+    });
+  });
+  copyBtn($("ccopy"),function(){return $("ccode").textContent.trim()});
+  function switchTo(p){ var b=document.querySelector('#ptabs button[data-p="'+p+'"]'); if(b) b.click(); }
+
+  /* ================= VIEW ================= */
+  $("vgo").addEventListener("click",function(){
+    err("verr");
+    var code=$("vcode").value.trim(), bk=$("bkview").value;
+    if(!code){ err("verr","Enter a booking code first."); return; }
+    if(!bk){ err("verr","Choose the bookmaker."); return; }
+    var b=this; b.disabled=true; b.textContent="Reading...";
+    post("view",{code:code,bookmaker:bk},function(d){
+      b.disabled=false; b.textContent="View slip";
+      if(d.error){ err("verr",d.error); $("vchips").innerHTML=""; $("vrows").innerHTML=""; return; }
+      var data=d.data||{}, chips=[], rows=[];
+      if(data.status) chips.push('<span class="chip2 '+(/won/i.test(data.status)?"ok":/lost|cut/i.test(data.status)?"bad":"")+'">'+data.status+"</span>");
+      if(data.total_odds) chips.push('<span class="chip2">Total odds '+data.total_odds+"</span>");
+      if(data.stake) chips.push('<span class="chip2">Stake '+data.stake+"</span>");
+      if(data.potential_payout) chips.push('<span class="chip2 warn">Payout '+data.potential_payout+"</span>");
+      if(data.has_pending) chips.push('<span class="chip2">Games still pending</span>');
+      if(data.has_unknown) chips.push('<span class="chip2 bad">A game is missing data at the bookmaker</span>');
+      if(data.last_updated) chips.push('<span class="chip2">Updated '+data.last_updated+"</span>");
+      $("vchips").innerHTML=chips.join("");
+      (data.selections||[]).forEach(function(s){
+        var st=(s.status||"").toUpperCase();
+        var cls = /WON/.test(st)?"ok":/LOST|CUT/.test(st)?"bad":"";
+        rows.push('<div class="sel"><span>'+(s.match||s.home+" v "+s.away)+" &middot; "+(s.market||"")+(s.selection?", "+s.selection:"")+"</span><i"+(cls?' class="chip2 '+cls+'" style="border:none;padding:0"':"")+">"+(s.odds?s.odds:"")+(s.score?" &middot; "+s.score:"")+"</i></div>");
+      });
+      $("vrows").innerHTML=rows.length?rows.join(""):'<p class="note">No games listed on this slip.</p>';
+      $("vimg").style.display="block"; $("vimgbox").innerHTML="";
+    });
+  });
+  $("vimg").addEventListener("click",function(){
+    err("verr");
+    var code=$("vcode").value.trim(), bk=$("bkview").value;
+    if(!code||!bk){ err("verr","View the slip first, then get the image."); return; }
+    var b=this; b.disabled=true; b.textContent="Drawing...";
+    fetch("/api/mbc",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"view_image",code:code,bookmaker:bk})}).then(function(r){
+      b.disabled=false; b.textContent="Get it as a shareable image (2 cr)";
+      var ct=r.headers.get("content-type")||"";
+      if(ct.indexOf("image/")===0){ return r.blob().then(function(bl){ $("vimgbox").innerHTML='<img src="'+URL.createObjectURL(bl)+'" alt="Slip image" style="width:100%;border-radius:12px;border:1px solid var(--line)">'; }); }
+      return r.json().then(function(d){ err("verr",d.error||"Could not draw the image."); });
+    }).catch(function(){ b.disabled=false; b.textContent="Get it as a shareable image (2 cr)"; err("verr","Could not draw the image. Try again."); });
+  });
+
+  /* ================= MERGE ================= */
+  var mcount=0;
+  function addPair(bk,code){
+    if(mcount>=30) return;
+    mcount++;
+    var row=document.createElement("div"); row.className="pair";
+    var s=document.createElement("select");
+    var o=document.createElement("option"); o.value=""; o.textContent="Bookmaker"; s.appendChild(o);
+    BOOKIES.forEach(function(b){ var x=document.createElement("option"); x.value=b.key; x.textContent=name(b); s.appendChild(x); });
+    if(bk) s.value=bk;
+    var inp=document.createElement("input"); inp.placeholder="Code"; inp.autocomplete="off"; inp.maxLength=32;
+    if(code) inp.value=code;
+    inp.addEventListener("input",function(){ this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,""); });
+    var x=document.createElement("button"); x.type="button"; x.className="mini"; x.textContent="&times;"; x.innerHTML="&times;";
+    x.addEventListener("click",function(){ row.remove(); mcount--; });
+    row.appendChild(s); row.appendChild(inp); row.appendChild(x);
+    $("mpairs").appendChild(row);
+  }
+  $("madd").addEventListener("click",function(){ addPair("",""); });
+  $("mgo").addEventListener("click",function(){
+    err("merr");
+    var pairs=[], rows=$("mpairs").children;
+    for(var i=0;i<rows.length;i++){
+      var s=rows[i].children[0].value, c=rows[i].children[1].value.trim();
+      if(s&&c) pairs.push({bookmaker:s,code:c});
+      else if(s||c){ err("merr","Every row needs both a bookmaker and a code."); return; }
+    }
+    if(pairs.length<2){ err("merr","Merge needs at least 2 codes."); return; }
+    var b=this; b.disabled=true; b.textContent="Merging...";
+    post("merge",{pairs:pairs,target:$("mtarget").value},function(d){
+      b.disabled=false; b.textContent="Merge codes";
+      if(d.error){ err("merr",d.error); $("mres").style.display="none"; return; }
+      var data=d.data||{};
+      $("mcode").textContent=data.target_code||"";
+      var chips=[];
+      if(data.codes_combined) chips.push('<span class="chip2">'+data.codes_combined+" codes combined</span>");
+      if(data.selections_count) chips.push('<span class="chip2">'+data.selections_count+" games</span>");
+      if(data.total_odds) chips.push('<span class="chip2 warn">Total odds '+data.total_odds+"</span>");
+      ["skipped","dropped","conflicts"].forEach(function(n){
+        if(Array.isArray(data[n])&&data[n].length) chips.push('<span class="chip2 bad">'+data[n].length+" "+n+"</span>");
+      });
+      $("mchips").innerHTML=chips.join("");
+      var rows=[];
+      ["skipped","dropped","conflicts"].forEach(function(n){
+        (data[n]||[]).slice(0,5).forEach(function(it){ rows.push('<div class="sel"><span>'+n+": "+(typeof it==="string"?it:JSON.stringify(it))+"</span></div>"); });
+      });
+      $("mrows").innerHTML=rows.join("");
+      $("mres").style.display="block";
+    });
+  });
+  copyBtn($("mcopy"),function(){return $("mcode").textContent.trim()});
+
+  /* ================= SPLIT ================= */
+  $("spattern").addEventListener("change",function(){
+    $("row-todds").style.display=this.value==="target_odds"?"block":"none";
+    $("row-scounts").style.display=this.value==="custom"?"block":"none";
+  });
+  $("sgo").addEventListener("click",function(){
+    err("serr");
+    var code=$("scode").value.trim(), bk=$("bksplit").value, count=parseInt($("scount").value,10);
+    if(!code){ err("serr","Enter a booking code first."); return; }
+    if(!bk){ err("serr","Choose the bookmaker."); return; }
+    if(!(count>=2&&count<=20)){ err("serr","Parts must be 2 to 20."); return; }
+    var payload={code:code,bookmaker:bk,count:count,pattern:$("spattern").value,order:$("sorder").value};
+    if(payload.pattern==="target_odds"){ if(!$("stodds").value.trim()){ err("serr","Enter the target odds."); return; } payload.target_odds=$("stodds").value.trim(); }
+    if(payload.pattern==="custom"){
+      var counts=$("scounts").value.split(",").map(function(s){return parseInt(s.trim(),10)}).filter(function(n){return n>0});
+      if(counts.length!==count){ err("serr","Enter "+count+" game counts, comma separated."); return; }
+      payload.counts=counts;
+    }
+    var b=this; b.disabled=true; b.textContent="Splitting...";
+    post("split",payload,function(d){
+      b.disabled=false; b.textContent="Split code";
+      if(d.error){ err("serr",d.error); $("srows").innerHTML=""; return; }
+      var data=d.data||{}, rows=[];
+      (data.parts||[]).forEach(function(p){
+        rows.push('<div class="sel"><span>Part '+p.part+" &middot; "+(p.games||0)+" games &middot; odds "+(p.odds||"?")+(p.verified?" &#10003;":"")+'</span><i>'+(p.code||"failed")+"</i></div>");
+      });
+      if(!rows.length&&listOf(data).length){
+        listOf(data).forEach(function(p){ rows.push('<div class="sel"><span>'+(p.games||"")+"</span><i>"+(p.code||"")+"</i></div>"); });
+      }
+      $("srows").innerHTML=rows.length?rows.join(""):'<p class="note">No parts came back. Check the details and try again.</p>';
+    });
+  });
+
+  /* ================= BOOK ================= */
+  function parsePicks(){
+    var lines=$("bpicks").value.split(/\n+/).filter(function(s){return s.trim()});
+    var picks=[], bad=[];
+    lines.forEach(function(line,i){
+      var parts=line.split("|").map(function(s){return s.trim()});
+      if(parts.length<3){ bad.push(i+1); return; }
+      var teams=parts[0].split(/\s+(?:vs\.?|v)\s+/i);
+      if(teams.length!==2){ bad.push(i+1); return; }
+      var p={home_team:teams[0],away_team:teams[1],market:parts[1],outcome:parts[2]};
+      var nums=parts.slice(3).filter(Boolean);
+      if(nums.length===1){ p.odds=nums[0]; }
+      else if(nums.length>=2){ p.line=nums[0]; p.odds=nums[1]; }
+      picks.push(p);
+    });
+    return {picks:picks,bad:bad};
+  }
+  $("rgo").addEventListener("click",function(){
+    err("berr");
+    var bk=$("bkbook").value;
+    if(!bk){ err("berr","Choose the bookmaker first."); return; }
+    var pr=parsePicks();
+    if(pr.bad.length){ err("berr","Line(s) "+pr.bad.join(", ")+" need: Home vs Away | Market | Outcome"); return; }
+    if(!pr.picks.length){ err("berr","Type at least one pick."); return; }
+    if(pr.picks.length>50){ err("berr","Up to 50 picks per code."); return; }
+    PLAN=null; $("bgo").style.display="none"; $("bres").style.display="none";
+    var b=this; b.disabled=true; b.textContent="Resolving...";
+    post("resolve",{bookmaker:bk,picks:pr.picks,strict:$("bstrict").checked,accept_odds_change:$("bodds").checked},function(d){
+      b.disabled=false; b.textContent="Resolve picks (free)";
+      if(d.error){ err("berr",d.error); $("brows").innerHTML=""; $("bchips").innerHTML=""; return; }
+      var data=d.data||{}; PLAN=data.plan_id||null;
+      var s=data.summary||{};
+      var chips=[];
+      chips.push('<span class="chip2 ok">'+(s.resolved||0)+" resolved</span>");
+      if(s.ambiguous) chips.push('<span class="chip2 warn">'+s.ambiguous+" need a closer look</span>");
+      if(s.failed) chips.push('<span class="chip2 bad">'+s.failed+" failed</span>");
+      $("bchips").innerHTML=chips.join("");
+      var rows=[];
+      (data.picks||[]).forEach(function(p){
+        var st=p.status||"", cls = st==="resolved"?"ok":st==="ambiguous"?"warn":"bad";
+        var txt = p.requested||((p.event?p.event.home+" v "+p.event.away:"")+" "+(p.market?p.market.canonical||"":""));
+        rows.push('<div class="sel"><span>'+txt+"</span><i"+'><span class="chip2 '+cls+'">'+st+"</span></i></div>");
+      });
+      $("brows").innerHTML=rows.join("");
+      if(PLAN&&(s.resolved||0)>0&&(s.failed||0)===0){ $("bgo").style.display="block"; }
+      else if(PLAN){ $("bgo").style.display="none"; err("berr","Fix or remove the failed picks, then resolve again."); }
+    });
+  });
+  $("bgo").addEventListener("click",function(){
+    if(!PLAN){ return; }
+    err("berr");
+    var b=this; b.disabled=true; b.textContent="Booking...";
+    post("book",{bookmaker:$("bkbook").value,plan_id:PLAN,strict:$("bstrict").checked,accept_odds_change:$("bodds").checked},function(d){
+      b.disabled=false; b.textContent="Book the code (2 cr)";
+      if(d.error){ err("berr",d.error); return; }
+      var data=d.data||{};
+      $("bcode").textContent=data.code||"";
+      var chips=[];
+      if(data.total_odds) chips.push('<span class="chip2 warn">Total odds '+data.total_odds+"</span>");
+      if(data.verified) chips.push('<span class="chip2 ok">Verified by reading it back</span>');
+      (data.failures||[]).slice(0,5).forEach(function(f){ chips.push('<span class="chip2 bad">'+(typeof f==="string"?f:(f.reason||"failed pick"))+"</span>"); });
+      $("bchips2").innerHTML=chips.join("");
+      $("bres").style.display="block";
+    });
+  });
+  copyBtn($("bcopy"),function(){return $("bcode").textContent.trim()});
+
+  /* ================= TRACK ================= */
+  function myTracks(){ try{ return JSON.parse(localStorage.getItem(savedTracks)||"[]"); }catch(e){ return []; } }
+  function saveTracks(a){ try{ localStorage.setItem(savedTracks,JSON.stringify(a.slice(0,20))); }catch(e){} }
+  $("tgo").addEventListener("click",function(){
+    err("terr");
+    var code=$("tcode").value.trim(), bk=$("bktrack").value;
+    if(!code){ err("terr","Enter a booking code first."); return; }
+    if(!bk){ err("terr","Choose the bookmaker."); return; }
+    var b=this; b.disabled=true; b.textContent="Starting...";
+    post("track_start",{code:code,bookmaker:bk,mode:$("tmode").value,label:$("tlabel").value.trim()},function(d){
+      b.disabled=false; b.textContent="Start tracking";
+      if(d.error){ err("terr",d.error); return; }
+      var data=d.data||{};
+      if(data.id){
+        var list=myTracks(); list.unshift({id:data.id,code:code,bookmaker:bk,mode:$("tmode").value,label:$("tlabel").value.trim(),at:Date.now()}); saveTracks(list);
+        $("tcode").value=""; $("tlabel").value="";
+        $("terr").style.display="none";
+        loadTracks();
+      } else { err("terr","Tracking started but no id came back. Refresh to see it."); }
+    });
+  });
+  function loadTracks(){
+    var list=myTracks(), box=$("trows");
+    if(!list.length){ box.innerHTML='<p class="note">No tracked slips yet. Start one above and it appears here with its live status.</p>'; $("trefresh").style.display="none"; return; }
+    $("trefresh").style.display="block";
+    box.innerHTML='<p class="note">Checking your tracked slips...</p>';
+    var left=list.length;
+    box.innerHTML="";
+    list.forEach(function(t){
+      post("track_get",{id:t.id},function(d){
+        var el=document.createElement("div"); el.className="trk";
+        var status=d.error?(d.error.indexOf("not found")>-1?"ended":d.error):(d.data&&d.data.status||"unknown");
+        var chips='<div class="tr2"><span class="chip2">'+(t.bookmaker||"")+" &middot; "+(t.code||"")+"</span>"+(t.label?'<span class="chip2">'+t.label+"</span>":"")+'<span class="chip2 '+(status==="active"?"ok":status==="finished"?"":"bad")+'">'+status+"</span></div>";
+        el.innerHTML='<div class="tr1"><span>'+(t.label||t.code)+"</span></div>"+chips;
+        var stop=document.createElement("button"); stop.type="button"; stop.textContent="Stop tracking";
+        stop.addEventListener("click",function(){
+          stop.disabled=true;
+          post("track_stop",{id:t.id},function(){
+            saveTracks(myTracks().filter(function(x){return x.id!==t.id})); loadTracks();
+          });
+        });
+        el.appendChild(stop);
+        box.appendChild(el);
+      });
+    });
+  }
+  $("trefresh").addEventListener("click",loadTracks);
+
+  /* ================= BOOKIES ================= */
+  setTimeout(function(){
+    var rows=BOOKIES.map(function(b){
+      var fl=[];
+      fl.push('<span class="chip2 '+(b.book!==false?"ok":"")+'">Convert '+(b.book!==false?"&#10003;":"&ndash;")+"</span>");
+      fl.push('<span class="chip2 '+(b.search?"ok":"")+'">Search '+(b.search?"&#10003;":"&ndash;")+"</span>");
+      fl.push('<span class="chip2 '+(b.track?"ok":"")+'">Track '+(b.track?"&#10003;":"&ndash;")+"</span>");
+      return '<div class="bkrow"><b>'+name(b)+'</b><span class="fl">'+fl.join("")+"</span></div>";
+    }).join("");
+    $("bkrows").innerHTML = rows ? rows + '<p class="note">'+BOOKIES.length+" bookmakers supported. Bookmakers without the green tick cannot take converted or booked codes.</p>" : '<p class="note">Could not load the list. Refresh the page to try again.</p>';
+  }, 1200);
+})();
+</script>
+<script src="/affiliate.js" defer></script>
+<script src="/ads.js" defer></script>
+</body></html>
