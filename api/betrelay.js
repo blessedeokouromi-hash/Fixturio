@@ -135,7 +135,7 @@ module.exports = async (req, res) => {
       if (req.query.debug === "1") out.up = lastUp;
       res.status(200).json(out);
     } catch (e) {
-      res.status(502).json({ error: "Could not load the bookmaker list. Try again in a moment.", up: lastUp });
+      res.status(502).json({ error: "Could not load the bookmaker list. Try again in a moment.", up: lastUp, keyLen: (process.env.BETRELAY_API_KEY || "").trim().length });
     }
     return;
   }
