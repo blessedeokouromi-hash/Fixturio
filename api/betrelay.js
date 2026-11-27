@@ -49,7 +49,20 @@ async function brFetch(path) {
 // "sportybet:ng" -> { key, bookie, country }
 function parseBookies(raw) {
   const out = [];
-  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+  if (Array.isArray(raw)) {
+    raw.forEach(function (item) {
+      if (!item || typeof item !== "object") return;
+      const k = String(item.key || item.bookie_key || item.id || ((item.bookie || item.name || "") + ":" + (item.country || "")));
+      if (!k || k === ":") return;
+      out.push({
+        key: k,
+        bookie: String(item.bookie || item.name || k.split(":")[0]),
+        country: String(item.country || k.split(":")[1] || "").toLowerCase(),
+        from: item.from === 1 || item.from === true || item.can_be_source === true,
+        to: item.to === 1 || item.to === true || item.can_be_target === true
+      });
+    });
+  } else if (raw && typeof raw === "object" && !Array.isArray(raw)) {
     for (const k of Object.keys(raw)) {
       if (!k || typeof raw[k] !== "object" || raw[k] === null) continue;
       const parts = k.split(":");
@@ -118,7 +131,9 @@ module.exports = async (req, res) => {
     if (want !== "bookies") { res.status(400).json({ error: "Unknown action." }); return; }
     try {
       const bookies = await bookiesList();
-      res.status(200).json({ bookies: bookies, left: await remainingToday(ip), limit: DAILY_LIMIT });
+      const out = { bookies: bookies, left: await remainingToday(ip), limit: DAILY_LIMIT };
+      if (req.query.debug === "1") out.up = lastUp;
+      res.status(200).json(out);
     } catch (e) {
       res.status(502).json({ error: "Could not load the bookmaker list. Try again in a moment.", up: lastUp });
     }
