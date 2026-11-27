@@ -5,10 +5,10 @@
 // browser and never appears in this public repository.
 //
 // GET  /api/betrelay?action=bookies
-//        -> { bookies:[{key,bookie,country,from,to}], left, ttlHours }
+//        -> { bookies:[{key,bookie,country,from,to}], left, limit }
 //        Cached in memory for 6 h so repeated visits cost the key nothing.
 // POST /api/betrelay   { code, from, to }
-//        -> { code, bookie, games, odds, selections:[...] , left }
+//        -> { code, bookie, games, odds, selections:[...], left, limit }
 //        3 conversions per visitor per UTC day, backed by the Supabase
 //        rate_limits table through lib/supa.js (in-memory fallback when
 //        Supabase is unreachable).
@@ -19,42 +19,37 @@ const DAILY_LIMIT = 3;
 const CACHE_MS = 6 * 3600 * 1000;
 
 let cache = null; // { at, bookies }
-let lastUp = null; // diagnostics: status of the last upstream call
+let lastUp = null; // diagnostics: shape of the last upstream answer
 
 function key() {
   // Strip accidental surrounding quotes/whitespace from the saved value.
   return (process.env.BETRELAY_API_KEY || "").trim().replace(/^["']+|["']+$/g, "").trim();
 }
 
-async function brFetch(path, attempt) {
-  const r = await fetch(BASE + path + (path.includes("?") ? "&" : "?") + "api_key=" + encodeURIComponent(key()) + (attempt === 2 ? "&v=2" : ""));
+async function brFetch(path) {
+  const r = await fetch(BASE + path + (path.includes("?") ? "&" : "?") + "api_key=" + encodeURIComponent(key()));
   const text = await r.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (e) {}
   const rejected = data && typeof data.message === "string" && data.message.indexOf("unauthorized") !== -1;
-  if (rejected && attempt !== 2) {
-    // The saved key value may be wrapped in quotes or carry stray characters;
-    // one retry with a header instead of the query param rules that out.
-    lastUp = { status: r.status, json: true, head: text.slice(0, 160), retried: true };
+  if (rejected) {
+    // One retry with the key in a header instead of the query string rules
+    // out a saved-value formatting problem on our side.
+    lastUp = { status: r.status, head: text.slice(0, 160), retried: true };
     const r2 = await fetch(BASE + path, { headers: { "api_key": key() } });
     const t2 = await r2.text();
     let d2 = null;
     try { d2 = t2 ? JSON.parse(t2) : null; } catch (e) {}
-    return { ok: r2.ok, status: r2.status, data: d2, text: t2 };
+    return { ok: r2.ok, status: r2.status, data: d2 };
   }
-  lastUp = { status: r.status, json: !!data, head: text.slice(0, 160) };
-  return { ok: r.ok, status: r.status, data: data, text: text };
-  const text = await r.text();
-  let data = null;
-  try { data = text ? JSON.parse(text) : null; } catch (e) {}
-  lastUp = { status: r.status, json: !!data, head: text.slice(0, 160) };
+  lastUp = { status: r.status, head: text.slice(0, 160) };
   return { ok: r.ok, status: r.status, data: data };
 }
 
 // "sportybet:ng" -> { key, bookie, country }
 function parseBookies(raw) {
   const out = [];
-  if (raw && typeof raw === "object") {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
     for (const k of Object.keys(raw)) {
       if (!k || typeof raw[k] !== "object" || raw[k] === null) continue;
       const parts = k.split(":");
@@ -78,7 +73,7 @@ async function bookiesList() {
     if (cache) return cache.bookies; // serve stale rather than fail the page
     throw new Error("bookies unavailable");
   }
-  const payload = r.data.data && typeof r.data.data === "object" ? r.data.data : r.data;
+  const payload = r.data.data && typeof r.data.data === "object" && !Array.isArray(r.data.data) ? r.data.data : r.data;
   const list = parseBookies(payload);
   if (!list.length) throw new Error("bookies unavailable");
   cache = { at: Date.now(), bookies: list };
@@ -149,7 +144,7 @@ module.exports = async (req, res) => {
     const list = await bookiesList();
     const f = list.find(function (b) { return b.key === from && b.from; });
     const t = list.find(function (b) { return b.key === to && b.to; });
-    if (!f || !t) { res.status(400).json({ error: "That bookmaker pair is not supported. Try another pair." }); return; }
+    if (!f || !t) { res.status(400).json({ error: "That bookmaker pair is not supported. Try another pair.", left: await remainingToday(ip) }); return; }
 
     const r = await brFetch("/conversion_v2?from=" + encodeURIComponent(f.key) + "&to=" + encodeURIComponent(t.key) + "&booking_code=" + encodeURIComponent(code));
     if (!r.ok || !r.data) {
@@ -159,17 +154,16 @@ module.exports = async (req, res) => {
     const payload = r.data.data || r.data;
     const errs = payload && Array.isArray(payload.errors) ? payload.errors : [];
     if (errs.length || !payload || !payload.conversion || !payload.conversion.destination_code) {
-      const msg = errs.length && (errs[0].message || errs[0].error || errs[0])
-        ? String(errs[0].message || errs[0].error || errs[0]) : "Could not convert that code. Check the code and bookmakers, or try again in a moment.";
+      const raw = errs.length ? (errs[0].message || errs[0].error || errs[0]) : null;
+      const msg = raw ? String(raw) : "Could not convert that code. Check the code and bookmakers, or try again in a moment.";
       res.status(200).json({ error: msg.slice(0, 220), left: await remainingToday(ip) });
       return;
     }
     const conv = payload.conversion;
-    const dest = String(conv.dump && conv.dump.away ? (conv.dump.away.bookie || "") : (to || "")).toLowerCase();
     res.status(200).json({
       code: conv.destination_code,
       source_code: code,
-      bookie: dest || to,
+      bookie: conv.dump && conv.dump.away && conv.dump.away.bookie ? String(conv.dump.away.bookie).toLowerCase() : to,
       games: selectionsOf(conv).length || (conv.dump && conv.dump.home && conv.dump.home.no_of_entries) || null,
       odds: conv.dump && conv.dump.home && conv.dump.home.odds ? Number(conv.dump.home.odds) : null,
       selections: selectionsOf(conv),
@@ -177,6 +171,6 @@ module.exports = async (req, res) => {
       limit: DAILY_LIMIT
     });
   } catch (e) {
-    res.status(502).json({ error: "Conversion failed on our side. Try again in a moment.", left: await remainingToday(ip).catch(function () { return null; }) });
+    res.status(502).json({ error: "Conversion failed on our side. Try again in a moment.", left: await remainingToday(ip) });
   }
 };
