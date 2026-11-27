@@ -12,7 +12,7 @@
 const supa = require("../lib/supa");
 
 const BASE = "https://betrelay.com.ng/api/v1";
-const DAILY_LIMIT = 3; // per visitor, enforced by our rate_limits table
+const DAILY_LIMIT = 1; // per visitor, enforced by our rate_limits table
 const CACHE_MS = 24 * 3600 * 1000;
 
 let cache = null; // { at, bookies }
@@ -109,7 +109,7 @@ module.exports = async (req, res) => {
   if (!from || !to || from === to) { res.status(400).json({ error: "Pick two different bookmakers." }); return; }
 
   if (await supa.hitRate("brc", ip, DAILY_LIMIT, 86400)) {
-    res.status(429).json({ error: "You've used your " + DAILY_LIMIT + " free conversions for today. Come back tomorrow.", left: 0, limit: DAILY_LIMIT });
+    res.status(429).json({ error: "You've used your 1 free conversion for today. Come back tomorrow.", left: 0, limit: DAILY_LIMIT });
     return;
   }
 

@@ -69,7 +69,7 @@ input{text-transform:uppercase;letter-spacing:.08em;font-weight:700}
 <label for="to">To</label>
 <select id="to"><option value="">Select target</option></select>
 <button class="post" id="go">Convert code</button>
-<p class="quota" id="quota">3 free conversions a day</p>
+<p class="quota" id="quota">1 free conversion a day</p>
 <p class="err" id="err" style="display:none"></p>
 </div>
 <div class="card res" id="res">
@@ -104,7 +104,7 @@ input{text-transform:uppercase;letter-spacing:.08em;font-weight:700}
     else if(d.error){ var e=$("err"); e.textContent=d.error; e.style.display="block"; }
     if(typeof d.left==="number"){ left=d.left; quota(); }
   }).catch(function(){});
-  function quota(){ if(left===null) return; $("quota").textContent = left>0 ? left+" of 3 free conversions left today" : "No free conversions left today, come back tomorrow"; }
+  function quota(){ if(left===null) return; $("quota").textContent = left>0 ? left+" of 1 free conversion left today" : "No free conversions left today, come back tomorrow"; }
 
   $("swap").addEventListener("click", function(){ var a=$("from").value; $("from").value=$("to").value; $("to").value=a; });
   $("code").addEventListener("input", function(){ this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,""); });
