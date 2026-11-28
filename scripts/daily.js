@@ -388,25 +388,38 @@ function reason(m) {
     return cap;
   };
 
+  // Confidence calibration, learned from the graded history (190 settled
+  // picks, Nov 13-27): picks the app displayed at 50-59% actually won 44% of
+  // them, 60-69% claims won 50%, while claims of 70% and up tracked what they
+  // promised (77%, 83% and 95%). So a raw model probability below 70% is
+  // scaled by 0.78 before it is displayed or used to select picks, which
+  // brings the low bands in line with what the engine really delivers. The
+  // thin-data caps then apply on top, exactly as before.
+  const calib = p => (p < 0.70 ? p * 0.78 : p);
+
   const picks = [];
   poolMatches.forEach(m => {
     // Best market first: rank every market by blended probability, ignore the
-    // ones the model and the odds disagree on, and hold picks to a 55%
-    // confidence floor so coin-flip markets never become recommendations.
+    // ones the model and the odds disagree on, and hold picks to a 50%
+    // calibrated floor (55% raw before the calibration scale) so coin-flip
+    // markets never become recommendations.
     if (!(m.markets || []).length) return;
     const trivial = x => /over 0\.5|under 0\.5|first half/i.test(x.market);
     let ranked = m.markets.filter(x => !x.skip && !trivial(x)).sort((x, y) => y.prob - x.prob);
     if (!ranked.length) ranked = m.markets.filter(x => !x.skip).sort((x, y) => y.prob - x.prob);
-    const usable = ranked.filter(x => x.prob >= 0.55);
+    const usable = ranked.filter(x => calib(x.prob) >= 0.50);
     const best = usable[0] || ranked[0];
-    const single = usable.find(x => x.kind === "single");
+    // Second choice: the best other market on the same match, so a card never
+    // repeats the one market the model happens to like everywhere that day.
+    const second = usable.find(x => x !== best && x.market !== best.market)
+      || usable.find(x => x !== best && x.kind === "single");
     const chosen = [best];
-    if (single && single !== best) chosen.push(single);
+    if (second) chosen.push(second);
     chosen.forEach(c => picks.push({
       fixture: m.id,
       match: m.home + " vs " + m.away,
       market: c.market,
-      probability: Math.round(Math.min(capFor(m), c.prob * 100)),
+      probability: Math.round(Math.min(capFor(m), calib(c.prob) * 100)),
       reason: m.why || reason(m),
       cs: m.cs,
       odd: c.odd || null,
@@ -424,10 +437,23 @@ function reason(m) {
   // higher-odds ones. Picks without odds fall back to raw probability.
   const valScore = p => (p.odd > 1 ? Math.log(p.probability / 100) / Math.log(p.odd) : p.probability / 100);
   picks.sort((a, b) => valScore(b) - valScore(a));
+  // Market diversity: no single market name may hold more than three of the
+  // day's picks. The Nov 27 list put 10 of 15 picks on "Away team under 1.5
+  // goals" and the Nov 28 list all 15 on "Double chance 12", which reads to
+  // users as the engine stuck in a rut. The cap keeps the top three by value
+  // score for each market and lets the rest of the list spread.
+  const famCount = {};
+  const diverse = [];
+  for (const p of picks) {
+    if ((famCount[p.market] || 0) >= 3) continue;
+    famCount[p.market] = (famCount[p.market] || 0) + 1;
+    diverse.push(p);
+  }
+
   // The banker: the day's most confident pick, tagged only when it is a real
   // banker (75% or better) AND the match has enough stored data behind it.
   // Otherwise no banker is shown that day.
-  const bankerPick = picks.filter(p => p.probability >= 75 && p.dataQ === "ok" && !p.cupish).sort((a, b) => b.probability - a.probability)[0];
+  const bankerPick = diverse.filter(p => p.probability >= 75 && p.dataQ === "ok" && !p.cupish).sort((a, b) => b.probability - a.probability)[0];
   if (bankerPick) bankerPick.banker = true;
 
 
@@ -448,25 +474,27 @@ function reason(m) {
       // Legs carry the same thin-data cap as the picks: a leg built on very
       // little history shows its capped confidence, and the slip's joint
       // chance is computed from those capped numbers.
-      const prob = Math.min(capFor(m), Math.round(x.prob * 100));
+      const prob = Math.min(capFor(m), Math.round(calib(x.prob) * 100));
       if (prob < 55) return;
       candAcca.push({ fixture: m.id, match: m.home + " vs " + m.away, market: x.market, odd: x.odd, probability: prob, kickoff: m.kickoff, league: m.league, country: m.country, dataQ: m.dataQ });
     });
   });
   const valS = p => Math.log(p.probability / 100) / Math.log(p.odd);
   const buildSlip = order => {
-    const seenF = {}, seenLg = {}, seenCt = {};
+    const seenF = {}, seenLg = {}, seenCt = {}, seenMk = {};
     const legs = [];
     let total = 1;
     for (const p of order) {
       if (legs.length >= 14) break;
       if (seenF[p.fixture]) continue;
+      if ((seenMk[p.market] || 0) >= 3) continue;
       if ((seenLg[p.league] || 0) >= 2) continue;
       if ((seenCt[p.country] || 0) >= 4) continue;
       const nt = total * p.odd;
       if (nt > 50) continue;
       legs.push(p);
       seenF[p.fixture] = 1;
+      seenMk[p.market] = (seenMk[p.market] || 0) + 1;
       seenLg[p.league] = (seenLg[p.league] || 0) + 1;
       seenCt[p.country] = (seenCt[p.country] || 0) + 1;
       total = nt;
@@ -515,7 +543,7 @@ function reason(m) {
     generated: new Date().toISOString(),
     matches,
     px,
-    picks: picks.slice(0, 15),
+    picks: diverse.slice(0, 15),
     acca,
     summary: "Ranked by the best chance per unit of odds, from every league we follow. Safer picks with bigger prices lead the list, so always check the market before you decide."
   }));
