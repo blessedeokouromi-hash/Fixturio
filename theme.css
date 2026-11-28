@@ -127,3 +127,7 @@ html[data-theme="dark"] body .seg button.on{background:var(--bar);border-color:v
 }
 .logo img,header img[src="/logo.png"]{animation:fxlogo 4s ease-in-out infinite;animation-delay:.6s;will-change:transform}
 @media (prefers-reduced-motion:reduce){.logo img,header img[src="/logo.png"]{animation:none}}
+
+/* heading icon tiles (Nov 28 design pass) */
+h1 .tico,h2 .tico,h3 .tico{display:inline-flex;width:30px;height:30px;border-radius:9px;background:var(--band);color:var(--amb);align-items:center;justify-content:center;vertical-align:-8px;margin-right:9px;flex:none}
+h1 .tico svg,h2 .tico svg,h3 .tico svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
