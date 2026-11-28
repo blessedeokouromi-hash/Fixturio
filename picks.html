@@ -157,7 +157,7 @@ function drawAcca(){
   const box=$("acca");
   if(!acca||!acca.legs||acca.legs.length<2){box.innerHTML="";return;}
   const legs=acca.legs.map(l=>'<div class="lg"><div><b>'+esc(l.match)+'</b><small>'+(window.flagName?window.flagName(l.country)+" ":"")+esc(l.league||"")+(l.country?" · "+esc(l.country):"")+' · '+tm(l.kickoff)+'</small><i>'+esc(l.market)+'</i></div><span>@'+esc(l.odd)+'</span></div>').join("");
-  box.innerHTML='<section class="acca"><b class="at">Acca of the day</b><p class="ad">'+acca.legs.length+' legs combined, picked from the safest legs across every league we follow. Small stake, long odds.</p>'+legs+'<div class="tot2"><span>Total odds</span><b>'+esc(acca.total)+'</b></div><div class="bet-cta" style="margin:14px 0 0"></div><p class="betfine">18+. Opens the bookmaker in a new tab.</p></section>';
+  box.innerHTML='<section class="acca"><b class="at">Acca of the day</b><p class="ad">'+acca.legs.length+' legs combined, picked from the safest legs across every league we follow.</p>'+legs+'<div class="tot2"><span>Total odds</span><b>'+esc(acca.total)+'</b></div><div class="bet-cta" style="margin:14px 0 0"></div><p class="betfine">18+. Opens the bookmaker in a new tab.</p></section>';
 }
 
 function formRow(mid){
